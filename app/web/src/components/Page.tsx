@@ -22,8 +22,9 @@ const NAV = [
 
 export function Sidebar() {
   const [loc, go] = useLocation();
-  const { policy } = useViewer();
+  const { policy, me, member } = useViewer();
   const qc = useQueryClient();
+  const m = member(me.email);
   const out = async () => {
     if (pushSupported() && Notification.permission === "granted") await unregisterPush();
     await ok(api.auth.logout.$post());
@@ -40,6 +41,10 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="spacer" />
+      <button className="me hide-sm" onClick={() => go("/pengaturan")} aria-label="Profil saya">
+        {m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)" }}>{me.name[0]}</span>}
+        <span><b>{m?.name ?? me.name}</b><small>{m?.role || (me.owner ? "Pemilik" : me.email)}</small></span>
+      </button>
       <nav className="nav hide-sm"><button onClick={out}><LogOut size={19} />Keluar</button></nav>
     </aside>
   );
@@ -106,9 +111,10 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
             <Bell_ />
             <button className="tool" onClick={() => go("/pengaturan")} aria-label="Profil saya" style={{ padding: 0 }}>{m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)" }}>{me.name[0]}</span>}</button>
           </div>
-          <button className="btn primary" onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
+          <button className="btn primary hide-mobile" onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
         </div>
       </div>
+      <button className="fab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
       {(tabs || actions) && (
         <div className="tabs" role="tablist">
           {tabs?.map(x => <button key={x.id} role="tab" aria-selected={tab === x.id} onClick={() => onTab?.(x.id)}>{x.label}</button>)}

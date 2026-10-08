@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { PRIORITIES, STATUSES, type Priority, type Status, type TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
-import { Avatar } from "../components/ui";
+import { Avatar, Empty } from "../components/ui";
 import { api, ok } from "../lib/api";
 import { STATUS, fmtShort, today } from "../lib/format";
 import { patchTaskLocally, useAction, useTasks, windowFrom, keys } from "../lib/queries";
@@ -55,7 +55,7 @@ function Column({ status, tasks, canDrag }: { status: Status; tasks: TaskDTO[]; 
     <section ref={setNodeRef} className="col" data-c={COL_TINT[status]} data-over={isOver} aria-label={STATUS[status]}>
       <div className="col-h">{STATUS[status]}<span>{tasks.length}</span></div>
       {tasks.map(t => <DraggableCard key={t.id} t={t} canDrag={canDrag(t)} />)}
-      {!tasks.length && <p className="empty">Tidak ada tugas.</p>}
+      {!tasks.length && <Empty icon={status === "done" ? "🎯" : status === "doing" ? "🛠️" : "🌿"} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
     </section>
   );
 }
