@@ -30,12 +30,14 @@ const api = createApp({
 const web = resolve(env.WEB_DIR);
 const app = api;
 if (existsSync(web)) {
-  const index = readFileSync(join(web, "index.html"), "utf8");
+  const read = () => readFileSync(join(web, "index.html"), "utf8");
+  const cached = read(); // in local dev mode re-read each time so a rebuild shows up on refresh
+  const index = () => (env.ALLOW_DEV_LOGIN ? read() : cached);
   app.use("/*", serveStatic({
     root: web,
     onFound: (path, c) => { c.header("cache-control", /\/assets\//.test(path) ? "public, max-age=31536000, immutable" : "no-cache"); },
   }));
-  app.get("*", c => c.req.path.startsWith("/api/") ? c.json({ error: "not found" }, 404) : c.html(index, 200, { "cache-control": "no-cache" }));
+  app.get("*", c => c.req.path.startsWith("/api/") ? c.json({ error: "not found" }, 404) : c.html(index(), 200, { "cache-control": "no-cache" }));
 }
 
 startJobs(db, push, bus);
