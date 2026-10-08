@@ -10,6 +10,7 @@ import { PRIORITY_LABEL } from "../lib/tasks";
 import { useViewer } from "../lib/viewer";
 
 const PRIO_COLOR: Record<Priority, string> = { urgent: "#5F31C4", high: "#C6F04A", normal: "#2547E8", low: "#AEB6C1" };
+const range = (d: string, year = false) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) }).format(new Date(d + "T12:00:00"));
 const dur = (min: number | null) => min === null ? "–" : min < 60 ? `${min} mnt` : `${Math.floor(min / 60)} j ${min % 60} m`;
 
 export function ReportsPage() {
@@ -22,7 +23,7 @@ export function ReportsPage() {
   const maxP = Math.max(1, ...(d?.perPerson ?? []).map(p => p.total));
   const maxProj = Math.max(1, ...(d?.byProject ?? []).map(p => p.total));
   return (
-    <Page title="Laporan" sub={`${from} s/d ${to}${policy.isManager ? "" : " · hanya tugasmu"}`}
+    <Page title="Laporan" sub={`${range(from)} – ${range(to, true)}${policy.isManager ? "" : " · hanya tugasmu"}`}
       tabs={[{ id: "ringkas", label: "Ringkasan" }, ...(policy.isManager ? [{ id: "orang", label: "Per orang" }] : []), { id: "proyek", label: "Proyek & label" }]} tab={tab} onTab={setTab}
       actions={<>
         <div className="seg" role="group" aria-label="Rentang">{[7, 30, 90].map(n => <button key={n} aria-pressed={days === n} onClick={() => setDays(n)}>{n} hari</button>)}</div>
@@ -50,7 +51,7 @@ export function ReportsPage() {
         )}
         {tab === "orang" && (
           <section className="surface"><div className="surface-h"><h2>Produktivitas per orang</h2></div>
-            <div style={{ overflowX: "auto" }}><table className="tbl"><thead><tr><th>Nama</th><th className="r">Tugas</th><th className="r">Selesai</th><th className="r">Tepat waktu</th><th className="r">Telat</th><th className="r">Terlambat (buka)</th><th style={{ width: "28%" }}>Progres</th></tr></thead>
+            <div style={{ overflowX: "auto" }}><table className="tbl"><thead><tr><th>Nama</th><th className="r">Tugas</th><th className="r">Selesai</th><th className="r">Tepat waktu</th><th className="r">Telat</th><th className="r">Terlambat</th><th style={{ width: "26%", paddingLeft: 24 }}>Progres</th></tr></thead>
               <tbody>{d.perPerson.map(p => (
                 <tr key={p.email}><td><b>{p.name}</b></td><td className="r">{p.total}</td><td className="r">{p.done}</td><td className="r">{p.onTime + p.late ? Math.round(p.onTime / (p.onTime + p.late) * 100) + "%" : "–"}</td><td className="r">{p.late}</td><td className="r">{p.overdue}</td>
                   <td><HBar label="" done={p.done} total={p.total} max={maxP} /></td></tr>
