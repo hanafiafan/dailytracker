@@ -49,3 +49,19 @@ export async function runReminders(db: Db, push: Push, now = Date.now()) {
   }
 }
 
+/** Every 15 minutes (on the clock); also once at startup so a restart never skips today's routines. */
+export function startJobs(db: Db, push: Push, bus: Bus) {
+  const tick = () => {
+    try {
+      if (ensureRoutines(db, wib().date)) bus.emit("tasks");
+      runReminders(db, push).catch(e => console.error("reminders", e));
+    } catch (e) { console.error("jobs", e); }
+  };
+  tick();
+  let last = "";
+  return setInterval(() => {
+    const { date, hour, minute } = wib();
+    const key = `${date}T${hour}:${minute}`;
+    if (minute % 15 === 0 && key !== last) { last = key; tick(); }
+  }, 30_000).unref();
+}
