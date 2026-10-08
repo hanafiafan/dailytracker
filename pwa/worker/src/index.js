@@ -27,3 +27,27 @@ async function accessToken(env) {
   return tokenCache.value;
 }
 
+// ---------- Firestore REST ----------
+const dec = v => "stringValue" in v ? v.stringValue : "integerValue" in v ? Number(v.integerValue) : "doubleValue" in v ? v.doubleValue
+  : "booleanValue" in v ? v.booleanValue : "timestampValue" in v ? Date.parse(v.timestampValue)
+  : "arrayValue" in v ? (v.arrayValue.values || []).map(dec) : "mapValue" in v ? decFields(v.mapValue.fields) : null;
+const decFields = f => Object.fromEntries(Object.entries(f || {}).map(([k, v]) => [k, dec(v)]));
+const wrapDoc = d => { const p = d.name.split("/documents/")[1].split("/"); return { path: p.join("/"), id: p[p.length - 1], parent: p[p.length - 3], data: decFields(d.fields) }; };
+const base = env => `https://firestore.googleapis.com/v1/projects/${env.PROJECT_ID}/databases/(default)/documents`;
+const enc = p => p.split("/").map(encodeURIComponent).join("/");
+
+async function fs(env, method, url, body) {
+  const r = await fetch(url, { method, headers: { authorization: "Bearer " + await accessToken(env), "content-type": "application/json" }, body: body && JSON.stringify(body) });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`firestore ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+const getDoc = async (env, path) => { const d = await fs(env, "GET", `${base(env)}/${enc(path)}`); return d && wrapDoc(d); };
+const listDocs = async (env, path) => ((await fs(env, "GET", `${base(env)}/${enc(path)}?pageSize=300`)) || {}).documents?.map(wrapDoc) || [];
+const delDoc = (env, path) => fs(env, "DELETE", `${base(env)}/${enc(path)}`);
+const markDoc = (env, path, field) => fs(env, "PATCH", `${base(env)}/${enc(path)}?updateMask.fieldPaths=${field}`, { fields: { [field]: { booleanValue: true } } });
+const query = async (env, from, where) => {
+  const r = await fs(env, "POST", `${base(env)}:runQuery`, { structuredQuery: { from: [{ collectionId: from, allDescendants: true }], ...(where ? { where } : {}) } });
+  return (r || []).filter(x => x.document).map(x => wrapDoc(x.document));
+};
+
