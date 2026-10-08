@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import type { MemberDTO } from "@shared/schemas";
-import { Page } from "../components/Page";
 import { Avatar } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
 import { useMeta, useTasks } from "../lib/queries";
@@ -53,7 +52,7 @@ function Node({ p, open }: { p: Person; open?: number }) {
   );
 }
 
-export function OrgPage() {
+export function OrgView() {
   const { policy } = useViewer();
   const org = useOrg();
   const [tab, setTab] = useState("bagan"), [unit, setUnit] = useState(""), [q, setQ] = useState("");
@@ -62,8 +61,10 @@ export function OrgPage() {
   const units = org.byUnit.map(u => u.unit);
   const rows = org.uniq.filter(p => (!unit || p.unit === unit || (unit === NOUNIT && !p.unit)) && (!q.trim() || (p.name + " " + p.role).toLowerCase().includes(q.trim().toLowerCase())));
   return (
-    <Page title="Struktur organisasi" sub={`${org.uniq.length} orang · ${units.length} unit`}
-      tabs={[{ id: "bagan", label: "Bagan" }, { id: "tabel", label: "Tabel" }]} tab={tab} onTab={setTab}>
+    <>
+      <div className="seg" role="group" aria-label="Tampilan struktur" style={{ justifySelf: "start" }}>
+        <button aria-pressed={tab === "bagan"} onClick={() => setTab("bagan")}>Bagan</button><button aria-pressed={tab === "tabel"} onClick={() => setTab("tabel")}>Tabel</button>
+      </div>
       {tab === "bagan" ? (
         <section className="bc"><div className="heatwrap"><div className="org">
           <div className="otop">{[...org.top, ...org.bossP].map(p => <Node key={p.key} p={p} open={openOf(p.m?.email)} />)}</div>
@@ -95,6 +96,6 @@ export function OrgPage() {
           </table></div>
         </section>
       )}
-    </Page>
+    </>
   );
 }
