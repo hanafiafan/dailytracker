@@ -13,6 +13,7 @@ import { memberColumns, type AppEnv, type Deps } from "./context.js";
 import { inboxRoutes } from "./routes/inbox.js";
 import { leaveRoutes } from "./routes/leaves.js";
 import { timeRoutes } from "./routes/time.js";
+import { bookingRoutes, resourceRoutes } from "./routes/resources.js";
 import { linkRoutes } from "./routes/links.js";
 import { metaRoutes } from "./routes/meta.js";
 import { reportRoutes } from "./routes/reports.js";
@@ -69,6 +70,8 @@ export function createApp(deps: Deps) {
     .use("/routines/*", auth).route("/routines", routineRoutes(deps))
     .use("/leaves/*", auth).route("/leaves", leaveRoutes(deps, notify))
     .use("/time/*", auth).route("/time", timeRoutes(deps))
+    .use("/resources/*", auth).route("/resources", resourceRoutes(deps))
+    .use("/bookings/*", auth).route("/bookings", bookingRoutes(deps))
     .use("/links/*", auth).route("/links", linkRoutes(deps))
     .use("/meta/*", auth).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth).route("/inbox", inboxRoutes(deps))

@@ -42,6 +42,8 @@ export const tasks = sqliteTable("tasks", {
   date: text("date").notNull(),
   title: text("title").notNull(),
   note: text("note").notNull().default(""),
+  /** How many times a manager sent it back for fixes. */
+  revisions: integer("revisions").notNull().default(0),
   start: text("start"),
   due: text("due"),
   status: text("status", { enum: ["todo", "doing", "done"] }).notNull().default("todo"),
@@ -174,3 +176,24 @@ export const timeEntries = sqliteTable("time_entries", {
   startedAt: integer("started_at").notNull(),
   endedAt: integer("ended_at"),
 }, t => [index("time_task").on(t.taskId), index("time_email").on(t.email, t.startedAt)]);
+
+/** Shared equipment, studios and locations that can be booked for a time slot. */
+export const resources = sqliteTable("resources", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kind: text("kind", { enum: ["alat", "studio", "lokasi"] }).notNull().default("alat"),
+  note: text("note").notNull().default(""),
+  archived: bool("archived").notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+});
+export const bookings = sqliteTable("bookings", {
+  id: text("id").primaryKey(),
+  resourceId: text("resource_id").notNull().references(() => resources.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
+  date: text("date").notNull(),
+  start: text("start").notNull(),
+  end: text("end").notNull(),
+  note: text("note").notNull().default(""),
+  createdAt: integer("created_at").notNull(),
+}, t => [index("bookings_slot").on(t.resourceId, t.date)]);

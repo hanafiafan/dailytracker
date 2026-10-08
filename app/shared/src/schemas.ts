@@ -58,6 +58,10 @@ export const LEAVE_KINDS = ["cuti", "izin", "sakit"] as const;
 export type LeaveKind = (typeof LEAVE_KINDS)[number];
 export const leaveCreate = z.object({ kind: z.enum(LEAVE_KINDS), from: date, to: date, reason: z.string().trim().max(200).default("") });
 export const leaveDecision = z.object({ status: z.enum(["approved", "rejected"]) });
+export const RESOURCE_KINDS = ["alat", "studio", "lokasi"] as const;
+export type ResourceKind = (typeof RESOURCE_KINDS)[number];
+export const resourceInput = z.object({ name: z.string().trim().min(1).max(60), kind: z.enum(RESOURCE_KINDS).default("alat"), note: z.string().trim().max(200).default(""), archived: z.boolean().default(false) });
+export const bookingCreate = z.object({ resourceId: z.string().min(1), date, start: hm, end: hm, taskId: z.string().nullish(), note: z.string().trim().max(200).default("") });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
 export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
@@ -89,7 +93,7 @@ export interface AnalyticsDTO {
 export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
   status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
-  createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null;
+  createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];
 }
@@ -108,6 +112,8 @@ export interface TimeReportDTO {
 }
 export interface ProjectReportDTO {
   project: ProjectDTO;
-  stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number };
-  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number }[];
+  stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number; revisions: number };
+  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number }[];
 }
+export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
+export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }

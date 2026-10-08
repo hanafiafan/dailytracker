@@ -37,8 +37,8 @@ export const reportRoutes = (deps: Deps) => {
       const onTime = done.filter(t => { const dl = dueMs(t); return !dl || (t.doneAt ?? 0) - dl <= 60000; }).length;
       const out: ProjectReportDTO = {
         project: toProject(p),
-        stats: { total: rows.length, done: done.length, open: rows.length - done.length, onTime, late: done.length - onTime, minutes: Math.round([...mins.values()].reduce((s, v) => s + v, 0)), withProof: done.filter(t => t.proofLink || t.hasPhoto).length },
-        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0) })),
+        stats: { total: rows.length, done: done.length, open: rows.length - done.length, onTime, late: done.length - onTime, minutes: Math.round([...mins.values()].reduce((s, v) => s + v, 0)), withProof: done.filter(t => t.proofLink || t.hasPhoto).length, revisions: rows.reduce((s, t) => s + t.revisions, 0) },
+        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0), revisions: t.revisions })),
       };
       return c.json(out);
     })

@@ -3,7 +3,7 @@
 import { join } from "node:path";
 import { addDays, wib } from "@shared/time";
 import { openDb } from "../db/index.js";
-import { activity, comments, labels, leaves, links, members, notifications, projects, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
+import { activity, bookings, comments, labels, leaves, resources, links, members, notifications, projects, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
 import { newId } from "../context.js";
 
 const db = openDb(join(process.env.DATA_DIR ?? "./data", "app.db"));
@@ -86,6 +86,15 @@ db.insert(leaves).values([
   { id: newId(), email: "eko@demo.id", kind: "cuti", from: addDays(today, 3), to: addDays(today, 5), reason: "Acara keluarga", status: "approved", decidedBy: "owner@demo.id", decidedAt: now - 3600_000, createdAt: now - 86400_000 },
   { id: newId(), email: "fajar@demo.id", kind: "izin", from: addDays(today, 1), to: addDays(today, 1), reason: "Urus dokumen", status: "pending", createdAt: now - 7200_000 },
   { id: newId(), email: "gita@demo.id", kind: "sakit", from: addDays(today, -1), to: addDays(today, 0), reason: "", status: "approved", decidedBy: "owner@demo.id", decidedAt: now - 86400_000, createdAt: now - 90000_000 },
+]).run();
+const res = [["Kamera Sony A7 IV", "alat"], ["Lighting kit 3 titik", "alat"], ["Gimbal & mic wireless", "alat"], ["Studio foto", "studio"], ["Rooftop (lokasi shooting)", "lokasi"]].map(([name, kind], i) => ({ id: newId(), name: name!, kind: kind as "alat" | "studio" | "lokasi", createdAt: now + i }));
+db.insert(resources).values(res).run();
+db.insert(bookings).values([
+  { id: newId(), resourceId: res[0]!.id, email: "sinta@demo.id", date: today, start: "08:00", end: "11:00", note: "Foto lookbook", createdAt: now },
+  { id: newId(), resourceId: res[1]!.id, email: "sinta@demo.id", date: today, start: "08:00", end: "11:00", note: "", createdAt: now },
+  { id: newId(), resourceId: res[3]!.id, email: "bayu@demo.id", date: today, start: "13:00", end: "16:00", note: "Shooting behind the scenes", createdAt: now },
+  { id: newId(), resourceId: res[2]!.id, email: "bayu@demo.id", date: today, start: "13:00", end: "16:00", note: "", createdAt: now },
+  { id: newId(), resourceId: res[4]!.id, email: "citra@demo.id", date: addDays(today, 1), start: "09:00", end: "12:00", note: "Konten Lebaran", createdAt: now },
 ]).run();
 for (const e of [owner, "rani@demo.id", "dimas@demo.id"]) {
   db.insert(notifications).values([

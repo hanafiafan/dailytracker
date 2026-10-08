@@ -181,7 +181,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, t = find(c.req.param("id"));
       if (!t) return c.json({ error: "not found" }, 404);
       if (!u.policy.canManage(t.email) || t.status !== "done" || t.by === "self") return c.json({ error: "forbidden" }, 403);
-      db.update(tasks).set({ status: "doing", doneAt: null, returnedAt: Date.now() }).where(eq(tasks.id, t.id)).run();
+      db.update(tasks).set({ status: "doing", doneAt: null, returnedAt: Date.now(), revisions: t.revisions + 1 }).where(eq(tasks.id, t.id)).run();
       log(u, t.id, "returned", "mengembalikan tugas untuk diperbaiki");
       touch();
       void notify.returned(t);
