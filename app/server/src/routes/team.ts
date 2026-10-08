@@ -65,3 +65,31 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     bus.emit("team"); bus.emit("tasks");
     return c.json({ ok: true });
   })
+  .get("/:email/photo", c => {
+    const u = c.var.user;
+    if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
+    const row = db.select({ photo: members.photo }).from(members).where(eq(members.email, c.req.param("email"))).get();
+    if (!row?.photo) return c.body(null, 404);
+    return c.body(new Uint8Array(row.photo), 200, { "content-type": "image/jpeg", "cache-control": "private, max-age=31536000, immutable" });
+  })
+  .put("/:email/photo", async c => {
+    const u = c.var.user, email = c.req.param("email");
+    if (u.email !== email && !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    if (!isJpeg(bytes) || bytes.length > MAX_PHOTO) return c.json({ error: "Foto harus JPG dan kurang dari 150 KB" }, 400);
+    const cur = db.select({ v: members.photoV }).from(members).where(eq(members.email, email)).get();
+    if (!cur) return c.json({ error: "not found" }, 404);
+    db.update(members).set({ photo: Buffer.from(bytes), photoV: Math.abs(cur.v) + 1 }).where(eq(members.email, email)).run();
+    bus.emit("team");
+    return c.json({ ok: true });
+  })
+  .delete("/:email/photo", c => {
+    const u = c.var.user, email = c.req.param("email");
+    if (u.email !== email && !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    const cur = db.select({ v: members.photoV }).from(members).where(eq(members.email, email)).get();
+    if (!cur) return c.json({ error: "not found" }, 404);
+    // Negative = no photo; the number keeps growing so cached URLs (?v=) never go stale.
+    db.update(members).set({ photo: null, photoV: -(Math.abs(cur.v) + 1) }).where(eq(members.email, email)).run();
+    bus.emit("team");
+    return c.json({ ok: true });
+  });
