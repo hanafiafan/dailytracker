@@ -856,3 +856,67 @@ import { DEFAULT_TEAM } from "./config.js";
         h("button", { class: "btn", type: "submit" }, "Tambah")));
   }
 
+  // ---------- member ----------
+  function memberView() {
+    const m = myMember();
+    if (!S.teamLoaded) return loading();
+    if (!m) return notRegistered();
+    if (m.isAdmin) return ownerView();
+    const key = S.meId;
+    const { day, late } = tasksFor(key);
+    const all = day.concat(late), c = tally(all);
+    const header = h("header", { class: "top" }, h("div", { class: "top-in", style: "max-width:680px" },
+      m.isAdmin && adminTabs(),
+      h("div", { class: "brand me" }, avatar(m),
+        h("div", {}, h("h1", {}, "Halo, " + m.name), h("p", {}, m.role || "", " · ", h("button", { class: "linkbtn", onclick: () => S.editMember === "me" ? (S.editMember = null, render()) : openEdit("me", m) }, "Ubah profil")))),
+      dateNav(), userChip()));
+    const isToday = S.date === today();
+    return [header, h("main", { class: "wrap narrow" },
+      S.editMember === "me" && h("section", { class: "hello" }, h("h2", { style: "font-size:1.1rem" }, "Profil kamu"), profileForm(m)),
+      installCard(), notifyCard(),
+      h("section", { class: "hello" },
+        h("p", { class: "muted" }, fmtLong(S.date)),
+        h("div", { class: "big" }, `${c.done} dari ${all.length}`, h("span", {}, " tugas selesai")),
+        bar(c, all.length)),
+      isToday && isIdle(key) && h("section", { class: "warnbox big", role: "status" },
+        h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+        askedToday(key)
+          ? h("div", { class: "txt" }, h("b", {}, `Permintaan terkirim jam ${fmtTime(S.keyDoc[key].askAt)}`), "Admin sudah diberi tahu. Tugas baru akan muncul di sini otomatis.")
+          : h("div", { class: "txt" }, h("b", {}, "Kamu tidak punya tugas aktif"), all.length ? "Semua tugas hari ini sudah selesai. Minta tugas berikutnya ke admin." : "Belum ada tugas untukmu hari ini. Minta tugas ke admin."),
+        !askedToday(key) && !S.readOnly && h("button", { class: "btn primary", onclick: askWork }, "Minta tugas ke admin")),
+      late.length ? h("section", { class: "list" }, h("h2", {}, "Belum selesai dari hari sebelumnya"),
+        h("ul", { class: "tasks" }, late.map(t => taskRow(key, t, { canDelete: t.by === "self", isLate: true })))) : null,
+      h("section", { class: "list" }, h("h2", {}, isToday ? "Tugas hari ini" : "Tugas " + fmtShort(S.date)),
+        day.length ? h("ul", { class: "tasks" }, day.map(t => taskRow(key, t, { canDelete: t.by === "self" })))
+          : h("p", { class: "empty" }, S.itemsLoaded[key] ? "Belum ada tugas. Tugas dari atasan akan muncul di sini, atau tambahkan sendiri di bawah." : "Memuat…"),
+        !S.readOnly && h("form", { class: "quick", style: "padding:6px", onsubmit: e => { e.preventDefault(); quickAdd(key, "own", "self"); } },
+          h("input", { class: "input", id: "own", placeholder: "Tambah tugasku sendiri…", maxlength: "160", "aria-label": "Tambah tugas sendiri" }),
+          h("label", { class: "tl" }, h("span", {}, "Mulai"), h("input", { class: "input timein", id: "own-s", type: "time", "aria-label": "Jam mulai (opsional)" })),
+          h("label", { class: "tl" }, h("span", {}, "Selesai"), h("input", { class: "input timein", id: "own-t", type: "time", "aria-label": "Jam selesai (opsional)" })),
+          h("button", { class: "btn", type: "submit" }, "Tambah"))),
+      h("p", { class: "foot" }, "Ketuk status untuk menggantinya: Belum → Dikerjakan → Selesai. Atasan dan admin melihat progres ini; anggota tim lain tidak bisa melihat tugasmu."))];
+  }
+  function userChip() {
+    return h("div", { class: "userchip" },
+      h("span", { title: S.meId }, S.meId),
+      h("button", { class: "linkbtn", onclick: () => signOutUser() }, "Keluar"));
+  }
+  function notRegistered() {
+    return h("div", { class: "center" }, h("div", {},
+      h("h1", { style: "font-size:1.5rem" }, "Email belum terdaftar"),
+      h("p", { class: "muted" }, "Kamu masuk sebagai ", h("b", {}, S.meId), ". Email ini belum ada di daftar tim."),
+      h("p", { class: "muted" }, "Kirim email ini ke pemilik aplikasi supaya ditambahkan, lalu buka aplikasi lagi. Atau keluar dan masuk dengan akun Google lain."),
+      h("div", {}, h("button", { class: "btn", onclick: () => signOutUser() }, "Keluar dan ganti akun"))));
+  }
+  function setupView() {
+    return h("main", { class: "wrap narrow" },
+      h("section", { class: "hello" },
+        h("h2", { style: "font-size:1.3rem" }, "Isi email tim"),
+        h("p", { class: "muted" }, "Tulis email Google setiap orang. Email ini dipakai untuk masuk ke aplikasi, dan setiap orang hanya melihat tugasnya sendiri. Yang belum tahu emailnya boleh dikosongkan dan ditambahkan nanti di Kelola tim.")),
+      h("section", { class: "list", style: "padding:14px; gap:10px" },
+        DEFAULT_TEAM.map((p, i) => h("label", { class: "setup-row" },
+          avatar(p),
+          h("span", { class: "who" }, h("b", {}, p.name), h("small", {}, p.role + (p.isAdmin ? " · kendali penuh seperti pemilik" : ""))),
+          h("input", { class: "input", id: "se-" + i, type: "email", placeholder: "nama@gmail.com", autocomplete: "off", "aria-label": "Email " + p.name }))),
+        h("div", { class: "actions" }, h("button", { class: "btn primary", disabled: S.busy, onclick: saveSetup }, S.busy ? "Menyimpan…" : "Simpan tim"))));
+  }
