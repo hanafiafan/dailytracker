@@ -91,7 +91,7 @@ function Goals({ all }: { all: TaskDTO[] }) {
     <section className="bc s3" style={{ gridColumn: "span 3" }}>
       <div className="bc-h"><span className="bc-ico"><FolderKanban size={18} /></span><h3>Proyek</h3><button className="go" onClick={() => go("/proyek")} aria-label="Buka proyek"><ArrowUpRight size={16} /></button></div>
       {cur ? <>
-        <div className="gauge-card"><h4 className="clamp2">{cur.p.name}</h4><Gauge pct={cur.pct} /><div className="gv">{cur.pct}%</div><div className="tg">{cur.done} dari {cur.total} tugas selesai</div></div>
+        <div className="gauge-card" role="link" tabIndex={0} style={{ cursor: "pointer" }} onClick={() => go("/proyek/" + cur.p.id)} onKeyDown={e => e.key === "Enter" && go("/proyek/" + cur.p.id)} aria-label={`Buka detail ${cur.p.name}`}><h4 className="clamp2">{cur.p.name}</h4><Gauge pct={cur.pct} /><div className="gv">{cur.pct}%</div><div className="tg">{cur.done} dari {cur.total} tugas selesai</div></div>
         <div className="plist">
           {rows.filter(r => r !== cur).slice(0, 3).map(r => (
             <button key={r.p.id} className="prow" data-c={r.p.color} onClick={() => setPick(r.p.id)} aria-label={`Tampilkan ${r.p.name}`}>
