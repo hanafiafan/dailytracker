@@ -88,3 +88,37 @@ const wib = (d = new Date()) => {
 };
 const atMs = (date, hm) => Date.parse(`${date}T${hm}:00+07:00`);
 
+// ---------- /notify ----------
+async function who(env, req) {
+  const idToken = (req.headers.get("authorization") || "").replace(/^Bearer /, "");
+  if (!idToken) return null;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${env.FIREBASE_API_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken }) });
+  const u = r.ok && (await r.json()).users?.[0];
+  return u && u.emailVerified && u.email ? u.email.toLowerCase() : null;
+}
+async function notify(env, caller, { type, email, id }) {
+  email = String(email || "").toLowerCase();
+  const recent = ms => ms && Date.now() - ms < RECENT;
+  const team = await listDocs(env, "team");
+  const managers = await managersOf(env, team, email);
+  const isManager = managers.includes(caller);
+  const devices = await deviceMap(env);
+
+  if (type === "ask") {
+    const kd = await getDoc(env, `tasks/${email}`);
+    if (caller !== email || !kd || !recent(kd.data.askAt)) return 403;
+    return push(env, devices, managers, `${nameOf(team, email)} minta tugas`, "Semua tugasnya sudah selesai.", "ask-" + email);
+  }
+  const t = id && await getDoc(env, `tasks/${email}/items/${id}`);
+  if (!t) return 404;
+  if (type === "new" && isManager && t.data.by === "owner" && !t.data.routine && recent(t.data.createdAt)) {
+    const when = t.data.date === wib().date ? "" : ` (${t.data.date})`;
+    return push(env, devices, [email], "Tugas baru", t.data.title + when, "new-" + id);
+  }
+  if (type === "back" && isManager && t.data.returnedAt && t.data.status !== "done" && recent(t.data.returnedAt))
+    return push(env, devices, [email], "Tugas dikembalikan", `${t.data.title}. Cek catatan dari admin.`, "back-" + id);
+  if (type === "done" && (caller === email || isManager) && t.data.status === "done" && recent(t.data.doneAt))
+    return push(env, devices, managers.filter(m => m !== caller), `${nameOf(team, email)} menyelesaikan tugas`, t.data.title, "done-" + id);
+  return 403;
+}
+
