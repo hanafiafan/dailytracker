@@ -19,11 +19,11 @@ const team = [
   { email: "eko@demo.id", name: "Eko", role: "Sosmed", group: "HUC" },
   { email: "fajar@demo.id", name: "Fajar", role: "Ads", group: "HUC" },
   { email: "gita@demo.id", name: "Gita", role: "Kreator", group: "HUC" },
-  { email: "hendra@demo.id", name: "Hendra", role: "Operasional", group: "HCM" },
+  { email: "hendra@demo.id", name: "Hendra Kusuma Wardhana Pratama", role: "Koordinator Operasional dan Logistik Gudang Pusat", group: "HCM" },
 ];
 team.forEach((m, i) => db.insert(members).values({ adminGroups: [], ...m, sortOrder: i + 1, seenAt: i < 7 ? now - i * 3600_000 : null }).run());
 
-const P = Object.fromEntries([["lebaran", "Kampanye Lebaran", "pink"], ["katalog", "Katalog Q4", "sky"], ["live", "Live Shopping", "yellow"], ["brand", "Brand Refresh", "lilac"]].map(([k, name, color]) => {
+const P = Object.fromEntries([["lebaran", "Kampanye Lebaran", "pink"], ["katalog", "Katalog Q4", "sky"], ["live", "Live Shopping", "yellow"], ["brand", "Brand Refresh", "lilac"], ["panjang", "Kampanye Hari Raya Idul Fitri dan Ramadhan Seluruh Marketplace", "mint"]].map(([k, name, color]) => {
   const id = newId(); db.insert(projects).values({ id, name: name!, color: color!, createdAt: now }).run(); return [k, id];
 }));
 const L = Object.fromEntries([["foto", "Foto", "mint"], ["video", "Video", "peach"], ["revisi", "Revisi", "pink"], ["iklan", "Iklan", "sky"]].map(([k, name, color]) => {
@@ -55,6 +55,7 @@ const seeds: Seed[] = [
   { who: "eko", d: 2, title: "Konsep carousel Hari Raya", s: "10:00", due: "12:00", st: "todo", pj: "lebaran" },
   { who: "fajar", d: 2, title: "Setup kampanye iklan katalog", s: "14:00", due: "16:00", st: "todo", pr: "high", pj: "katalog", lb: ["iklan"] },
   { who: "hendra", d: 3, title: "Audit SOP packing", st: "todo", pr: "low" },
+  { who: "gita", d: 0, title: "Menyusun dan menyiapkan laporan lengkap evaluasi performa seluruh kampanye konten, iklan, dan live shopping selama kuartal ini untuk dipresentasikan", s: "15:30", due: "17:30", st: "todo", pr: "urgent", pj: "panjang", lb: ["foto", "video", "revisi", "iklan"], note: "Kumpulkan semua data penjualan, engagement, dan biaya iklan dari setiap platform marketplace, bandingkan dengan target bulanan, lalu rangkum temuan utama beserta rekomendasi perbaikan untuk kuartal berikutnya agar tim bisa langsung menindaklanjuti dengan cepat dan tepat sasaran.", sub: [["Tarik data penjualan semua marketplace bulan ini", false], ["Susun grafik", false]] },
   { who: "sinta", d: 3, title: "Seleksi foto untuk katalog cetak", s: "11:00", due: "13:00", st: "todo", pj: "katalog" },
   { who: "bayu", d: 4, title: "Edit highlight live shopping", s: "09:00", due: "12:00", st: "todo", pj: "live", lb: ["video"] },
 ];
