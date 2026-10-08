@@ -679,3 +679,180 @@ import { DEFAULT_TEAM } from "./config.js";
         h("button", { class: "btn small ghost", onclick: () => { S.notifOff = true; render(); } }, "Nanti")));
   }
 
+  // ---------- owner ----------
+  function ownerView() {
+    let all = [];
+    for (const m of workers()) { const { day, late } = tasksFor(keyFor(m)); all = all.concat(day, late); }
+    const c = tally(all), total = all.length;
+    const pct = total ? Math.round(c.done / total * 100) : 0;
+
+    const header = h("header", { class: "top" }, h("div", { class: "top-in" },
+      S.ro ? h("div", { class: "brand me" }, avatar(myMember()), h("div", {}, h("h1", {}, "Pantau Tim"), h("p", {}, "Admin · " + workers().length + " orang"))) : h("div", { class: "brand" }, h("h1", {}, "Tugas Harian Tim Kreatif"), h("p", {}, fmtLong(S.date) + " · " + workers().length + " orang" + (isBoss() ? "" : " · Admin " + myAdminGroups().join(", ")))),
+      S.ro && adminTabs(),
+      dateNav(), userChip()));
+
+    const summary = h("section", { class: "summary", "aria-label": "Ringkasan" },
+      h("div", {},
+        h("div", { class: "big" }, pct + "%", h("span", {}, total ? `selesai dari ${total} tugas` : "belum ada tugas")),
+        bar(c, total),
+        h("div", { class: "counts" },
+          h("span", {}, h("i", { class: "dot done" }), h("b", {}, c.done), " selesai"),
+          h("span", {}, h("i", { class: "dot doing" }), h("b", {}, c.doing), " dikerjakan"),
+          h("span", {}, h("i", { class: "dot todo" }), h("b", {}, c.todo), " belum"))),
+      h("div", { class: "actions" },
+      h("button", { class: "btn", "aria-pressed": String(S.showRecap), onclick: () => { S.showRecap = !S.showRecap; render(); } }, S.showRecap ? "Tutup rekap" : "Lihat rekap"),
+      !S.ro && h("button", { class: "btn primary", onclick: () => { S.showAdd = !S.showAdd; render(); if (S.showAdd) setTimeout(() => document.getElementById("add-title")?.focus(), 0); } }, S.showAdd ? "Tutup" : "+ Tambah tugas")));
+
+    const addPanel = S.showAdd ? h("section", { class: "panel", "aria-label": "Tambah tugas" },
+      h("h2", {}, "Tugas baru"),
+      h("div", { class: "field" }, h("span", {}, "Untuk siapa"),
+        h("div", { class: "chips" },
+          h("button", { class: "chip", "aria-pressed": String(S.addSel.size === workers().length && workers().length > 0), onclick: () => { if (S.addSel.size === workers().length) S.addSel.clear(); else workers().forEach(m => S.addSel.add(m.id)); render(); } }, "Semua"),
+          workers().map(m => h("button", { class: "chip", "aria-pressed": String(S.addSel.has(m.id)), onclick: () => { S.addSel.has(m.id) ? S.addSel.delete(m.id) : S.addSel.add(m.id); render(); } }, m.name)))),
+      h("label", { class: "field" }, h("span", {}, "Tugas"), h("input", { class: "input", id: "add-title", placeholder: "Contoh: Foto produk pashmina warna baru", maxlength: "160", onkeydown: e => { if (e.key === "Enter") submitAdd(); } })),
+      h("label", { class: "field" }, h("span", {}, "Catatan (opsional)"), h("textarea", { class: "input", id: "add-note", rows: "2", maxlength: "600", placeholder: "Detail, link brief, atau target" })),
+      h("div", { class: "row" },
+        !S.addRoutine && h("label", { class: "field" }, h("span", {}, "Tanggal"), h("input", { class: "input", id: "add-date", type: "date", value: S.date })),
+
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-hot", checked: S.addHot, onchange: e => { S.addHot = e.target.checked; } }), "Penting"),
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-pf", checked: S.addProof, onchange: e => { S.addProof = e.target.checked; } }), "Wajib bukti"),
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-rt", checked: S.addRoutine, onchange: e => { S.addRoutine = e.target.checked; render(); } }), "Ulangi rutin")),
+      h("div", { class: "field" }, h("span", {}, "⏰ Jam kerja (opsional)"),
+        h("div", { class: "row", style: "gap:10px" },
+          h("label", { class: "tl" }, h("span", {}, "Mulai"), h("input", { class: "input timein", id: "add-start", type: "time" })),
+          h("label", { class: "tl" }, h("span", {}, "Selesai"), h("input", { class: "input timein", id: "add-time", type: "time" }))),
+        h("div", { class: "chips" },
+          [["Pagi", "08:00", "12:00"], ["Siang", "13:00", "17:00"], ["Sore", "15:00", "17:00"], ["Malam", "19:00", "21:00"], ["Tanpa jam", "", ""]].map(([lbl, a, b]) =>
+            h("button", { class: "chip", type: "button", onclick: () => { document.getElementById("add-start").value = a; document.getElementById("add-time").value = b; } }, a ? `${lbl} ${a}–${b}` : lbl)))),
+      S.addRoutine && h("div", { class: "field" }, h("span", {}, "Muncul otomatis setiap"),
+        h("div", { class: "chips" }, [1, 2, 3, 4, 5, 6, 0].map(d => h("button", { class: "chip", "aria-pressed": String(S.addDays.has(d)), onclick: () => { S.addDays.has(d) ? S.addDays.delete(d) : S.addDays.add(d); render(); } }, DAYN[d])))),
+      h("div", { class: "actions" },
+        h("button", { class: "btn ghost", onclick: () => { S.showAdd = false; render(); } }, "Batal"),
+        h("button", { class: "btn primary", onclick: submitAdd }, S.addRoutine ? "Simpan tugas rutin" : "Bagikan tugas"))) : null;
+
+    const grid = workers().length ? h("section", { class: "grid", "aria-label": "Tugas per orang" }, workers().map(personCard))
+      : h("div", { class: "panel" }, h("h2", {}, "Daftar tim masih kosong"), h("p", { class: "muted" }, "Tambahkan anggota lewat Kelola tim di bawah."));
+
+    const manage = h("details", { class: "manage", id: "manage", open: S.manageOpen, ontoggle: e => { S.manageOpen = e.target.open; } },
+      h("summary", {}, "Kelola tim"),
+      h("p", { class: "foot", style: "margin:8px 0" }, isBoss()
+        ? "Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin \"Semua unit\" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu."
+        : `Kamu mengelola unit ${myAdminGroups().join(", ")}. Orang di unit lain tidak terlihat di sini.`),
+      h("p", { class: "foot", style: "margin:0 0 6px" }, "Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap."),
+      h("div", { class: "mlist" }, manageable().map(m => [h("div", { class: "mrow", "data-id": m.id },
+        h("button", { class: "handle", type: "button", "aria-label": `Geser ${m.name}. Pakai panah atas atau bawah.`, title: "Tarik untuk memindah",
+          onpointerdown: e => dragStart(e, m.id), onkeydown: e => { if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); moveBy(m.id, e.key === "ArrowUp" ? -1 : 1); } } }, "⠿"),
+        avatar(m),
+        h("div", { class: "who" }, h("b", {}, m.name), h("small", {}, m.role || "—"), h("small", {}, m.id)),
+        m.group && h("span", { class: "tag due" }, m.group),
+        m.isAdmin && h("span", { class: "tag rut" }, (m.adminGroups && m.adminGroups.length) ? "Admin " + m.adminGroups.join("/") : "Admin penuh"),
+        m.seenAt ? h("span", { class: "tag on", title: "Terakhir buka " + fmtShort(ymd(new Date(m.seenAt))) }, "Sudah masuk") : h("span", { class: "tag off" }, "Belum masuk"),
+        isBoss() && m.id !== S.meId && h("button", { class: "btn small", onclick: () => toggleAdmin(m) }, m.isAdmin ? "Cabut admin" : "Jadikan admin"),
+        h("button", { class: "btn small", onclick: () => S.editMember === m.id ? (S.editMember = null, render()) : openEdit(m.id, m) }, S.editMember === m.id ? "Tutup" : "Ubah"),
+        m.id !== S.meId && h("button", { class: "btn small danger", onclick: () => removeMember(m) }, S.arm === "rm/" + m.id ? "Yakin hapus?" : "Hapus"),
+        isBoss() && m.isAdmin && m.id !== S.meId && units().length > 0 && scopeChips(m)),
+        S.editMember === m.id && profileForm(m)])),
+      h("div", { class: "row", style: "border-top:1px solid var(--line); padding-top:12px" },
+        h("label", { class: "field" }, h("span", {}, "Nama"), h("input", { class: "input", id: "mem-name", maxlength: "40" })),
+        h("label", { class: "field" }, h("span", {}, "Divisi"), h("input", { class: "input", id: "mem-role", maxlength: "60" })),
+        h("label", { class: "field" }, h("span", {}, "Email Google"), h("input", { class: "input", id: "mem-email", type: "email", maxlength: "120", onkeydown: e => { if (e.key === "Enter") addMember(); } })),
+        unitField("mem-group"),
+        h("button", { class: "btn", onclick: addMember }, "Tambah anggota")));
+
+    if (S.ro) return [header, h("main", { class: "wrap" }, summary, idleNotice(), S.showRecap && recapView(), grid,
+      h("p", { class: "foot" }, "Data diperbarui langsung. Anggota tim lain tidak bisa melihat halaman pantauan ini."))];
+    if (!S.team.length) return [header, setupView()];
+    const unitBar = myUnits().length > 1 ? h("div", { class: "chips unitbar", role: "group", "aria-label": "Filter unit" },
+      h("button", { class: "chip", "aria-pressed": String(!S.unit), onclick: () => { S.unit = ""; render(); } }, "Semua unit"),
+      myUnits().map(g => h("button", { class: "chip", "aria-pressed": String(S.unit === g), onclick: () => { S.unit = g; render(); } }, g))) : null;
+    return [header, h("main", { class: "wrap" }, installCard(), notifyCard(), unitBar, summary, idleNotice(), addPanel, S.showRecap && recapView(), grid, manage)];
+  }
+
+  function idleNotice() {
+    const idle = workers().filter(m => isIdle(keyFor(m)));
+    if (!idle.length) return null;
+    const asking = idle.filter(m => askedToday(keyFor(m)));
+    return h("section", { class: "warnbox big", "aria-label": "Orang tanpa tugas" },
+      h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+      h("div", { class: "txt" },
+        h("b", {}, `${idle.length} orang tidak punya tugas aktif hari ini` + (asking.length ? `, ${asking.length} sudah minta tugas` : "")),
+        h("div", { class: "idle-list", style: "margin-top:6px" }, idle.map(m => S.ro ? h("span", { class: "chip" }, (askedToday(keyFor(m)) ? "✋ " : "") + m.name)
+          : h("button", { class: "chip", onclick: () => openAddFor(m), title: "Beri tugas untuk " + m.name },
+          (askedToday(keyFor(m)) ? "✋ " : "") + m.name + " +")))));
+  }
+
+  function recapView() {
+    const n = S.recapDays, t = today();
+    const days = Array.from({ length: n }, (_, i) => addDays(S.date, i - n + 1));
+    const cellOf = (list, d) => { const l = list.filter(x => x.date === d); return { total: l.length, done: l.filter(x => x.status === "done").length }; };
+    const shade = c => {
+      if (!c.total) return null;
+      const p = c.done / c.total;
+      return `background: color-mix(in srgb, var(--accent) ${Math.round(10 + p * 80)}%, var(--surface)); color: ${p >= .55 ? "var(--accent-ink)" : "var(--ink)"}`;
+    };
+    const cellBtn = (label, c, d) => h("button", {
+      class: "cell" + (c.total ? "" : " none") + (d === S.date ? " sel" : ""), style: shade(c),
+      title: `${label}, ${fmtShort(d)}: ${c.total ? `${c.done} dari ${c.total} selesai` : "tidak ada tugas"}`,
+      "aria-label": `${label}, ${fmtShort(d)}: ${c.total ? `${c.done} dari ${c.total} selesai` : "tidak ada tugas"}`,
+      onclick: () => setDate(d) }, c.total ? `${c.done}/${c.total}` : "–");
+    const totCell = (done, total) => h("td", { class: "tot" }, h("b", {}, total ? Math.round(done / total * 100) + "%" : "–"), h("small", {}, `${done}/${total}`));
+    let gDone = 0, gTot = 0;
+    const colTotals = days.map(() => ({ done: 0, total: 0 }));
+    const rows = workers().map(m => {
+      const key = keyFor(m), list = S.items[key] || [];
+      const cells = days.map((d, i) => { const c = cellOf(list, d); colTotals[i].done += c.done; colTotals[i].total += c.total; return c; });
+      const done = cells.reduce((a, c) => a + c.done, 0), total = cells.reduce((a, c) => a + c.total, 0);
+      gDone += done; gTot += total;
+      const warn = S.date === t && isIdle(key);
+      return h("tr", {},
+        h("th", { class: "who", scope: "row" }, h("b", {}, m.name, warn && h("span", { class: "warnico", title: askedToday(key) ? "Minta tugas" : "Tidak ada tugas aktif", "aria-label": "Tidak ada tugas aktif" }, "!")), h("span", {}, m.role || "")),
+        cells.map((c, i) => h("td", {}, cellBtn(m.name, c, days[i]))),
+        totCell(done, total));
+    });
+    const steps = [0, .25, .5, .75, 1];
+    return h("section", { class: "recap", "aria-label": "Rekap" },
+      h("div", { class: "recap-h" },
+        h("div", {}, h("h2", {}, "Rekap per orang"), h("p", {}, `${fmtShort(days[0])} – ${fmtShort(days[n - 1])} · angka = selesai/total tugas. Ketuk kotak untuk membuka hari itu.`)),
+        h("div", { class: "seg", role: "group", "aria-label": "Rentang rekap" },
+          [7, 14].map(k => h("button", { "aria-pressed": String(S.recapDays === k), onclick: () => { S.recapDays = k; if (addDays(S.date, -k) < S.winFrom) { S.winFrom = addDays(S.date, -k - 7); syncSubs(true); } render(); } }, `${k} hari`)))),
+      h("div", { class: "mxwrap" }, h("table", { class: "mx" },
+        h("thead", {}, h("tr", {}, h("th", { class: "who", scope: "col" }, "Orang"),
+          days.map(d => h("th", { scope: "col", class: d === t ? "today" : null }, DAYN[parse(d).getDay()], h("small", {}, parse(d).getDate()))),
+          h("th", { scope: "col", class: "tot" }, "Total"))),
+        h("tbody", {}, rows),
+        h("tfoot", {}, h("tr", {}, h("th", { class: "who", scope: "row" }, h("b", {}, "Semua")),
+          colTotals.map((c, i) => h("td", {}, cellBtn("Semua", c, days[i]))), totCell(gDone, gTot))))),
+      h("div", { class: "legend" },
+        h("span", {}, "0%", h("span", { class: "ramp", "aria-hidden": "true" }, steps.map(p => h("i", { style: `background: color-mix(in srgb, var(--accent) ${Math.round(10 + p * 80)}%, var(--surface))` }))), "100% selesai"),
+        h("span", {}, h("i", { class: "nobox", "aria-hidden": "true" }), "tidak ada tugas"),
+        h("span", { style: "display:inline-flex;gap:6px;align-items:center" }, h("span", { class: "warnico", "aria-hidden": "true" }, "!"), "tidak ada tugas aktif hari ini")));
+  }
+
+  function personCard(m) {
+    const key = keyFor(m);
+    const { day, late } = tasksFor(key);
+    const all = day.concat(late), c = tally(all);
+    const routines = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    const qid = "q-" + m.id;
+    return h("article", { class: "card" },
+      h("div", { class: "card-h" }, avatar(m),
+        h("div", { class: "nm" }, h("h3", {}, m.name), h("p", {}, [m.role, m.group].filter(Boolean).join(" · "))),
+        m.seenAt ? h("span", { class: "tag on", title: "Sudah pernah membuka aplikasi" }, "Sudah masuk") : h("span", { class: "tag off", title: "Belum membuka aplikasi" }, "Belum masuk")),
+      h("div", { class: "meter" }, bar(c, all.length), h("span", {}, `${c.done}/${all.length} selesai`)),
+      S.date === today() && isIdle(key) && h("div", { class: "warnbox" },
+        h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+        h("div", { class: "txt" }, h("b", {}, askedToday(key) ? `Minta tugas sejak ${fmtTime(S.keyDoc[key].askAt)}` : "Tidak ada tugas aktif"),
+          askedToday(key) ? `${m.name} sudah menyelesaikan semua tugasnya.` : "Semua tugas selesai atau belum diberi tugas.")),
+      late.length ? [h("div", { class: "sub" }, "Belum selesai sebelumnya"), h("ul", { class: "tasks" }, late.map(t => taskRow(key, t, { canDelete: !S.ro, isLate: true })))] : null,
+      day.length ? h("ul", { class: "tasks" }, day.map(t => taskRow(key, t, { canDelete: !S.ro })))
+        : (!late.length && h("p", { class: "empty" }, S.itemsLoaded[key] ? "Belum ada tugas di tanggal ini." : "Memuat…")),
+      routines.length ? h("div", { class: "routines" }, h("span", {}, "Rutin:"), routines.map(r => h("span", { class: "rt" },
+        `${r.title}${r.start || r.due ? " " + [r.start, r.due].filter(Boolean).join("–") : ""} · ${(r.days || []).length === 7 ? "tiap hari" : [1, 2, 3, 4, 5, 6, 0].filter(d => (r.days || []).includes(d)).map(d => DAYN[d]).join(" ")}`,
+        !S.ro && h("button", { "aria-label": "Hentikan tugas rutin " + r.title, onclick: () => removeRoutine(key, r.id) }, S.arm === "rt/" + key + "/" + r.id ? "Yakin?" : "×")))) : null,
+      !S.ro && h("form", { class: "quick", onsubmit: e => { e.preventDefault(); quickAdd(key, qid, "owner"); } },
+        h("input", { class: "input", id: qid, placeholder: `Tugas untuk ${m.name}…`, maxlength: "160", "aria-label": `Tambah tugas untuk ${m.name}` }),
+        h("label", { class: "tl" }, h("span", {}, "Mulai"), h("input", { class: "input timein", id: qid + "-s", type: "time", "aria-label": `Jam mulai tugas ${m.name}` })),
+        h("label", { class: "tl" }, h("span", {}, "Selesai"), h("input", { class: "input timein", id: qid + "-t", type: "time", "aria-label": `Jam selesai tugas ${m.name}` })),
+        h("button", { class: "btn", type: "submit" }, "Tambah")));
+  }
+
