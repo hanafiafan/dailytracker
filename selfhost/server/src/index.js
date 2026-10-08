@@ -63,3 +63,49 @@ app.get("/api/events", auth, (req, res) => {
   req.on("close", () => { clearInterval(ka); clients.delete(c); });
 });
 
+// ---------- documents ----------
+const segs = p => typeof p === "string" && p.length < 900 ? p.split("/") : null;
+const okPath = (p, odd) => { const s = segs(p); return !!s && s.length <= 4 && s.length % 2 === (odd ? 1 : 0) && s.every(x => x && x !== "." && x !== ".."); };
+const docOut = (path, d) => ({ id: path.split("/").pop(), exists: !!d, data: d ? d.data : null });
+
+app.get("/api/doc", auth, (req, res) => {
+  const path = String(req.query.path || "");
+  if (!okPath(path, false)) return res.status(400).json({ error: "bad path" });
+  if (!req.rules.can("get", path)) return res.status(403).json({ error: "permission-denied" });
+  res.json(docOut(path, store.get(path)));
+});
+app.get("/api/col", auth, (req, res) => {
+  const path = String(req.query.path || "");
+  if (!okPath(path, true)) return res.status(400).json({ error: "bad path" });
+  if (!req.rules.can("list", path)) return res.status(403).json({ error: "permission-denied" });
+  let where = [];
+  try { where = req.query.where ? JSON.parse(req.query.where) : []; res.json({ docs: store.list(path, where) }); }
+  catch { res.status(400).json({ error: "bad query" }); }
+});
+
+function write(req, res, path, op, data, merge, extra = {}) {
+  if (!okPath(path, false)) return res.status(400).json({ error: "bad path" });
+  const before = (store.get(path) || {}).data || null;
+  let after = null;
+  if (op === "update" && !before) return res.status(404).json({ error: "not-found" });
+  if (op !== "delete") {
+    if (!data || typeof data !== "object" || Array.isArray(data)) return res.status(400).json({ error: "bad data" });
+    after = op === "update" || (op === "set" && merge) ? { ...(before || {}), ...data } : data;
+  }
+  const action = op === "delete" ? "delete" : before ? "update" : "create";
+  if (op === "delete" && !before) return res.json({});
+  if (!req.rules.can(action, path, before, after)) return res.status(403).json({ error: "permission-denied" });
+  if (op === "delete") store.del(path); else store.set(path, after);
+  emit(path);
+  try { onWrite(push, () => wib().date, path, before, after); } catch (e) { console.warn("hook", e); }
+  res.json(extra);
+}
+app.put("/api/doc", auth, (req, res) => write(req, res, String(req.query.path || ""), "set", req.body.data, !!req.body.merge));
+app.patch("/api/doc", auth, (req, res) => write(req, res, String(req.query.path || ""), "update", req.body.data));
+app.delete("/api/doc", auth, (req, res) => write(req, res, String(req.query.path || ""), "delete"));
+app.post("/api/col", auth, (req, res) => {
+  const col = String(req.query.path || ""), id = crypto.randomUUID().replaceAll("-", "").slice(0, 20);
+  if (!okPath(col, true)) return res.status(400).json({ error: "bad path" });
+  write(req, res, `${col}/${id}`, "set", req.body.data, false, { id });
+});
+
