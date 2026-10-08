@@ -134,16 +134,17 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
           <div className="mlist">{list.map(m => <Row key={m.email} m={m} editing={editing === m.email} onEdit={o => setEditing(o ? m.email : null)} />)}</div>
         </SortableContext>
       </DndContext>
-      <form className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }} onSubmit={e => {
+      <form className="addmember" onSubmit={e => {
         e.preventDefault(); const form = e.currentTarget, f = new FormData(form);
         if (!String(f.get("name")).trim()) return void toast.error("Tulis nama anggota");
         add.mutate(f, { onSuccess: () => form.reset(), onError: e2 => toast.error(errorText(e2)) });
       }}>
-        <label className="field"><span>Nama</span><input className="input" name="name" maxLength={40} /></label>
-        <label className="field"><span>Divisi</span><input className="input" name="role" maxLength={60} /></label>
-        <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required /></label>
+        <h3 className="addmember-h">Tambah anggota baru</h3>
+        <label className="field"><span>Nama</span><input className="input" name="name" maxLength={40} placeholder="Nama panggilan" /></label>
+        <label className="field"><span>Jabatan</span><input className="input" name="role" maxLength={60} placeholder="Contoh: Videografer" /></label>
+        <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required placeholder="nama@gmail.com" /></label>
         <UnitField name="group" />
-        <button className="btn" type="submit" disabled={add.isPending}>Tambah anggota</button>
+        <button className="btn primary" type="submit" disabled={add.isPending}>Tambah anggota</button>
       </form>
     </details>
   );
