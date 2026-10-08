@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { CalendarOff, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
 import { fmtShort, today } from "../lib/format";
 import { pushSupported, unregisterPush } from "../lib/push";
-import { keys, useInbox } from "../lib/queries";
+import { keys, useInbox, useLeaves } from "../lib/queries";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
 
@@ -18,6 +18,7 @@ const NAV = [
   { to: "/kalender", label: "Kalender", Icon: CalendarDays },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban },
   { to: "/tim", label: "Tim", Icon: Users, manager: true },
+  { to: "/izin", label: "Izin", Icon: CalendarOff },
   { to: "/laporan", label: "Laporan", Icon: BarChart3 },
   { to: "/riwayat", label: "Riwayat", Icon: History },
 ];
@@ -30,6 +31,7 @@ export function TopNav() {
   const qc = useQueryClient();
   const m = member(me.email);
   const [menu, setMenu] = useState(false);
+  const waiting = (useLeaves(true).data ?? []).filter(l => l.status === "pending" && l.email !== me.email && policy.canManage(l.email)).length;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!menu) return;
@@ -49,7 +51,7 @@ export function TopNav() {
       <nav className="pillnav" aria-label="Menu utama">
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon }) => (
           <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
-            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span></a>
+            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}</a>
         ))}
       </nav>
       <div className="navtools">

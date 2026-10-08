@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { ActivityDTO, AnalyticsDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
+import type { ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
-  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const,
+  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const,
 };
 
 /** null = not signed in. */
@@ -33,6 +33,7 @@ export const useTask = (id: string | null) => useQuery({
 export const useRoutines = (enabled: boolean) => useQuery({ queryKey: keys.routines, enabled, queryFn: () => ok(api.routines.$get()) as unknown as Promise<RoutineDTO[]> });
 export const useLinks = (enabled: boolean) => useQuery({ queryKey: keys.links, enabled, queryFn: () => ok(api.links.$get()) as unknown as Promise<LinkDTO[]> });
 
+export const useLeaves = (enabled: boolean) => useQuery({ queryKey: keys.leaves, enabled, queryFn: () => ok(api.leaves.$get()) as unknown as Promise<LeaveDTO[]> });
 export const useMeta = (enabled: boolean) => useQuery({ queryKey: keys.meta, enabled, queryFn: () => ok(api.meta.$get()) as unknown as Promise<MetaDTO> });
 export const useInbox = (enabled: boolean) => useQuery({
   queryKey: keys.inbox, enabled,
@@ -61,6 +62,7 @@ export function useLive(qc: QueryClient, active: boolean) {
       else if (topic === "meta") void qc.invalidateQueries({ queryKey: keys.meta });
       else if (topic === "inbox") void qc.invalidateQueries({ queryKey: keys.inbox });
       else if (topic === "team") void qc.invalidateQueries({ queryKey: keys.team });
+      else if (topic === "leaves") void qc.invalidateQueries({ queryKey: keys.leaves });
       else if (topic === "links") void qc.invalidateQueries({ queryKey: keys.links });
     });
     es.addEventListener("ready", () => void qc.invalidateQueries()); // after a reconnect, catch up on anything missed

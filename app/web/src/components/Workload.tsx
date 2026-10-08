@@ -1,7 +1,8 @@
 import { useLocation } from "wouter";
 import { addDays } from "@shared/time";
 import { DAYN, fmtShort, today } from "../lib/format";
-import { useTasks, windowFrom } from "../lib/queries";
+import { useLeaves, useTasks, windowFrom } from "../lib/queries";
+import { awayOn } from "../lib/leaves";
 import { weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
@@ -16,12 +17,14 @@ export function Workload() {
   const [, go] = useLocation();
   const tq = useTasks(windowFrom(date, today()), true);
   const start = weekStart(date), days = Array.from({ length: 14 }, (_, i) => addDays(start, i));
+  const leaves = useLeaves(true).data ?? [];
   const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
   const open = (tq.data ?? []).filter(t => t.status !== "done");
   const cell = (email: string, d: string) => {
     const l = open.filter(t => t.email === email && t.date === d);
     const h = l.reduce((s, t) => s + (t.start && t.due ? Math.max(0, mins(t.due) - mins(t.start)) : 0), 0) / 60;
-    return { n: l.length, h, over: l.length >= OVER_TASKS || h > OVER_HOURS };
+    const away = !!awayOn(leaves, email, d);
+    return { n: l.length, h, away, over: !away && (l.length >= OVER_TASKS || h > OVER_HOURS) };
   };
   return (
     <section className="bc">
@@ -32,8 +35,8 @@ export function Workload() {
           const cs = days.map(d => cell(m.email, d)), total = cs.reduce((s, c) => s + c.n, 0);
           return [
             <div key={m.email} className="hp"><Avatar m={m} /><span className="clamp1">{m.name}</span></div>,
-            ...cs.map((c, i) => <button key={m.email + days[i]} className={"hc" + (c.over ? " over" : "")} style={{ ["--lv" as string]: Math.min(c.n / 5, 1) }}
-              title={`${m.name} · ${fmtShort(days[i]!)}: ${c.n} tugas${c.h ? `, ${c.h.toFixed(1)} jam terjadwal` : ""}`} onClick={() => { setDate(days[i]!); go("/kalender"); }}>{c.n || ""}</button>),
+            ...cs.map((c, i) => <button key={m.email + days[i]} className={"hc" + (c.over ? " over" : "") + (c.away ? " away" : "")} style={{ ["--lv" as string]: Math.min(c.n / 5, 1) }}
+              title={`${m.name} · ${fmtShort(days[i]!)}: ${c.away ? "tidak masuk, " : ""}${c.n} tugas${c.h ? `, ${c.h.toFixed(1)} jam terjadwal` : ""}`} onClick={() => { setDate(days[i]!); go("/kalender"); }}>{c.away ? "cuti" : c.n || ""}</button>),
             <div key={m.email + "t"} className="ht">{total}</div>,
           ];
         })}
