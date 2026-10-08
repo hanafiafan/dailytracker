@@ -109,7 +109,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
             <Bell_ />
             <button className="tool" onClick={() => go("/pengaturan")} aria-label="Profil saya" style={{ padding: 0 }}>{m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)", color: "var(--dark-ink)" }}>{me.name[0]}</span>}</button>
           </div>
-          <button className="btn lime hide-mobile" onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
+          <button className="btn primary hide-mobile" onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
         </div>
       </div>
       <button className="fab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>

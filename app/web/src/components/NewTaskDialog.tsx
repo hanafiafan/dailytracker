@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { PRIORITIES, type Priority } from "@shared/schemas";
 import { api, ok } from "../lib/api";
@@ -41,7 +42,8 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
     <>
       <div className="scrim" onClick={onClose} />
       <form className="dialog" role="dialog" aria-label="Tugas baru" onSubmit={e => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}>
-        <h2>{manager ? "Tugas baru" : "Tugas untukku"}</h2>
+        <header className="dialog-h"><div><h2>{manager ? "Tugas baru" : "Tugas untukku"}</h2><p className="muted">{manager ? "Bagikan pekerjaan ke satu orang atau lebih." : "Catatan pekerjaan pribadimu."}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></header>
+        <div className="dialog-b">
         {manager && (
           <div className="field"><span>Untuk siapa</span>
             <div className="chips">
@@ -71,7 +73,8 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
           <label className="check"><input type="checkbox" checked={routine} onChange={e => setRoutine(e.target.checked)} />Ulangi rutin</label>
         </div>}
         {routine && <div className="field"><span>Muncul otomatis setiap</span><div className="chips">{[1, 2, 3, 4, 5, 6, 0].map(d => <button type="button" key={d} className="chip" aria-pressed={days.has(d)} onClick={() => setDays(toggle(days, d))}>{DAYN[d]}</button>)}</div></div>}
-        <div className="actions"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button type="submit" className="btn primary" disabled={save.isPending}>{routine ? "Simpan tugas rutin" : manager ? "Bagikan tugas" : "Simpan"}</button></div>
+        </div>
+        <footer className="dialog-f"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button type="submit" className="btn primary" disabled={save.isPending}>{routine ? "Simpan tugas rutin" : manager ? "Bagikan tugas" : "Simpan"}</button></footer>
       </form>
     </>
   );
