@@ -33,6 +33,7 @@ export function Sidebar() {
   return (
     <aside className="side">
       <div className="logo"><i><Sparkles size={18} /></i>Tugas Harian</div>
+      <div className="navlabel">Menu</div>
       <nav className="nav" aria-label="Menu utama">
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon, c }) => (
           <a key={to} data-c={c} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
