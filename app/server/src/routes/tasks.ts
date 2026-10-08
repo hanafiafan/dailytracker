@@ -124,3 +124,45 @@ export const taskRoutes = ({ db, bus }: Deps, notify: Notify) => {
       void notify.returned(t);
       return c.json({ ok: true });
     })
+    .put("/:id/report", zValidator("json", taskReport), c => {
+      const u = c.var.user, t = find(c.req.param("id")), { report } = c.req.valid("json");
+      if (!t) return c.json({ error: "not found" }, 404);
+      if (!(u.email === t.email && u.member) && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
+      db.update(tasks).set({ report: report || null, reportAt: report ? Date.now() : null }).where(eq(tasks.id, t.id)).run();
+      touch();
+      return c.json({ ok: true });
+    })
+    .delete("/:id", c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t) return c.json({ ok: true });
+      const ownSelf = u.email === t.email && !!u.member && t.by === "self";
+      if (!ownSelf && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
+      db.delete(tasks).where(eq(tasks.id, t.id)).run();
+      touch();
+      return c.json({ ok: true });
+    })
+    .get("/:id/proof", c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t || !u.policy.canSee(t.email)) return c.body(null, 404);
+      const p = db.select().from(proofs).where(eq(proofs.taskId, t.id)).get();
+      if (!p) return c.body(null, 404);
+      return c.body(new Uint8Array(p.data), 200, { "content-type": "image/jpeg", "cache-control": "private, max-age=86400" });
+    })
+    .post("/:id/comments", zValidator("json", commentCreate), c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t || !u.policy.canSee(t.email)) return c.json({ error: "not found" }, 404);
+      const row = { id: newId(), taskId: t.id, by: u.member?.name ?? u.name, byEmail: u.email, text: c.req.valid("json").text, at: Date.now() };
+      db.insert(comments).values(row).run();
+      touch();
+      return c.json(toComment(row), 201);
+    })
+    .delete("/:id/comments/:cid", c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      const cm = db.select().from(comments).where(eq(comments.id, c.req.param("cid"))).get();
+      if (!t || !cm || cm.taskId !== t.id) return c.json({ ok: true });
+      if (cm.byEmail !== u.email && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
+      db.delete(comments).where(eq(comments.id, cm.id)).run();
+      touch();
+      return c.json({ ok: true });
+    });
+};
