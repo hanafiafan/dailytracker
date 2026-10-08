@@ -5,7 +5,7 @@ import { useLeaves, useTasks, windowFrom } from "../lib/queries";
 import { awayOn } from "../lib/leaves";
 import { weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
-import { Avatar } from "./ui";
+import { Avatar, PersonLink } from "./ui";
 
 const mins = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3));
 const OVER_TASKS = 6, OVER_HOURS = 9;
@@ -34,7 +34,7 @@ export function Workload() {
         {people.map(m => {
           const cs = days.map(d => cell(m.email, d)), total = cs.reduce((s, c) => s + c.n, 0);
           return [
-            <div key={m.email} className="hp"><Avatar m={m} /><span className="clamp1">{m.name}</span></div>,
+            <div key={m.email} className="hp"><Avatar m={m} /><span className="clamp1"><PersonLink email={m.email}>{m.name}</PersonLink></span></div>,
             ...cs.map((c, i) => <button key={m.email + days[i]} className={"hc" + (c.over ? " over" : "") + (c.away ? " away" : "")} style={{ ["--lv" as string]: Math.min(c.n / 5, 1) }}
               title={`${m.name} · ${fmtShort(days[i]!)}: ${c.away ? "tidak masuk, " : ""}${c.n} tugas${c.h ? `, ${c.h.toFixed(1)} jam terjadwal` : ""}`} onClick={() => { setDate(days[i]!); go("/kalender"); }}>{c.away ? "cuti" : c.n || ""}</button>),
             <div key={m.email + "t"} className="ht">{total}</div>,

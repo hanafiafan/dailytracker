@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { PersonLink } from "./ui";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -19,7 +20,7 @@ function UnitField({ name, defaultValue }: { name: string; defaultValue?: string
   const { team, policy } = useViewer();
   if (!policy.isBoss) return <label className="field"><span>Unit</span><select className="input" name={name} defaultValue={defaultValue || policy.groups[0]}>{policy.groups.map(g => <option key={g}>{g}</option>)}</select></label>;
   return <label className="field"><span>Unit (mis. HCS, HCM)</span>
-    <input className="input" name={name} list="unit-list" maxLength={20} placeholder="Kosongkan kalau tidak ada" style={{ textTransform: "uppercase" }} defaultValue={defaultValue} />
+    <input className="input" name={name} list="unit-list" maxLength={20} placeholder="Kosongkan kalau tidak ada" defaultValue={defaultValue} />
     <datalist id="unit-list">{units(team).map(g => <option key={g} value={g} />)}</datalist></label>;
 }
 
@@ -91,7 +92,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
       <div ref={setNodeRef} className={"mrow" + (isDragging ? " dragging" : "")} style={{ transform: CSS.Translate.toString(transform), transition }}>
         <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button>
         <Avatar m={m} />
-        <div className="who"><b>{m.name}</b><small>{m.role || "—"}</small><small>{m.email}</small></div>
+        <div className="who"><b><PersonLink email={m.email}>{m.name}</PersonLink></b><small>{m.role || "—"}</small><small>{m.email}</small></div>
         {m.group && <span className="tag due">{m.group}</span>}
         {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
         {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}

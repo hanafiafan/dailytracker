@@ -1,4 +1,6 @@
 import { Art, type ArtName } from "./Illus";
+import { useLocation } from "wouter";
+import { useViewer } from "../lib/viewer";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Inbox } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
@@ -67,4 +69,13 @@ export function Ring({ done, total, size = 44 }: { done: number; total: number; 
       <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">{total ? Math.round(p * 100) : "–"}</text>
     </svg>
   );
+}
+
+/** A person's name that opens their tasks (managers only; everyone else sees plain text). */
+export function PersonLink({ email, children, className }: { email: string; children: ReactNode; className?: string }) {
+  const { policy } = useViewer();
+  const [, go] = useLocation();
+  if (!policy.isManager || !policy.canManage(email)) return <>{children}</>;
+  const href = "/daftar?who=" + encodeURIComponent(email);
+  return <a href={href} className={"plink " + (className ?? "")} title="Lihat tugasnya" onClick={e => { e.preventDefault(); e.stopPropagation(); go(href); }}>{children}</a>;
 }
