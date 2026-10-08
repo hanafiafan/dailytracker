@@ -25,7 +25,7 @@ export const memberOrder = z.object({ emails: z.array(z.string()).max(200) });
 
 export const taskCreate = z.object({
   emails: z.array(email).min(1).max(100),
-  title: z.string().trim().min(1).max(160),
+  title: z.string().trim().min(1).max(120),
   note: z.string().trim().max(600).default(""),
   date: date.optional(),
   start: hm.nullish(), due: hm.nullish(),
@@ -40,7 +40,7 @@ export const taskCreate = z.object({
 }).refine(t => !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
 /** Partial edit of a task: title/notes/schedule/priority/project/labels, or reassigning to someone else. */
 export const taskPatch = z.object({
-  title: z.string().trim().min(1).max(160), note: z.string().trim().max(600),
+  title: z.string().trim().min(1).max(120), note: z.string().trim().max(600),
   date, start: hm.nullable(), due: hm.nullable(),
   priority: z.enum(PRIORITIES), projectId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
   needProof: z.boolean(), email,
