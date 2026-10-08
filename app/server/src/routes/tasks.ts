@@ -67,3 +67,60 @@ export const taskRoutes = ({ db, bus }: Deps, notify: Notify) => {
       touch(); bus.emit("team");
       return c.json({ ids: made.map(t => t.id) }, 201);
     })
+    .patch("/:id/status", zValidator("json", taskStatus), c => {
+      const u = c.var.user, t = find(c.req.param("id")), { status } = c.req.valid("json");
+      if (!t) return c.json({ error: "not found" }, 404);
+      const own = u.email === t.email && !!u.member;
+      if (!own && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
+      // Members finish a task through /complete (proof); managers can set it directly.
+      if (status === "done" && !u.policy.canManage(t.email)) return c.json({ error: "Selesaikan tugas lewat form bukti" }, 400);
+      const now = Date.now();
+      db.update(tasks).set({
+        status,
+        doneAt: status === "done" ? now : null,
+        ...(status === "done" ? { returnedAt: null } : {}),
+        ...(status === "doing" && !t.startedAt ? { startedAt: now } : {}),
+      }).where(eq(tasks.id, t.id)).run();
+      touch();
+      if (status === "done") void notify.done({ ...t, status }, u.email);
+      return c.json({ ok: true });
+    })
+    // Mark done with proof: multipart { photo?: JPEG, link?, note?, skipProof? }.
+    .post("/:id/complete", async c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t) return c.json({ error: "not found" }, 404);
+      const own = u.email === t.email && !!u.member;
+      if (!own && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
+      const form = await c.req.parseBody();
+      const photo = form.photo instanceof File && form.photo.size ? new Uint8Array(await form.photo.arrayBuffer()) : null;
+      let link = typeof form.link === "string" ? form.link.trim() : "";
+      const note = typeof form.note === "string" ? form.note.trim().slice(0, 600) : "";
+      const skip = form.skipProof === "1";
+      if (link && !/^https?:\/\//i.test(link)) link = "https://" + link;
+      if (link && !URL.canParse(link)) return c.json({ error: "Link tidak valid" }, 400);
+      if (photo && (!isJpeg(photo) || photo.length > MAX_PROOF)) return c.json({ error: "Foto harus JPG dan kurang dari 1,5 MB" }, 400);
+      if (!skip && !photo && !link) return c.json({ error: "Lampirkan foto atau link sebagai bukti" }, 400);
+      if (skip && t.needProof && !u.policy.canManage(t.email)) return c.json({ error: "Tugas ini wajib bukti" }, 400);
+      const now = Date.now();
+      db.transaction(tx => {
+        if (photo) tx.insert(proofs).values({ taskId: t.id, data: Buffer.from(photo), at: now }).onConflictDoUpdate({ target: proofs.taskId, set: { data: Buffer.from(photo), at: now } }).run();
+        if (!skip && !photo) tx.delete(proofs).where(eq(proofs.taskId, t.id)).run();
+        tx.update(tasks).set({
+          status: "done", doneAt: now, returnedAt: null,
+          ...(skip ? {} : { proofLink: link || null, proofAt: now, hasPhoto: !!photo }),
+          ...(note ? { report: note, reportAt: now } : {}),
+        }).where(eq(tasks.id, t.id)).run();
+      });
+      touch();
+      void notify.done({ ...t, status: "done" }, u.email);
+      return c.json({ ok: true });
+    })
+    .post("/:id/return", c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t) return c.json({ error: "not found" }, 404);
+      if (!u.policy.canManage(t.email) || t.status !== "done" || t.by === "self") return c.json({ error: "forbidden" }, 403);
+      db.update(tasks).set({ status: "doing", doneAt: null, returnedAt: Date.now() }).where(eq(tasks.id, t.id)).run();
+      touch();
+      void notify.returned(t);
+      return c.json({ ok: true });
+    })
