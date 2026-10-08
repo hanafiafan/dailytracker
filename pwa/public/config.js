@@ -5,17 +5,25 @@
 // 1) Tempel konfigurasi dari Firebase Console:
 //    Project settings → General → Your apps → Web app → "SDK setup and configuration" → Config
 export const firebaseConfig = {
-  apiKey: "GANTI",
-  authDomain: "GANTI.firebaseapp.com",
-  projectId: "GANTI",
-  storageBucket: "GANTI.appspot.com",
-  messagingSenderId: "GANTI",
-  appId: "GANTI",
+  apiKey: "AIzaSyDuSOicBkI4IWtgBGQuLcr9GkmksRawtvs",
+  authDomain: "dailytask-a8327.firebaseapp.com",
+  projectId: "dailytask-a8327",
+  storageBucket: "dailytask-a8327.firebasestorage.app",
+  messagingSenderId: "747680179966",
+  appId: "1:747680179966:web:d62c34f557459efa1127af",
+  measurementId: "G-LSEM91HZQ3",
 };
+
+// Kunci push (VAPID): Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair.
+// Tempel "Key pair" di sini. Kosong = notifikasi push belum aktif.
+export const VAPID_KEY = "";
+
+// Alamat Worker Cloudflare yang mengirim push (muncul setelah "wrangler deploy", mis. https://tugas-harian-push.NAMA.workers.dev).
+export const WORKER_URL = "";
 
 // 2) Email Google pemilik aplikasi (yang bisa melihat dan mengatur semua).
 //    Harus sama dengan email di file firestore.rules.
-export const OWNER_EMAIL = "rtekidvector@gmail.com";
+export const OWNER_EMAIL = "hellensdev@gmail.com";
 
 // 3) Daftar tim awal. Email tiap orang diisi lewat aplikasi saat pertama kali dibuka.
 export const DEFAULT_TEAM = [
