@@ -51,3 +51,26 @@ describe("api", () => {
     expect(r.headers.get("set-cookie")).toMatch(/th_session=.*HttpOnly/i);
   });
 
+  it("manager assigns a task; the person sees it, others do not", async () => {
+    const r = await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "Foto produk", due: "17:00" });
+    expect(r.status).toBe(201);
+    const mine = await (await t.call("a@x.id", "GET", "/tasks?from=2000-01-01")).json();
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ title: "Foto produk", by: "owner", status: "todo" });
+    expect(await (await t.call("b@x.id", "GET", "/tasks?from=2000-01-01")).json()).toHaveLength(0);
+    expect(t.sent.some(s => s.title === "Tugas baru" && s.to[0] === "a@x.id")).toBe(true);
+  });
+
+  it("unit admin cannot assign outside their unit", async () => {
+    expect((await t.call("hcs@x.id", "POST", "/tasks", { emails: ["b@x.id"], title: "x" })).status).toBe(403);
+    expect((await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "x" })).status).toBe(201);
+  });
+
+  it("member cannot forge an admin task or assign to others", async () => {
+    expect((await t.call("a@x.id", "POST", "/tasks", { emails: ["b@x.id"], title: "x" })).status).toBe(403);
+    const r = await t.call("a@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Punyaku", needProof: true });
+    const [row] = t.db.select().from(tasks).all();
+    expect(r.status).toBe(201);
+    expect(row).toMatchObject({ by: "self", needProof: false });
+  });
+
