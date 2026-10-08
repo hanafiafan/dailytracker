@@ -1,0 +1,7 @@
+{
+  "name": "dailytask-migrasi",
+  "private": true,
+  "type": "module",
+  "scripts": { "cek": "node import-firebase.mjs", "import": "node import-firebase.mjs --apply" },
+  "dependencies": { "firebase-admin": "^12.0.0" }
+}
