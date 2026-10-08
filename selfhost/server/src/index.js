@@ -109,3 +109,12 @@ app.post("/api/col", auth, (req, res) => {
   write(req, res, `${col}/${id}`, "set", req.body.data, false, { id });
 });
 
+// ---------- push subscriptions ----------
+app.post("/api/push/subscribe", auth, (req, res) => {
+  const sub = req.body.sub;
+  if (!sub || typeof sub.endpoint !== "string" || !sub.keys) return res.status(400).json({ error: "bad subscription" });
+  store.push.save(sub.endpoint, req.me, sub);
+  res.json({});
+});
+app.post("/api/push/unsubscribe", auth, (req, res) => { store.push.drop(String(req.body.endpoint || "")); res.json({}); });
+
