@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Inbox, Sparkles } from "lucide-react";
+import { Inbox } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
 /** Avatar fill colours: the brand palette. */
-const AVATAR = ["#4F46E5", "#0E8F8F", "#C2410C", "#BE185D", "#0F766E", "#7C3AED", "#2563EB", "#B45309"];
+const AVATAR = ["#475569", "#52525B", "#4B5563", "#57606A", "#3F4A5A", "#5B6472"];
 
 export function Avatar({ m, big, src }: { m: Pick<MemberDTO, "email" | "name" | "role" | "hasPhoto" | "photoV">; big?: boolean; src?: string | null }) {
   const cls = "avatar" + (big ? " big" : "");
@@ -43,7 +43,7 @@ export const tally = (list: { status: Status }[]) => {
 export const Center = ({ children }: { children: ReactNode }) => <div className="center"><div>{children}</div></div>;
 export const Loading = () => (
   <div className="shell" aria-busy="true" aria-label="Memuat">
-    <aside className="side"><div className="logo"><i><Sparkles size={18} /></i>Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
+    <aside className="side"><div className="logo"><i />Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
     <div className="frame"><div className="sk" style={{ height: 44, width: "40%" }} /><div className="sk" style={{ height: 46, borderRadius: 999 }} />
       <div className="tiles">{[0, 1, 2, 3].map(i => <div key={i} className="sk" style={{ height: 160, borderRadius: 32 }} />)}</div></div>
   </div>

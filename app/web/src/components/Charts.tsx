@@ -44,7 +44,7 @@ export function HBar({ label, done, total, max, tint }: { label: string; done: n
       <span title={label} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
       <div className="track" style={{ width: `${(total / Math.max(1, max)) * 100}%`, minWidth: total ? 8 : 0 }}>
         <i style={{ width: `${total ? (done / total) * 100 : 0}%`, background: "#93C21A" }} />
-        <i style={{ flex: 1, background: tint ? `var(--c-${tint})` : "var(--c-gray)" }} />
+        <i style={{ flex: 1, background: "var(--line)" }} />
       </div>
       <b>{done}/{total}</b>
     </div>

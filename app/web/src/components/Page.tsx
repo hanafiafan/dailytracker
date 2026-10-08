@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { Sparkles, Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -32,7 +32,7 @@ export function Sidebar() {
   };
   return (
     <aside className="side">
-      <div className="logo"><i><Sparkles size={18} /></i>Tugas Harian</div>
+      <div className="logo"><i />Tugas Harian</div>
       <div className="navlabel">Menu</div>
       <nav className="nav" aria-label="Menu utama">
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon, c }) => (
