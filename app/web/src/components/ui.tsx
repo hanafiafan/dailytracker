@@ -37,4 +37,29 @@ export const tally = (list: { status: Status }[]) => {
 };
 
 export const Center = ({ children }: { children: ReactNode }) => <div className="center"><div>{children}</div></div>;
-export const Loading = () => <Center><p className="muted">Memuat tugas…</p></Center>;
+export const Loading = () => (
+  <div className="shell" aria-busy="true" aria-label="Memuat">
+    <aside className="side"><div className="logo"><i>✺</i>Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
+    <div className="frame"><div className="sk" style={{ height: 44, width: "40%" }} /><div className="sk" style={{ height: 46, borderRadius: 999 }} />
+      <div className="tiles">{[0, 1, 2, 3].map(i => <div key={i} className="sk" style={{ height: 160, borderRadius: 32 }} />)}</div></div>
+  </div>
+);
+/** Placeholder block while data loads. */
+export const Skeleton = ({ h = 16, w = "100%" }: { h?: number; w?: number | string }) => <div className="sk" style={{ height: h, width: w }} />;
+
+/** Friendly empty state. */
+export function Empty({ icon = "🌿", title, children }: { icon?: string; title: string; children?: ReactNode }) {
+  return <div className="emptystate"><span aria-hidden="true">{icon}</span><b>{title}</b>{children && <p>{children}</p>}</div>;
+}
+
+/** Small circular progress with the percentage in the middle. */
+export function Ring({ done, total, size = 44 }: { done: number; total: number; size?: number }) {
+  const r = 16, c = 2 * Math.PI * r, p = total ? done / total : 0;
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label={`${done} dari ${total} selesai`}>
+      <circle cx="20" cy="20" r={r} fill="none" stroke="var(--sunk)" strokeWidth="5" />
+      {total > 0 && p > 0 && <circle cx="20" cy="20" r={r} fill="none" stroke={p === 1 ? "var(--ok)" : "var(--ink)"} strokeWidth="5" strokeLinecap="round" strokeDasharray={`${p * c} ${c}`} transform="rotate(-90 20 20)" style={{ transition: "stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)" }} />}
+      <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">{total ? Math.round(p * 100) : "–"}</text>
+    </svg>
+  );
+}
