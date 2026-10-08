@@ -133,3 +133,16 @@ describe("dev login", () => {
     expect((await t.call(null, "POST", "/auth/dev", { email: "a@x.id" })).status).toBe(404);
   });
 });
+
+describe("nudge", () => {
+  it("lets a manager remind the assignee once an hour, and nobody else", async () => {
+    const t = setup();
+    const made = await json(await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Telat" }));
+    const id = made.ids[0];
+    expect((await t.call("a@x.id", "POST", `/tasks/${id}/nudge`)).status).toBe(403);
+    expect((await t.call("b@x.id", "POST", `/tasks/${id}/nudge`)).status).toBe(403);
+    expect((await t.call("hcs@x.id", "POST", `/tasks/${id}/nudge`)).status).toBe(200);
+    expect(t.sent.some(s => s.to.includes("a@x.id") && s.title.includes("mengingatkan"))).toBe(true);
+    expect((await t.call("hcs@x.id", "POST", `/tasks/${id}/nudge`)).status).toBe(429);
+  });
+});
