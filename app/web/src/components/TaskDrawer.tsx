@@ -104,7 +104,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         </section>
 
         <section>
-          <div className="surface-h" style={{ margin: 0 }}><span className="lbl">Checklist {t.subtasks.length > 0 && `· ${done}/${t.subtasks.length}`}</span></div>
+          <span className="lbl">Checklist{t.subtasks.length > 0 && ` · ${done}/${t.subtasks.length}`}</span>
           {t.subtasks.length > 0 && <div className="stackbar"><i className="s-done" style={{ width: `${(done / t.subtasks.length) * 100}%` }} /></div>}
           {t.subtasks.map(s => (
             <label key={s.id} className={"check-row" + (s.done ? " done" : "")}>
@@ -130,11 +130,6 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           {work && <textarea className="input" rows={2} maxLength={600} defaultValue={t.report ?? ""} placeholder="Catatan progres, kendala, atau link hasil kerja" aria-label="Catatan" onBlur={e => e.target.value.trim() !== (t.report ?? "") && a.saveReport.mutate(e.target.value.trim())} />}
           {!work && t.report && <div className="report"><p>{t.report}</p></div>}
           {proofOpen && <ProofPanel t={t} onClose={() => setProofOpen(false)} />}
-          <div className="actions" style={{ justifyContent: "flex-start" }}>
-            {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (manager ? a.setStatus.mutate("done") : setProofOpen(true))}>Tandai selesai</button>}
-            {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
-            {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
-          </div>
         </section>
 
         <section>
@@ -149,6 +144,11 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           ))}</ul>
         </section>
       </div>
+      <footer className="drawer-f">
+        {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (manager ? a.setStatus.mutate("done") : setProofOpen(true))}>Tandai selesai</button>}
+        {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+        {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
+      </footer>
       {lightbox && photo && <div className="lightbox" role="dialog" onClick={() => setLightbox(false)}><img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup"><X size={18} /></button></div>}
     </>
   );
