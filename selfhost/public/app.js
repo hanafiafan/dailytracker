@@ -186,3 +186,221 @@ import { DEFAULT_TEAM } from "./config.js";
     }
   }
 
+  // ---------- actions ----------
+  function setDate(d) {
+    S.date = d;
+    if (d < S.winFrom) { S.winFrom = addDays(d, -14); syncSubs(true); }
+    render();
+  }
+  function cycle(key, t) {
+    const next = NEXT[t.status] || "doing";
+    if (!isManager() && next === "done") { S.proofFor = key + "/" + t.id; render(); return; }
+    safe(async () => {
+      await db.doc(`tasks/${key}/items/${t.id}`).update({ status: next, doneAt: next === "done" ? Date.now() : null, ...(next === "done" ? { returnedAt: null } : {}), ...(next === "doing" && !t.startedAt ? { startedAt: Date.now() } : {}) });
+    });
+  }
+  // Proof photos live in their own documents (proofs/<email>/items/<taskId>) and load on demand.
+  const proofCache = {};
+  function proofSrc(p, key, id) {
+    if (!p || !p.photo) return null;
+    const k = key + "/" + id;
+    if (proofCache[k] === undefined) {
+      proofCache[k] = null;
+      db.doc(`proofs/${key}/items/${id}`).get()
+        .then(d => { proofCache[k] = d.exists ? d.data().data : false; render(); })
+        .catch(() => { proofCache[k] = false; render(); });
+    }
+    return proofCache[k] || null;
+  }
+  async function shrink(file, maxDim, q) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const sc = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return await new Promise(r => c.toBlob(r, "image/jpeg", q));
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const toDataURL = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+  async function pickProof(tag, file) {
+    if (!file) return;
+    try {
+      const blob = await shrink(file, 1400, 0.72);
+      if (!blob) throw new Error("no blob");
+      const old = S.proofDraft[tag]; if (old) URL.revokeObjectURL(old.preview);
+      S.proofDraft[tag] = { blob, file, preview: URL.createObjectURL(blob) };
+      render();
+    } catch (e) { toast("Foto tidak bisa dibaca. Coba screenshot atau foto format JPG/PNG."); }
+  }
+  function closeProof(tag) {
+    const d = S.proofDraft[tag]; if (d) URL.revokeObjectURL(d.preview);
+    delete S.proofDraft[tag]; S.proofFor = null; render();
+  }
+  async function submitProof(key, t, withoutProof) {
+    const tag = key + "/" + t.id;
+    const draft = S.proofDraft[tag];
+    const linkEl = document.getElementById("pl-" + t.id), noteEl = document.getElementById("pn-" + t.id);
+    let link = (linkEl && linkEl.value || "").trim();
+    const note = (noteEl && noteEl.value || "").trim();
+    if (link && !/^https?:\/\//i.test(link)) link = "https://" + link;
+    if (!withoutProof && !draft && !link) return toast("Lampirkan foto/screenshot atau link sebagai bukti");
+    S.busy = true; render();
+    await safe(async () => {
+      let proof = null;
+      if (!withoutProof) {
+        proof = { at: Date.now() };
+        if (link) proof.link = link.slice(0, 500);
+        if (draft) {
+          let small = await shrink(draft.file, 1200, 0.62);
+          let data = await toDataURL(small);
+          if (data.length > 650000) { small = await shrink(draft.file, 800, 0.55); data = await toDataURL(small); }
+          await db.doc(`proofs/${key}/items/${t.id}`).set({ data, at: Date.now() });
+          proofCache[key + "/" + t.id] = data;
+          proof.photo = true;
+        }
+      }
+      const upd = { status: "done", doneAt: Date.now(), returnedAt: null };
+      if (proof) upd.proof = proof;
+      if (note) { upd.report = note; upd.reportAt = Date.now(); }
+      await db.doc(`tasks/${key}/items/${t.id}`).update(upd);
+      closeProof(tag);
+    }, withoutProof ? "Tugas selesai" : "Tugas selesai dengan bukti");
+    S.busy = false; render();
+  }
+  function sendBack(key, t) {
+    const tag = "bk/" + key + "/" + t.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ status: "doing", doneAt: null, returnedAt: Date.now() }), "Tugas dikembalikan. Tulis alasannya di catatan.");
+  }
+  function del(key, t) {
+    const tag = key + "/" + t.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(async () => {
+      await db.doc(`tasks/${key}/items/${t.id}`).delete();
+      if (t.proof && t.proof.photo) { try { await db.doc(`proofs/${key}/items/${t.id}`).delete(); } catch (_) {} }
+    }, "Tugas dihapus");
+  }
+  const newTask = (title, extra) => ({ title, note: "", date: S.date, status: "todo", hot: false, createdAt: Date.now(), ...extra });
+  function quickAdd(key, inputId, by) {
+    const el = document.getElementById(inputId);
+    const title = (el && el.value || "").trim();
+    if (!title) { el && el.focus(); return; }
+    el.value = "";
+    const tEl = document.getElementById(inputId + "-t"); const due = (tEl && tEl.value) || null; if (tEl) tEl.value = "";
+    const sEl = document.getElementById(inputId + "-s"); const start = (sEl && sEl.value) || null; if (sEl) sEl.value = "";
+    safe(async () => { await db.collection(`tasks/${key}/items`).add(newTask(title, { by, start, due, needProof: by === "owner" })); if (by === "owner") await clearAsk(key); });
+  }
+  async function clearAsk(key) {
+    const kd = S.keyDoc[key];
+    if (kd && kd.askAt) await db.doc(`tasks/${key}`).update({ askAt: null });
+  }
+  const askWork = () => safe(() => db.doc(`tasks/${S.meId}`).set({ askAt: Date.now() }, { merge: true }), "Permintaan tugas terkirim ke admin");
+  function openNote(key, t) {
+    S.editNote = key + "/" + t.id; render();
+    const el = document.getElementById("rep-" + t.id);
+    if (el) { el.value = t.report || ""; el.focus(); }
+  }
+  function saveNote(key, t) {
+    const el = document.getElementById("rep-" + t.id);
+    const v = (el && el.value || "").trim();
+    S.editNote = null;
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ report: v, reportAt: v ? Date.now() : null }), v ? "Catatan disimpan" : "Catatan dihapus");
+  }
+  function openAddFor(m) {
+    S.showAdd = true; S.addSel = new Set([m.id]); render();
+    setTimeout(() => { const el = document.getElementById("add-title"); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 0);
+  }
+  async function submitAdd() {
+    const title = document.getElementById("add-title").value.trim();
+    const note = document.getElementById("add-note").value.trim();
+    const dateEl = document.getElementById("add-date");
+    const date = (dateEl && dateEl.value) || S.date;
+    const due = (document.getElementById("add-time") || {}).value || null;
+    const start = (document.getElementById("add-start") || {}).value || null;
+    if (start && due && start >= due) return toast("Jam selesai harus setelah jam mulai");
+    if (!S.addSel.size) return toast("Pilih minimal satu orang");
+    if (!title) { document.getElementById("add-title").focus(); return toast("Tulis judul tugasnya dulu"); }
+    if (S.addRoutine && !S.addDays.size) return toast("Pilih hari untuk tugas rutin");
+    const people = S.team.filter(m => S.addSel.has(m.id));
+    await safe(async () => {
+      for (const m of people) {
+        const key = keyOf(m);
+        if (S.addRoutine) {
+          const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+          const r = { id: Math.random().toString(36).slice(2, 9), title, note, hot: S.addHot, needProof: S.addProof, start, due, days: [...S.addDays].sort() };
+          await db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: [...cur, r] });
+          const d = today();
+          if (r.days.includes(parse(d).getDay())) await db.doc(`tasks/${key}/items/r-${r.id}-${d}`).set({ title, note, date: d, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, routine: r.id, by: "owner", createdAt: Date.now() });
+        } else {
+          await db.collection(`tasks/${key}/items`).add({ title, note, date, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, by: "owner", createdAt: Date.now() });
+        }
+        if (!S.addRoutine || (S.keyDoc[key] && S.keyDoc[key].askAt)) await clearAsk(key);
+      }
+    }, S.addRoutine ? "Tugas rutin disimpan" : `Tugas dibagikan ke ${people.length} orang`);
+    S.addTime = ""; ["add-title", "add-note", "add-time", "add-start"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+    S.addSel.clear(); S.addHot = false; S.addRoutine = false; S.addProof = true; S.showAdd = false;
+    render();
+  }
+  function removeRoutine(key, rid) {
+    const tag = "rt/" + key + "/" + rid;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    safe(() => db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: cur.filter(r => r.id !== rid) }), "Tugas rutin dihentikan");
+  }
+  async function moveTasks(from, to) {
+    if (!from || from === to) return;
+    const snap = await db.collection(`tasks/${from}/items`).get();
+    for (const d of snap.docs) {
+      await db.doc(`tasks/${to}/items/${d.id}`).set({ ...d.data() });
+      await db.doc(`tasks/${from}/items/${d.id}`).delete();
+    }
+    const pf = await db.collection(`proofs/${from}/items`).get();
+    for (const d of pf.docs) {
+      await db.doc(`proofs/${to}/items/${d.id}`).set({ ...d.data() });
+      await db.doc(`proofs/${from}/items/${d.id}`).delete();
+    }
+    const kd = await db.doc(`tasks/${from}`).get();
+    if (kd.exists) { await db.doc(`tasks/${to}`).set({ ...kd.data() }); await db.doc(`tasks/${from}`).delete(); }
+  }
+  const cleanEmail = v => (v || "").trim().toLowerCase();
+  const validEmail = v => /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(v);
+  function addMember() {
+    const name = document.getElementById("mem-name").value.trim();
+    const role = document.getElementById("mem-role").value.trim();
+    const email = cleanEmail(document.getElementById("mem-email").value);
+    const group = ((document.getElementById("mem-group") || {}).value || "").trim().toUpperCase();
+    if (!name) return toast("Tulis nama anggota");
+    if (!isBoss() && !myAdminGroups().includes(group)) return toast("Pilih unit yang kamu kelola");
+    if (!validEmail(email)) return toast("Tulis email Google anggota dengan benar");
+    if (S.team.some(m => m.id === email)) return toast("Email itu sudah dipakai anggota lain");
+    const order = Math.max(0, ...S.team.map(m => m.order || 0)) + 1;
+    ["mem-name", "mem-role", "mem-email"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+    safe(() => db.doc("team/" + email).set({ name, role, order, ...(group ? { group } : {}) }), `${name} ditambahkan`);
+  }
+  async function saveSetup() {
+    const rows = DEFAULT_TEAM.map((p, i) => ({ ...p, email: cleanEmail((document.getElementById("se-" + i) || {}).value) }));
+    const filled = rows.filter(r => r.email);
+    const bad = filled.find(r => !validEmail(r.email));
+    if (bad) return toast(`Email untuk ${bad.name} belum benar`);
+    if (!filled.length) return toast("Isi minimal satu email");
+    const dup = filled.find((r, i) => filled.findIndex(x => x.email === r.email) !== i);
+    if (dup) return toast(`Email ${dup.email} dipakai dua kali`);
+    S.busy = true; render();
+    await safe(async () => {
+      let order = 0;
+      for (const r of filled) await db.doc("team/" + r.email).set({ name: r.name, role: r.role, order: ++order, ...(r.isAdmin ? { isAdmin: true } : {}) });
+    }, `${filled.length} anggota tim disimpan`);
+    S.busy = false; render();
+  }
+  function removeMember(m) {
+    const tag = "rm/" + m.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(() => db.doc("team/" + m.id).delete(), `${m.name} dihapus dari tim`);
+  }
+  // ---------- pieces ----------
