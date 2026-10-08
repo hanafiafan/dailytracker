@@ -192,3 +192,35 @@ img.avatar { object-fit: cover; background: var(--sunk) }
 .mrow.drop-after { box-shadow: inset 0 -3px 0 var(--accent) }
 .mrow .who small { color: var(--muted); display: block; overflow-wrap: anywhere }
 
+/* Recap matrix */
+.recap { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0 }
+.recap-h { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between }
+.recap-h h2 { font-size: 1.15rem }
+.recap-h p { color: var(--muted); font-size: .82rem }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--sunk) }
+.seg button { border: 0; background: none; padding: 4px 12px; border-radius: 999px; font-size: .82rem; font-weight: 600; color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12) }
+.mxwrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px }
+table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; min-width: 100% }
+.mx th { font-weight: 600; font-size: .74rem; color: var(--muted); text-align: center; padding: 2px 0 4px; white-space: nowrap }
+.mx th.today { color: var(--accent) }
+.mx th small { display: block; font-size: .9rem; color: var(--ink); font-weight: 700 }
+.mx th.today small { color: var(--accent) }
+.mx th.who { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; padding-right: 8px; min-width: 128px }
+.mx th.who b { color: var(--ink); font-size: .9rem; display: flex; align-items: center; gap: 6px }
+.mx th.who span { font-weight: 500 }
+.mx td { padding: 0 }
+.cell { width: 100%; min-width: 46px; height: 38px; border: 0; border-radius: 6px; font-size: .78rem; font-weight: 600; display: grid; place-items: center }
+.cell:hover { outline: 2px solid var(--ink); outline-offset: -2px }
+.cell.none { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); font-weight: 500 }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--ink) }
+.mx .tot { text-align: right; padding-left: 8px; white-space: nowrap; font-size: .82rem }
+.mx .tot b { font-size: .95rem }
+.mx .tot small { display: block; color: var(--muted); font-size: .72rem }
+.mx tfoot th.who, .mx tfoot .tot { border-top: 1px solid var(--line); padding-top: 6px }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: .78rem; color: var(--muted) }
+.legend .ramp { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 6px }
+.legend .ramp i { width: 18px; height: 12px; border-radius: 3px }
+.legend .nobox { display: inline-block; width: 18px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); vertical-align: middle; margin-right: 6px }
+.warnico { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); color: var(--surface); font-size: .7rem; font-weight: 800; flex: none }
+
