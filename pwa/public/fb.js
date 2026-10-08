@@ -7,7 +7,8 @@ import {
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./config.js";
+import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+import { firebaseConfig, VAPID_KEY } from "./config.js";
 
 const cfg = { ...firebaseConfig };
 // On Firebase Hosting, sign in through the app's own domain so the login works inside installed apps too.
@@ -74,3 +75,23 @@ export async function signIn() {
   }
 }
 export const signOutUser = () => signOut(auth);
+
+// ---------- push notifications ----------
+// Each device registers its FCM token under tokens/<email>/devices/<token>; the Cloud Functions read it to send pushes.
+export async function pushSupported() { try { return await isSupported(); } catch (_) { return false; } }
+export async function registerPush(email) {
+  if (!VAPID_KEY) throw new Error("no-vapid");
+  const reg = await navigator.serviceWorker.ready;
+  const token = await getToken(getMessaging(app), { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+  if (!token) throw new Error("no-token");
+  await db.doc(`tokens/${email}/devices/${token}`).set({ at: Date.now(), ua: navigator.userAgent.slice(0, 120) });
+  return token;
+}
+export async function unregisterPush(email) {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const token = await getToken(getMessaging(app), { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (token) { await db.doc(`tokens/${email}/devices/${token}`).delete(); await deleteToken(getMessaging(app)); }
+  } catch (e) { console.warn("unregister", e); }
+}
+export const idToken = () => auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
