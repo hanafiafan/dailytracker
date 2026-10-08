@@ -91,3 +91,74 @@ function Comments({ t }: { t: TaskDTO }) {
   );
 }
 
+export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boolean; isLate?: boolean }) {
+  const { policy } = useViewer();
+  const [proofOpen, setProofOpen] = useState(false);
+  const [editNote, setEditNote] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+  const manager = policy.isManager;
+
+  const setStatus = useAction((status: TaskDTO["status"]) => ok(api.tasks[":id"].status.$patch({ param: { id: t.id }, json: { status } })));
+  const del = useAction(() => ok(api.tasks[":id"].$delete({ param: { id: t.id } })), { done: "Tugas dihapus" });
+  const back = useAction(() => ok(api.tasks[":id"].return.$post({ param: { id: t.id } })), { done: "Tugas dikembalikan. Tulis alasannya di komentar." });
+  const saveNote = useAction((report: string) => ok(api.tasks[":id"].report.$put({ param: { id: t.id }, json: { report } })), { done: "Catatan disimpan" });
+
+  const cycle = () => {
+    const next = NEXT[t.status];
+    if (!manager && next === "done") return setProofOpen(true);
+    setStatus.mutate(next);
+  };
+  const photo = t.hasPhoto ? `/api/tasks/${t.id}/proof` : null;
+
+  return (
+    <li className="task" data-status={t.status}>
+      <button className={"status " + t.status} onClick={cycle} title="Ketuk untuk ganti status" aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button>
+      <div className="tt">
+        <b>{t.title}</b>
+        {t.note && <p>{t.note}</p>}
+        <div className="meta">
+          <TimeTags t={t} />
+          {t.hot && <span className="tag hot">Penting</span>}
+          {isLate && <span className="tag late">Dari {fmtShort(t.date)}</span>}
+          {t.routineId && <span className="tag rut">Rutin</span>}
+          {t.by === "self" && <span className="tag off">Dibuat sendiri</span>}
+          {t.returnedAt && t.status !== "done" && <span className="tag late">Dikembalikan admin</span>}
+          {t.status !== "done" && t.needProof && <span className="tag off">Wajib bukti</span>}
+          {t.status === "done" && (t.proofAt ? <span className="tag on">✓ Ada bukti</span> : t.needProof ? <span className="tag late">Tanpa bukti</span> : null)}
+        </div>
+        {t.proofAt && (
+          <div className="proof">
+            {photo && <button className="thumb" onClick={() => setLightbox(true)} aria-label="Lihat foto bukti"><img src={photo} alt={"Bukti: " + t.title} loading="lazy" /></button>}
+            <div className="pmeta">
+              <span>Bukti · {fmtTime(t.proofAt)}</span>
+              {t.proofLink && <a href={t.proofLink} target="_blank" rel="noopener noreferrer">{host(t.proofLink)}</a>}
+              {manager && t.status === "done" && t.by !== "self" && policy.canManage(t.email) &&
+                <ConfirmButton className="linkbtn" label="Kembalikan" armed="Yakin kembalikan?" onConfirm={() => back.mutate()} />}
+            </div>
+          </div>
+        )}
+        {proofOpen && <ProofPanel t={t} onClose={() => setProofOpen(false)} />}
+        {t.report && !editNote && <div className="report"><span>Catatan{t.reportAt ? " · " + fmtTime(t.reportAt) : ""}</span><p>{t.report}</p></div>}
+        {editNote
+          ? <form className="noteform" onSubmit={e => { e.preventDefault(); saveNote.mutate(String(new FormData(e.currentTarget).get("report") ?? "")); setEditNote(false); }}>
+              <textarea className="input" name="report" rows={2} maxLength={600} defaultValue={t.report ?? ""} autoFocus placeholder="Progres, kendala, atau link hasil kerja" aria-label={"Catatan untuk " + t.title} />
+              <div className="actions"><button type="button" className="btn small ghost" onClick={() => setEditNote(false)}>Batal</button><button type="submit" className="btn small primary">Simpan catatan</button></div>
+            </form>
+          : !proofOpen && <span className="chips">
+              <button className="linkbtn notebtn" onClick={() => setEditNote(true)}>{t.report ? "Ubah catatan" : "+ Catatan"}</button>
+              <button className="linkbtn notebtn" onClick={() => setShowComments(s => !s)}>💬 {t.comments.length ? `Komentar (${t.comments.length})` : "Komentar"}</button>
+            </span>}
+        {showComments && <Comments t={t} />}
+      </div>
+      {canDelete
+        ? <ConfirmButton className="del" ariaLabel="Hapus tugas" label="✕" armed="Hapus?" onConfirm={() => del.mutate()} />
+        : <span />}
+      {lightbox && photo && (
+        <div className="lightbox" role="dialog" aria-label="Foto bukti" onClick={() => setLightbox(false)} onKeyDown={e => e.key === "Escape" && setLightbox(false)}>
+          <img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup">✕</button>
+        </div>
+      )}
+    </li>
+  );
+}
