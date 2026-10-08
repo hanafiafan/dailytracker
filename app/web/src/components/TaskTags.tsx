@@ -39,6 +39,7 @@ export function TaskMeta({ t, isLate, time = true, compact, max }: { t: TaskDTO;
   if (p) add("proj", <span className="tag proj" data-c={p.color} title={p.name}>{p.name}</span>, p.name);
   if (isLate) add("late", <span className="tag late">Dari {fmtShort(t.date)}</span>, "Tugas hari sebelumnya");
   if (t.returnedAt && t.status !== "done") add("back", <span className="tag late">Dikembalikan</span>, "Dikembalikan admin");
+  if (t.revisions > 0) add("rev", <span className="tag off" title="Berapa kali dikembalikan untuk diperbaiki">Revisi {t.revisions}×</span>, `Revisi ${t.revisions} kali`);
   if (sp.total > 0) add("sub", <span className="tag off"><ListChecks size={I} />{sp.done}/{sp.total}</span>, `Checklist ${sp.done}/${sp.total}`);
   if (t.comments.length > 0) add("cmt", <span className="tag off"><MessageSquare size={I} />{t.comments.length}</span>, `${t.comments.length} komentar`);
   for (const id of t.labelIds) { const l = label(id); if (l) add("l" + id, <span className="tag proj" data-c={l.color} title={l.name}>#{l.name}</span>, "#" + l.name); }
