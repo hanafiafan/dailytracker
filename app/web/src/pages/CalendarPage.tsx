@@ -154,7 +154,7 @@ export function CalendarPage() {
           </div>
           <div className="mini"><b>Warna = proyek</b>
             <div className="chips"><span className="tag proj" data-c="lilac">Tanpa proyek</span><PCProjects /></div>
-            <p className="foot">Seret tugas ke jam lain untuk menjadwal ulang. Klik dua kali di kotak kosong untuk membuat tugas baru di jam itu. Hijau lime = sedang dikerjakan.</p>
+            <p className="foot">Seret tugas ke jam lain untuk menjadwal ulang. Klik dua kali di kotak kosong untuk membuat tugas baru di jam itu. Latar biru muda = sedang dikerjakan.</p>
           </div>
         </div>
         <DndContext sensors={sensors} onDragStart={e => setDragId(String(e.active.id))} onDragEnd={onEnd} onDragCancel={() => setDragId(null)}>

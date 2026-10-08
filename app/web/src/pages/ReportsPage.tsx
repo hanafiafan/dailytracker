@@ -9,7 +9,7 @@ import { useAnalytics } from "../lib/queries";
 import { PRIORITY_LABEL } from "../lib/tasks";
 import { useViewer } from "../lib/viewer";
 
-const PRIO_COLOR: Record<Priority, string> = { urgent: "#5F31C4", high: "#C6F04A", normal: "#2547E8", low: "#AEB6C1" };
+const PRIO_COLOR: Record<Priority, string> = { urgent: "#B91C1C", high: "#D97706", normal: "#6B7280", low: "#D1D5DB" };
 const range = (d: string, year = false) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) }).format(new Date(d + "T12:00:00"));
 const dur = (min: number | null) => min === null ? "–" : min < 60 ? `${min} mnt` : `${Math.floor(min / 60)} j ${min % 60} m`;
 
