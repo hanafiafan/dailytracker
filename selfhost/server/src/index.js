@@ -21,3 +21,30 @@ app.set("trust proxy", 1);
 app.use(express.json({ limit: "2mb" }));
 app.use((req, res, next) => { res.set({ "x-content-type-options": "nosniff", "referrer-policy": "same-origin" }); next(); });
 
+// ---------- auth ----------
+const COOKIE = "th_session";
+const cookie = (req, name) => ((req.headers.cookie || "").split(/;\s*/).find(c => c.startsWith(name + "=")) || "").slice(name.length + 1);
+const setCookie = (req, res, value, maxAge) => res.append("set-cookie", `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${req.secure ? "; Secure" : ""}`);
+const auth = (req, res, next) => {
+  req.me = store.session.who(cookie(req, COOKIE));
+  if (!req.me) return res.status(401).json({ error: "unauthorized" });
+  req.rules = rules(req.me);
+  next();
+};
+// CSRF: every write must carry a custom header, which cross-site pages cannot send without a CORS preflight (we allow none).
+app.use("/api", (req, res, next) => (req.method !== "GET" && req.get("x-app") !== "1") ? res.status(400).json({ error: "bad request" }) : next());
+
+app.get("/api/config", (_req, res) => res.json({ googleClientId: env.GOOGLE_CLIENT_ID, vapidPublicKey: push.publicKey }));
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const t = await google.verifyIdToken({ idToken: String(req.body.credential || ""), audience: env.GOOGLE_CLIENT_ID });
+    const p = t.getPayload();
+    if (!p.email || !p.email_verified) return res.status(403).json({ error: "email not verified" });
+    const email = p.email.toLowerCase();
+    setCookie(req, res, store.session.make(email), 30 * 86400);
+    res.json({ email, owner: email === OWNER });
+  } catch (e) { console.warn("login", e.message); res.status(401).json({ error: "invalid credential" }); }
+});
+app.post("/api/auth/logout", (req, res) => { store.session.end(cookie(req, COOKIE)); setCookie(req, res, "", 0); res.json({}); });
+app.get("/api/me", auth, (req, res) => res.json({ email: req.me, owner: req.rules.owner }));
+
