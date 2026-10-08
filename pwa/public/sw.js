@@ -1,5 +1,5 @@
 // Service worker: keeps the app shell available offline and loads fresh files when online.
-const CACHE = "tugas-harian-v2";
+const CACHE = "tugas-harian-v3";
 const SHELL = ["./", "./index.html", "./app.js", "./fb.js", "./config.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 
@@ -26,6 +26,17 @@ self.addEventListener("fetch", e => {
       return res;
     }).catch(() => caches.match(req).then(r => r || (req.mode === "navigate" ? caches.match("./index.html") : undefined)))
   );
+});
+
+// Push from Cloud Functions (FCM data message: title, body, tag, url).
+self.addEventListener("push", e => {
+  let p = {};
+  try { p = e.data ? e.data.json() : {}; } catch (_) {}
+  const d = p.data || p.notification || {};
+  e.waitUntil(self.registration.showNotification(d.title || "Tugas Harian", {
+    body: d.body || "", icon: "./icons/icon-192.png", badge: "./icons/icon-192.png",
+    tag: d.tag || undefined, data: { url: d.url || "./" },
+  }));
 });
 
 // Open (or focus) the app when a notification is tapped.

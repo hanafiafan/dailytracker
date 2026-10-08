@@ -14,6 +14,13 @@ export const firebaseConfig = {
   measurementId: "G-LSEM91HZQ3",
 };
 
+// Kunci push (VAPID): Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair.
+// Tempel "Key pair" di sini. Kosong = notifikasi push belum aktif.
+export const VAPID_KEY = "";
+
+// Alamat Worker Cloudflare yang mengirim push (muncul setelah "wrangler deploy", mis. https://tugas-harian-push.NAMA.workers.dev).
+export const WORKER_URL = "";
+
 // 2) Email Google pemilik aplikasi (yang bisa melihat dan mengatur semua).
 //    Harus sama dengan email di file firestore.rules.
 export const OWNER_EMAIL = "hellensdev@gmail.com";

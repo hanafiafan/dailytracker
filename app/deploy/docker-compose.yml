@@ -1,0 +1,29 @@
+# Runs behind the Traefik proxy that Coolify already runs on the VPS (it issues the HTTPS certificate from the labels).
+# Needs /etc/tugas-harian.env with GOOGLE_CLIENT_ID, OWNER_EMAIL, PUBLIC_URL.
+services:
+  tugas-harian:
+    image: tugas-harian:latest
+    container_name: tugas-harian
+    restart: unless-stopped
+    env_file: /etc/tugas-harian.env
+    environment:
+      DATA_DIR: /data
+      HOST: 0.0.0.0
+      PORT: "3000"
+    volumes:
+      - /var/lib/tugas-harian:/data
+    networks: [coolify]
+    mem_limit: 300m
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tugas.rule=Host(`handaily.hellens.dev`)
+      - traefik.http.routers.tugas.entrypoints=https
+      - traefik.http.routers.tugas.tls=true
+      - traefik.http.routers.tugas.tls.certresolver=letsencrypt
+      - traefik.http.routers.tugas-http.rule=Host(`handaily.hellens.dev`)
+      - traefik.http.routers.tugas-http.entrypoints=http
+      - traefik.http.routers.tugas-http.middlewares=tugas-https
+      - traefik.http.middlewares.tugas-https.redirectscheme.scheme=https
+      - traefik.http.services.tugas.loadbalancer.server.port=3000
+networks:
+  coolify: { external: true }

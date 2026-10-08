@@ -1,0 +1,54 @@
+name: app
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/app.yml"]
+  pull_request:
+    paths: ["app/**"]
+
+concurrency: { group: "app-${{ github.ref }}", cancel-in-progress: true }
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  # Build the image here (the 2 GB VPS is too small for it), ship it over SSH, restart. Needs repo secrets:
+  # VPS_HOST, VPS_USER, VPS_SSH_KEY (private key whose public half is in the VPS's authorized_keys).
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SSH setup
+        env: { HOST: "${{ secrets.VPS_HOST }}", USER_: "${{ secrets.VPS_USER }}", KEY: "${{ secrets.VPS_SSH_KEY }}" }
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id && chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id\n' "$HOST" "$USER_" > ~/.ssh/config
+      - name: Build image
+        run: docker build -t tugas-harian:latest app
+      - name: Ship and restart
+        run: |
+          docker save tugas-harian:latest | gzip | ssh vps 'gunzip | sudo docker load'
+          ssh vps 'sudo mkdir -p /opt/tugas-harian-v2 && sudo chown "$USER" /opt/tugas-harian-v2'
+          scp app/deploy/docker-compose.yml vps:/opt/tugas-harian-v2/docker-compose.yml
+          ssh vps 'cd /opt/tugas-harian-v2 && sudo docker compose up -d --remove-orphans && sudo docker image prune -f'
+      - name: Health check
+        run: |
+          for i in 1 2 3 4 5 6; do
+            curl -fsS https://handaily.hellens.dev/api/config >/dev/null && exit 0
+            sleep 5
+          done
+          echo "health check failed"; exit 1

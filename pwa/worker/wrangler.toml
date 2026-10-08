@@ -1,0 +1,12 @@
+name = "tugas-harian-push"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+PROJECT_ID = "dailytask-a8327"
+FIREBASE_API_KEY = "AIzaSyDuSOicBkI4IWtgBGQuLcr9GkmksRawtvs" # kunci web Firebase, memang publik
+OWNER_EMAIL = "hellensdev@gmail.com"                          # samakan dengan OWNER_EMAIL di public/config.js
+APP_URL = "https://dailytask-a8327.web.app/"
