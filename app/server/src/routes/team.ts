@@ -33,3 +33,35 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     bus.emit("team");
     return c.json({ ok: true });
   })
+  .patch("/:email", zValidator("json", memberPatch), c => {
+    const u = c.var.user, email = c.req.param("email"), b = c.req.valid("json");
+    const target = loadTeam(db).find(m => m.email === email);
+    if (!target) return c.json({ error: "not found" }, 404);
+    const self = u.email === email;
+    const selfFields = Object.keys(b).every(k => k === "name" || k === "role");
+    if (!(self && selfFields) && !u.policy.canEditMember(email, b)) return c.json({ error: "forbidden" }, 403);
+    if (self && (b.isAdmin !== undefined || b.adminGroups !== undefined) && !u.policy.isBoss) return c.json({ error: "forbidden" }, 403);
+    const patch: Partial<typeof members.$inferInsert> = { ...b };
+    if (b.isAdmin === false) patch.adminGroups = [];
+    if (b.isAdmin === true && b.adminGroups === undefined) patch.adminGroups = target.group ? [target.group] : []; // a new admin starts limited to their own unit
+    if (Object.keys(patch).length) db.update(members).set(patch).where(eq(members.email, email)).run();
+    bus.emit("team");
+    return c.json({ ok: true });
+  })
+  // Change someone's email: tasks and routines follow through ON UPDATE CASCADE.
+  .post("/:email/move", zValidator("json", memberMove), c => {
+    const u = c.var.user, email = c.req.param("email"), { email: to } = c.req.valid("json");
+    if (u.email === email || !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    if (!loadTeam(db).some(m => m.email === email)) return c.json({ error: "not found" }, 404);
+    if (db.select().from(members).where(eq(members.email, to)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
+    db.update(members).set({ email: to, seenAt: null }).where(eq(members.email, email)).run();
+    bus.emit("team"); bus.emit("tasks");
+    return c.json({ ok: true });
+  })
+  .delete("/:email", c => {
+    const u = c.var.user, email = c.req.param("email");
+    if (u.email === email || !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    db.delete(members).where(eq(members.email, email)).run();
+    bus.emit("team"); bus.emit("tasks");
+    return c.json({ ok: true });
+  })
