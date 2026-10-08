@@ -81,3 +81,10 @@ async function push(env, devices, emails, title, body, tag) {
 }
 const nameOf = (team, email) => (team.find(t => t.id === email) || { data: {} }).data.name || email;
 
+// ---------- time helpers (the team lives in WIB, UTC+7 without DST) ----------
+const wib = (d = new Date()) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d).map(x => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour, minute: +p.minute };
+};
+const atMs = (date, hm) => Date.parse(`${date}T${hm}:00+07:00`);
+
