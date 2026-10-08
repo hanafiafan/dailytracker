@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, blob, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, blob, index, primaryKey } from "drizzle-orm/sqlite-core";
 
 const bool = (name: string) => integer(name, { mode: "boolean" });
 
@@ -16,6 +16,21 @@ export const members = sqliteTable("members", {
   askAt: integer("ask_at"),
 });
 
+export const projects = sqliteTable("projects", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("lilac"),
+  description: text("description").notNull().default(""),
+  archived: bool("archived").notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const labels = sqliteTable("labels", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("gray"),
+});
+
 export const tasks = sqliteTable("tasks", {
   id: text("id").primaryKey(),
   email: text("email").notNull().references(() => members.email, { onDelete: "cascade", onUpdate: "cascade" }),
@@ -26,6 +41,8 @@ export const tasks = sqliteTable("tasks", {
   due: text("due"),
   status: text("status", { enum: ["todo", "doing", "done"] }).notNull().default("todo"),
   hot: bool("hot").notNull().default(false),
+  priority: text("priority", { enum: ["low", "normal", "high", "urgent"] }).notNull().default("normal"),
+  projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
   needProof: bool("need_proof").notNull().default(true),
   by: text("by", { enum: ["owner", "self"] }).notNull().default("owner"),
   fromAdmin: text("from_admin"),
@@ -67,6 +84,8 @@ export const routines = sqliteTable("routines", {
   due: text("due"),
   days: text("days", { mode: "json" }).$type<number[]>().notNull(),
   hot: bool("hot").notNull().default(false),
+  priority: text("priority", { enum: ["low", "normal", "high", "urgent"] }).notNull().default("normal"),
+  projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
   needProof: bool("need_proof").notNull().default(true),
   byName: text("by_name"),
 });
@@ -92,3 +111,38 @@ export const pushSubs = sqliteTable("push_subs", {
 }, t => [index("push_email").on(t.email)]);
 
 export const meta = sqliteTable("meta", { k: text("k").primaryKey(), v: text("v").notNull() });
+
+export const taskLabels = sqliteTable("task_labels", {
+  taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  labelId: text("label_id").notNull().references(() => labels.id, { onDelete: "cascade" }),
+}, t => [primaryKey({ columns: [t.taskId, t.labelId] })]);
+
+export const subtasks = sqliteTable("subtasks", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  done: bool("done").notNull().default(false),
+  position: integer("position").notNull().default(0),
+}, t => [index("subtasks_task").on(t.taskId)]);
+
+/** Who did what to a task (or, with taskId null, to the workspace). Shown as the task timeline and the dashboard feed. */
+export const activity = sqliteTable("activity", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+  actorEmail: text("actor_email").notNull(),
+  actorName: text("actor_name").notNull(),
+  kind: text("kind").notNull(),
+  text: text("text").notNull(),
+  at: integer("at").notNull(),
+}, t => [index("activity_task").on(t.taskId), index("activity_at").on(t.at)]);
+
+/** In-app notification inbox (the bell). Push notifications are sent in addition. */
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  kind: text("kind").notNull(),
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  at: integer("at").notNull(),
+  readAt: integer("read_at"),
+}, t => [index("notifications_email").on(t.email, t.at)]);
