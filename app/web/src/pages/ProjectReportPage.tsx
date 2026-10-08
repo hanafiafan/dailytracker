@@ -38,6 +38,7 @@ export function ProjectReportPage() {
         <div className="stat"><span className="v">{s.done ? Math.round(s.onTime / s.done * 100) + "%" : "–"}</span><span className="k">tepat waktu ({s.onTime})</span></div>
         <div className="stat"><span className="v">{s.done ? Math.round(s.withProof / s.done * 100) + "%" : "–"}</span><span className="k">punya bukti</span></div>
         <div className="stat"><span className="v">{s.minutes ? hm(s.minutes) : "–"}</span><span className="k">waktu tercatat</span></div>
+        <div className="stat"><span className="v">{s.revisions}</span><span className="k">kali revisi</span></div>
         <div className="stat"><span className="v" style={{ color: s.open ? "var(--bad)" : undefined }}>{s.open}</span><span className="k">belum selesai</span></div>
       </div>
       <section className="bc">
@@ -48,7 +49,7 @@ export function ProjectReportPage() {
               {t.hasPhoto ? <button className="thumbbig" onClick={() => setZoom(t.id)} aria-label={`Perbesar bukti ${t.title}`}><img src={`/api/tasks/${t.id}/proof`} alt="" loading="lazy" /></button> : <div className="thumbbig empty">Tanpa foto</div>}
               <div style={{ minWidth: 0, display: "grid", gap: 4 }}>
                 <button className="linkbtn clamp2" style={{ textAlign: "left", textDecoration: "none", fontSize: ".9rem" }} onClick={() => openTask(t.id)}>{t.title}</button>
-                <small className="muted">{t.name} · {fmtShort(t.date)}{t.minutes ? " · " + hm(t.minutes) : ""} · {PRIORITY_LABEL[t.priority]}</small>
+                <small className="muted">{t.name} · {fmtShort(t.date)}{t.minutes ? " · " + hm(t.minutes) : ""} · {PRIORITY_LABEL[t.priority]}{t.revisions ? ` · revisi ${t.revisions}×` : ""}</small>
                 {t.proofLink && <a className="chip" style={{ width: "fit-content" }} href={t.proofLink} target="_blank" rel="noopener noreferrer"><ExternalLink size={12} />{host(t.proofLink)}</a>}
                 {t.report && <p className="clamp3" style={{ fontSize: ".8rem", color: "var(--muted)" }}>{t.report}</p>}
               </div>
