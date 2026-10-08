@@ -636,3 +636,14 @@
   .proofcard { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); break-inside: avoid; align-items: start; }
   .thumbbig { width: 96px; height: 96px; border-radius: 12px; overflow: hidden; border: 0; padding: 0; background: var(--glass); display: grid; place-items: center; font-size: .7rem; color: var(--muted); } .thumbbig img { width: 100%; height: 100%; object-fit: cover; } .thumbbig.empty { cursor: default; }
 }
+@layer components {
+  .bkgrid { display: grid; grid-template-columns: 190px minmax(640px, 1fr); gap: 10px 12px; align-items: center; min-width: 860px; }
+  .bkhours { position: relative; height: 18px; } .bkhours span { position: absolute; transform: translateX(-50%); font-size: .68rem; font-weight: 600; color: var(--muted); }
+  .bkname { display: flex; align-items: center; gap: 10px; min-width: 0; } .bkname small { display: block; font-size: .72rem; }
+  .bktrack { position: relative; height: 44px; border-radius: 12px; background: var(--canvas); cursor: pointer; overflow: hidden; } .bktrack:hover { background: var(--glass); }
+  .bktrack > i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .bkbar { position: absolute; top: 5px; bottom: 5px; display: flex; align-items: center; gap: 6px; padding: 0 6px 0 4px; border-radius: 10px; background: var(--volt); color: #101114; font-size: .72rem; font-weight: 700; overflow: hidden; cursor: default; z-index: 1; }
+  .bkbar.mine { background: var(--blue); color: #fff; } .bkbar .avatar { width: 24px; height: 24px; font-size: .6rem; } .bkbar span { min-width: 0; flex: 1; }
+  .bkbar button { border: 0; background: rgb(16 17 20 / .18); color: inherit; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; padding: 0; flex: none; }
+}
+@layer components { .bkhours span:last-child { transform: translateX(-100%); } }
