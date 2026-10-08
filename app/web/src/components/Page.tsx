@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -13,6 +13,7 @@ import { Avatar } from "./ui";
 const NAV = [
   { to: "/", label: "Dasbor", Icon: LayoutDashboard, c: "lilac" },
   { to: "/papan", label: "Papan", Icon: Columns3, c: "sky" },
+  { to: "/daftar", label: "Daftar", Icon: ListChecks, c: "mint" },
   { to: "/kalender", label: "Kalender", Icon: CalendarDays, c: "peach" },
   { to: "/tim", label: "Tim", Icon: Users, manager: true, c: "mint" },
   { to: "/laporan", label: "Laporan", Icon: BarChart3, c: "pink" },
