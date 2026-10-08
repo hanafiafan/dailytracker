@@ -177,3 +177,27 @@ describe("leave requests", () => {
     expect((await t.call("a@x.id", "DELETE", `/leaves/${again.id}`)).status).toBe(200);
   });
 });
+
+describe("time tracking", () => {
+  it("one running timer per person, totals per task, access follows task visibility", async () => {
+    const t = setup();
+    const mk = async (title: string) => (await json(await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title }))).ids[0] as string;
+    const t1 = await mk("Satu"), t2 = await mk("Dua");
+    expect((await t.call("b@x.id", "POST", `/time/${t1}/start`)).status).toBe(403);
+    expect((await t.call("a@x.id", "POST", `/time/${t1}/start`)).status).toBe(200);
+    expect((await json(await t.call("a@x.id", "GET", "/tasks"))).find((x: J) => x.id === t1).status).toBe("doing");
+    expect((await json(await t.call("a@x.id", "GET", "/time/running"))).taskTitle).toBe("Satu");
+    await t.call("a@x.id", "POST", `/time/${t2}/start`); // starting another stops the first
+    expect((await json(await t.call("a@x.id", "GET", "/time/running"))).taskTitle).toBe("Dua");
+    expect((await json(await t.call("a@x.id", "GET", `/time/task/${t1}`))).entries[0].endedAt).not.toBeNull();
+    expect((await t.call("b@x.id", "GET", `/time/task/${t1}`)).status).toBe(404);
+    await t.call("a@x.id", "POST", "/time/stop");
+    expect(await json(await t.call("a@x.id", "GET", "/time/running"))).toBeNull();
+    const rep = await json(await t.call("hcs@x.id", "GET", "/time/report"));
+    expect(rep.perPerson[0].email).toBe("a@x.id");
+    expect((await json(await t.call("b@x.id", "GET", "/time/report"))).perPerson).toHaveLength(0);
+    const e = (await json(await t.call("a@x.id", "GET", `/time/task/${t1}`))).entries[0];
+    expect((await t.call("b@x.id", "DELETE", `/time/entry/${e.id}`)).status).toBe(403);
+    expect((await t.call("a@x.id", "DELETE", `/time/entry/${e.id}`)).status).toBe(200);
+  });
+});
