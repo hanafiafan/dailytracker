@@ -953,3 +953,20 @@ import { DEFAULT_TEAM } from "./config.js";
       installCard()));
   }
 
+  // ---------- render ----------
+  function render() {
+    if (drag) { pendingRender = true; return; }
+    const keep = {};
+    app.querySelectorAll("input[id], textarea[id]").forEach(el => { if (el.type !== "checkbox") keep[el.id] = el.value; });
+    const a = document.activeElement, aid = a && a.id, sel = a && "selectionStart" in a ? [a.selectionStart, a.selectionEnd] : null;
+    let view;
+    if (S.mode === "loading") view = loading();
+    else if (S.mode === "login") view = loginView();
+    else if (S.mode === "owner") view = S.teamLoaded ? ownerView() : loading();
+    else view = memberView();
+    app.replaceChildren(...[].concat(view), ...(S.toast ? [h("div", { class: "toast", role: "status" }, S.toast)] : []),
+      ...(S.lightbox ? [h("div", { class: "lightbox", role: "dialog", "aria-label": "Foto bukti", onclick: () => { S.lightbox = null; render(); } }, h("img", { src: S.lightbox, alt: "Foto bukti" }), h("button", { class: "iconbtn", "aria-label": "Tutup" }, "✕"))] : []));
+    if (S.mode === "login") { const g = document.getElementById("gbtn"); if (g) { g.addEventListener("signin-failed", () => toast("Gagal masuk. Coba lagi.")); mountGoogleButton(g).catch(e => { console.warn(e); toast("Tombol Google tidak bisa dimuat. Periksa koneksi."); }); } }
+    for (const [id, v] of Object.entries(keep)) { const el = document.getElementById(id); if (el && el.type !== "checkbox" && el.type !== "date") el.value = v; else if (el && el.type === "date" && v) el.value = v; }
+    if (aid) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel && el.setSelectionRange) el.setSelectionRange(sel[0], sel[1]); } catch (_) {} } }
+  }
