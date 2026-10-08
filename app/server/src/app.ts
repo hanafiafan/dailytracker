@@ -34,3 +34,48 @@ export function createApp(deps: Deps) {
       } catch (e) { console.warn("login", (e as Error).message); return c.json({ error: "Login Google ditolak" }, 401); }
     })
     .post("/auth/logout", c => { endSession(c, deps); return c.json({ ok: true }); })
+    .get("/me", auth, c => {
+      const u = c.var.user;
+      // Remember (once a day) that this person has opened the app, so the owner sees who has signed in.
+      const m = u.member;
+      if (m && (!m.seenAt || wib(m.seenAt).date !== wib().date)) {
+        db.update(members).set({ seenAt: Date.now() }).where(eq(members.email, u.email)).run();
+        bus.emit("team");
+      }
+      return c.json({ email: u.email, name: m?.name ?? u.name, owner: u.owner, member: m ? toMemberLite(m) : null });
+    })
+    .use("/team/*", auth).route("/team", teamRoutes(deps))
+    .use("/tasks/*", auth).route("/tasks", taskRoutes(deps, notify))
+    .use("/routines/*", auth).route("/routines", routineRoutes(deps))
+    .use("/links/*", auth).route("/links", linkRoutes(deps))
+    // "I have nothing left to do": tells the admins.
+    .post("/ask", auth, c => {
+      const u = c.var.user;
+      if (!u.member) return c.json({ error: "forbidden" }, 403);
+      db.update(members).set({ askAt: Date.now() }).where(eq(members.email, u.email)).run();
+      bus.emit("team");
+      void notify.ask(u.email);
+      return c.json({ ok: true });
+    })
+    .post("/push/subscribe", auth, zValidator("json", pushSub), c => {
+      const sub = c.req.valid("json");
+      db.insert(pushSubs).values({ endpoint: sub.endpoint, email: c.var.user.email, sub }).onConflictDoUpdate({ target: pushSubs.endpoint, set: { email: c.var.user.email, sub } }).run();
+      return c.json({ ok: true });
+    })
+    .post("/push/unsubscribe", auth, zValidator("json", z.object({ endpoint: z.string() })), c => {
+      db.delete(pushSubs).where(and(eq(pushSubs.endpoint, c.req.valid("json").endpoint), eq(pushSubs.email, c.var.user.email))).run();
+      return c.json({ ok: true });
+    })
+    // Server-sent events: only "something changed" signals; the browser refetches what it is allowed to see.
+    .get("/events", auth, c => streamSSE(c, async stream => {
+      const off = bus.subscribe(topic => { void stream.writeSSE({ event: "change", data: topic }); });
+      stream.onAbort(off);
+      await stream.writeSSE({ event: "ready", data: "" });
+      while (!stream.aborted) { await stream.sleep(25_000); await stream.writeSSE({ event: "ping", data: "" }); }
+    }));
+
+  return new Hono()
+    .use(async (c, next) => { await next(); c.header("x-content-type-options", "nosniff"); c.header("referrer-policy", "same-origin"); })
+    .route("/api", api);
+}
+export type AppType = ReturnType<typeof createApp>;
