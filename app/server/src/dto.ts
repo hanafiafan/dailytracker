@@ -27,7 +27,7 @@ export const toRoutine = (r: RoutineRow): RoutineDTO => ({
   id: r.id, email: r.email, title: r.title, note: r.note, start: r.start, due: r.due, days: r.days, hot: r.hot,
   needProof: r.needProof, byName: r.byName,
 });
-export const toProject = (p: typeof projects.$inferSelect): ProjectDTO => ({ id: p.id, name: p.name, color: p.color as ProjectDTO["color"], description: p.description, archived: p.archived, createdAt: p.createdAt });
+export const toProject = (p: typeof projects.$inferSelect): ProjectDTO => ({ id: p.id, name: p.name, color: p.color as ProjectDTO["color"], description: p.description, archived: p.archived, createdAt: p.createdAt, closedAt: p.closedAt, closedBy: p.closedBy, summary: p.summary, links: p.resultLinks });
 export const toLabel = (l: typeof labels.$inferSelect): LabelDTO => ({ id: l.id, name: l.name, color: l.color as LabelDTO["color"] });
 export const toLeave = (l: typeof leaves.$inferSelect): LeaveDTO => ({ id: l.id, email: l.email, kind: l.kind, from: l.from, to: l.to, reason: l.reason, status: l.status, decidedBy: l.decidedBy, decidedAt: l.decidedAt, createdAt: l.createdAt });
 export const toNotification = (n: typeof notifications.$inferSelect): NotificationDTO => ({ id: n.id, kind: n.kind, taskId: n.taskId, text: n.text, at: n.at, read: n.readAt !== null });

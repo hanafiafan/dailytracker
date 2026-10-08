@@ -48,6 +48,11 @@ export const taskPatch = z.object({
 export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
 export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.enum(COLORS).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
+export const projectClose = z.object({
+  summary: z.string().trim().max(1000).default(""),
+  links: z.array(z.string().trim().url().max(500).refine(u => /^https?:\/\//i.test(u), "Hanya tautan http(s)")).max(10).default([]),
+  force: z.boolean().default(false),
+});
 export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.enum(COLORS).default("gray") });
 export const LEAVE_KINDS = ["cuti", "izin", "sakit"] as const;
 export type LeaveKind = (typeof LEAVE_KINDS)[number];
@@ -67,7 +72,7 @@ export interface MemberDTO {
 }
 export interface CommentDTO { id: string; by: string; byEmail: string; text: string; at: number }
 export interface SubtaskDTO { id: string; title: string; done: boolean }
-export interface ProjectDTO { id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number }
+export interface ProjectDTO { id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number; closedAt: number | null; closedBy: string | null; summary: string; links: string[] }
 export interface LabelDTO { id: string; name: string; color: Color }
 export interface ActivityDTO { id: string; taskId: string | null; taskTitle: string | null; actorEmail: string; actorName: string; kind: string; text: string; at: number }
 export interface NotificationDTO { id: string; kind: string; taskId: string | null; text: string; at: number; read: boolean }
@@ -100,4 +105,9 @@ export interface TimeReportDTO {
   perPerson: { email: string; name: string; min: number }[];
   byProject: { projectId: string | null; min: number }[];
   daily: { date: string; min: number }[];
+}
+export interface ProjectReportDTO {
+  project: ProjectDTO;
+  stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number };
+  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number }[];
 }

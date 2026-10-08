@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { asc, desc, eq } from "drizzle-orm";
-import { labelInput, projectInput } from "@shared/schemas";
-import { labels, projects, sessions } from "../db/schema.js";
+import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { labelInput, projectClose, projectInput } from "@shared/schemas";
+import { labels, projects, sessions, tasks } from "../db/schema.js";
 import { toLabel, toProject } from "../dto.js";
+import { logActivity } from "../services.js";
 import { newId, type AppEnv, type Deps } from "../context.js";
 
 // Projects (campaigns) and labels: everyone can read, the owner and admins manage them.
@@ -20,10 +21,29 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
         const row = { id: newId(), ...c.req.valid("json"), createdAt: Date.now() };
         db.insert(projects).values(row).run();
         bus.emit("meta");
-        return c.json(toProject(row), 201);
+        return c.json(toProject({ ...row, closedAt: null, closedBy: null, summary: "", resultLinks: [] }), 201);
       })
       .patch("/projects/:id", zValidator("json", projectInput.partial()), c => {
         db.update(projects).set(c.req.valid("json")).where(eq(projects.id, c.req.param("id"))).run();
+        bus.emit("meta");
+        return c.json({ ok: true });
+      })
+      // Closing report: a summary and result links. Open tasks need an explicit `force`, so nobody closes a project by accident.
+      .post("/projects/:id/close", zValidator("json", projectClose), c => {
+        const u = c.var.user, p = db.select().from(projects).where(eq(projects.id, c.req.param("id"))).get(), b = c.req.valid("json");
+        if (!p) return c.json({ error: "not found" }, 404);
+        if (p.closedAt) return c.json({ error: "Proyek ini sudah ditutup." }, 409);
+        const open = db.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.projectId, p.id), ne(tasks.status, "done"))).all().length;
+        if (open && !b.force) return c.json({ error: `Masih ada ${open} tugas yang belum selesai.`, open }, 409);
+        db.update(projects).set({ closedAt: Date.now(), closedBy: u.email, summary: b.summary, resultLinks: b.links }).where(eq(projects.id, p.id)).run();
+        logActivity(db, u, null, "project", `menutup proyek ${p.name}`);
+        bus.emit("meta");
+        return c.json({ ok: true });
+      })
+      .post("/projects/:id/reopen", c => {
+        const p = db.select().from(projects).where(eq(projects.id, c.req.param("id"))).get();
+        if (!p) return c.json({ error: "not found" }, 404);
+        db.update(projects).set({ closedAt: null, closedBy: null }).where(eq(projects.id, p.id)).run();
         bus.emit("meta");
         return c.json({ ok: true });
       })

@@ -23,6 +23,11 @@ export const projects = sqliteTable("projects", {
   description: text("description").notNull().default(""),
   archived: bool("archived").notNull().default(false),
   createdAt: integer("created_at").notNull(),
+  /** Closing report: set when a manager closes the project; cleared when it is reopened. */
+  closedAt: integer("closed_at"),
+  closedBy: text("closed_by"),
+  summary: text("summary").notNull().default(""),
+  resultLinks: text("result_links", { mode: "json" }).$type<string[]>().notNull().default([]),
 });
 
 export const labels = sqliteTable("labels", {

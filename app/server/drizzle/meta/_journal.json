@@ -29,6 +29,13 @@
       "when": 1791487225363,
       "tag": "0003_time_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791487716838,
+      "tag": "0004_project_close",
+      "breakpoints": true
     }
   ]
 }
