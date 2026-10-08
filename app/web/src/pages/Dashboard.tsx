@@ -15,7 +15,7 @@ import { fmtLong, fmtShort, isToday, today } from "../lib/format";
 import { useAction, useFeed, useRoutines, useTasks, windowFrom } from "../lib/queries";
 import { isIdle, sortTasks, splitDay } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
-import type { TaskDTO } from "@shared/schemas";
+import type { MemberDTO, TaskDTO } from "@shared/schemas";
 import { atMs } from "@shared/time";
 import { QuickAddSelf } from "../components/QuickAddSelf";
 import { WeekStrip } from "../components/WeekStrip";
@@ -23,7 +23,7 @@ import { fmtTime } from "../lib/format";
 
 const now = () => Date.now();
 
-function Tiles({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
+function Tiles({ tasks, date, people = [] }: { tasks: TaskDTO[]; date: string; people?: MemberDTO[] }) {
   const [, go] = useLocation();
   const c = tally(tasks), total = tasks.length, pct = total ? Math.round(c.done / total * 100) : 0;
   const overdue = tasks.filter(t => t.status !== "done" && t.due && now() > atMs(t.date, t.due)).length;
@@ -37,6 +37,7 @@ function Tiles({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
           <div className="k" style={{ margin: "6px 0 10px" }}>{total ? `${c.done} dari ${total} tugas selesai` : "belum ada tugas"}</div>
           <div className="bar"><i style={{ width: `${pct}%` }} /></div>
         </div>
+        {people.length > 0 && <div className="avatars heroav" title="Sedang punya tugas aktif">{people.slice(0, 5).map(m => <Avatar key={m.email} m={m} />)}{people.length > 5 && <span className="avatar more">+{people.length - 5}</span>}</div>}
       </div>
       <div className="tile" data-c="yellow"><span className="k">Selesai</span><div className="v">{c.done}</div></div>
       <div className="tile" data-c="sky"><span className="k">Dikerjakan</span><div className="v">{c.doing}</div></div>
@@ -105,7 +106,7 @@ function ManagerDashboard() {
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
       <InstallCard /><NotifyCard manager />
-      <Tiles tasks={shown} date={date} />
+      <Tiles tasks={shown} date={date} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />
       <WeekStrip date={date} tasks={tasks.filter(t => workers.some(w => w.email === t.email))} onPick={setDate} />
       <Links />
       {idle.length > 0 && (
