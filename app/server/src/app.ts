@@ -43,6 +43,14 @@ export function createApp(deps: Deps) {
       startSession(c, deps, c.req.valid("json").email.toLowerCase(), "Dev");
       return c.json({ ok: true });
     })
+    // Same, as a link you can open in the browser: /api/auth/dev?email=owner@demo.id
+    .get("/auth/dev", c => {
+      const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(env.PUBLIC_URL);
+      const email = c.req.query("email")?.toLowerCase();
+      if (!env.ALLOW_DEV_LOGIN || !local || !email) return c.json({ error: "not found" }, 404);
+      startSession(c, deps, email, "Dev");
+      return c.redirect("/");
+    })
     .post("/auth/logout", c => { endSession(c, deps); return c.json({ ok: true }); })
     .get("/me", auth, c => {
       const u = c.var.user;
