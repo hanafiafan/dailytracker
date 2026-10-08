@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { LinkDTO, MeDTO, MemberDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
+import type { ActivityDTO, AnalyticsDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
+  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const,
 };
 
 /** null = not signed in. */
@@ -25,8 +26,27 @@ export const useTasks = (from: string, enabled: boolean) => useQuery({
   queryKey: [...keys.tasks, from], enabled, placeholderData: prev => prev,
   queryFn: () => ok(api.tasks.$get({ query: { from } })) as unknown as Promise<TaskDTO[]>,
 });
+export const useTask = (id: string | null) => useQuery({
+  queryKey: [...keys.tasks, "one", id], enabled: !!id,
+  queryFn: () => ok(api.tasks[":id"].$get({ param: { id: id! } })) as unknown as Promise<TaskDTO>,
+});
 export const useRoutines = (enabled: boolean) => useQuery({ queryKey: keys.routines, enabled, queryFn: () => ok(api.routines.$get()) as unknown as Promise<RoutineDTO[]> });
 export const useLinks = (enabled: boolean) => useQuery({ queryKey: keys.links, enabled, queryFn: () => ok(api.links.$get()) as unknown as Promise<LinkDTO[]> });
+
+export const useMeta = (enabled: boolean) => useQuery({ queryKey: keys.meta, enabled, queryFn: () => ok(api.meta.$get()) as unknown as Promise<MetaDTO> });
+export const useInbox = (enabled: boolean) => useQuery({
+  queryKey: keys.inbox, enabled,
+  queryFn: () => ok(api.inbox.notifications.$get()) as unknown as Promise<{ items: NotificationDTO[]; unread: number }>,
+});
+export const useFeed = (enabled: boolean) => useQuery({ queryKey: [...keys.activity, "feed"], enabled, queryFn: () => ok(api.inbox.activity.$get({ query: { limit: "25" } })) as unknown as Promise<ActivityDTO[]> });
+export const useTaskActivity = (id: string | null) => useQuery({
+  queryKey: [...keys.activity, id], enabled: !!id,
+  queryFn: () => ok(api.tasks[":id"].activity.$get({ param: { id: id! } })) as unknown as Promise<ActivityDTO[]>,
+});
+export const useAnalytics = (from: string, to: string, enabled: boolean) => useQuery({
+  queryKey: [...keys.analytics, from, to], enabled,
+  queryFn: () => ok(api.reports.analytics.$get({ query: { from, to } })) as unknown as Promise<AnalyticsDTO>,
+});
 
 export const windowFrom = (date: string, today: string) => addDays(date < today ? date : today, -30);
 
@@ -37,7 +57,9 @@ export function useLive(qc: QueryClient, active: boolean) {
     const es = new EventSource("/api/events");
     es.addEventListener("change", e => {
       const topic = (e as MessageEvent<string>).data;
-      if (topic === "tasks") { void qc.invalidateQueries({ queryKey: keys.tasks }); void qc.invalidateQueries({ queryKey: keys.routines }); }
+      if (topic === "tasks") for (const k of [keys.tasks, keys.routines, keys.activity, keys.analytics]) void qc.invalidateQueries({ queryKey: k });
+      else if (topic === "meta") void qc.invalidateQueries({ queryKey: keys.meta });
+      else if (topic === "inbox") void qc.invalidateQueries({ queryKey: keys.inbox });
       else if (topic === "team") void qc.invalidateQueries({ queryKey: keys.team });
       else if (topic === "links") void qc.invalidateQueries({ queryKey: keys.links });
     });
@@ -59,6 +81,15 @@ export function useAction<V = void>(fn: (v: V) => Promise<unknown>, opts: { done
       const m = typeof opts.done === "function" ? opts.done(v) : opts.done;
       if (m) toast.success(m);
     },
-    onError: e => toast.error(errorText(e)),
+    onError: e => {
+      toast.error(errorText(e));
+      for (const k of opts.refresh ?? [keys.tasks, keys.team]) void qc.invalidateQueries({ queryKey: k }); // undo any optimistic change
+    },
   });
+}
+
+/** Show a change right away (drag and drop); the refetch after the request confirms or reverts it. */
+export function patchTaskLocally(qc: QueryClient, id: string, patch: Partial<TaskDTO>) {
+  qc.setQueriesData<TaskDTO[] | TaskDTO>({ queryKey: keys.tasks }, old =>
+    Array.isArray(old) ? old.map(t => (t.id === id ? { ...t, ...patch } : t)) : old && !Array.isArray(old) && old.id === id ? { ...old, ...patch } : old);
 }
