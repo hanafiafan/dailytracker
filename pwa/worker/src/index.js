@@ -122,3 +122,61 @@ async function notify(env, caller, { type, email, id }) {
   return 403;
 }
 
+// ---------- cron: reminders ----------
+async function reminders(env) {
+  const now = Date.now(), { date, hour, minute } = wib();
+  const items = await query(env, "items", { fieldFilter: { field: { fieldPath: "date" }, op: "EQUAL", value: { stringValue: date } } });
+  const devices = await deviceMap(env);
+
+  // Deadline reminders: once at 30 minutes before, once when overdue.
+  for (const d of items) {
+    const t = d.data;
+    if (t.status === "done" || !t.due) continue;
+    const dl = atMs(date, t.due);
+    if (now > dl && !t.remLate) {
+      await markDoc(env, d.path, "remLate");
+      await push(env, devices, [d.parent], "Tugas terlambat", `${t.title} (tenggat ${t.due})`, "late-" + d.id);
+    } else if (dl > now && dl - now <= 30 * 60000 && !t.remDue && !t.remLate) {
+      await markDoc(env, d.path, "remDue");
+      await push(env, devices, [d.parent], "Tenggat sebentar lagi", `${t.title} jam ${t.due}`, "due-" + d.id);
+    }
+  }
+
+  // Morning reminder at 08:00 WIB: unfinished tasks today, plus routines the app has not created yet.
+  if (hour !== 8 || minute >= 15) return;
+  const dow = new Date(`${date}T12:00:00+07:00`).getUTCDay();
+  const have = new Map();
+  for (const d of items) {
+    const h = have.get(d.parent) || have.set(d.parent, { ids: new Set(), open: 0 }).get(d.parent);
+    h.ids.add(d.id);
+    if (d.data.status !== "done") h.open++;
+  }
+  const [team, kds] = await Promise.all([listDocs(env, "team"), listDocs(env, "tasks")]);
+  for (const m of team) {
+    if (m.data.isAdmin || !devices.has(m.id)) continue;
+    const h = have.get(m.id) || { ids: new Set(), open: 0 };
+    const routines = ((kds.find(k => k.id === m.id) || { data: {} }).data.routines) || [];
+    const extra = routines.filter(r => (r.days || []).includes(dow) && !h.ids.has(`r-${r.id}-${date}`)).length;
+    if (h.open + extra) await push(env, devices, [m.id], "Selamat pagi", `Kamu punya ${h.open + extra} tugas hari ini.`, "morning-" + date);
+  }
+}
+
+export default {
+  async fetch(req, env) {
+    const origin = req.headers.get("origin") || "";
+    const cors = { "access-control-allow-origin": ORIGINS.includes(origin) ? origin : ORIGINS[0], "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "POST, OPTIONS", vary: "origin" };
+    if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    const url = new URL(req.url);
+    if (req.method !== "POST" || url.pathname !== "/notify") return new Response("ok", { headers: cors });
+    try {
+      const caller = await who(env, req);
+      if (!caller) return new Response("unauthorized", { status: 401, headers: cors });
+      const res = await notify(env, caller, await req.json());
+      return new Response(typeof res === "number" ? "rejected" : "sent", { status: typeof res === "number" ? res : 200, headers: cors });
+    } catch (e) {
+      console.error(e);
+      return new Response("error", { status: 500, headers: cors });
+    }
+  },
+  async scheduled(_evt, env, ctx) { ctx.waitUntil(reminders(env).catch(e => console.error(e))); },
+};
