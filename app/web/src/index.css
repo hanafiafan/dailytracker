@@ -282,3 +282,15 @@ select.input { appearance: auto }
 .login > div { gap: 14px }
 .login .tip { text-align: left }
 
+/* additions for the React version */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px }
+.cmt { margin-top: 6px; display: grid; gap: 4px; font-size: .84rem }
+.cmt .c { background: var(--sunk); border-radius: 8px; padding: 5px 9px; overflow-wrap: anywhere }
+.cmt .c b { font-weight: 700 }
+.cmt .c small { color: var(--muted); margin-left: 6px }
+.cmt .c button { background: none; border: 0; color: var(--muted); margin-left: 6px; font-size: .75rem }
+.cmt form { display: flex; gap: 6px }
+.links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.links a { color: var(--accent); font-weight: 600; font-size: .85rem }
+.sk { display: inline-block; width: 100%; height: 1em; border-radius: 6px; background: var(--sunk) }
+}
