@@ -235,3 +235,37 @@ describe("project closing report", () => {
     expect((await json(await t.call(OWNER, "GET", "/meta"))).projects[0].closedAt).toBeNull();
   });
 });
+
+describe("equipment bookings and revisions", () => {
+  const day = (n: number) => new Date(Date.now() + 7 * 3600e3 + n * 86400e3).toISOString().slice(0, 10);
+  it("managers keep the resource list; overlapping bookings are refused; only the booker cancels", async () => {
+    const t = setup();
+    expect((await t.call("a@x.id", "POST", "/resources", { name: "Kamera A7" })).status).toBe(403);
+    const cam = await json(await t.call("hcs@x.id", "POST", "/resources", { name: "Kamera A7", kind: "alat" }));
+    const slot = { resourceId: cam.id, date: day(1), start: "09:00", end: "11:00" };
+    expect((await t.call("a@x.id", "POST", "/bookings", { ...slot, end: "09:00" })).status).toBe(400);
+    expect((await t.call("a@x.id", "POST", "/bookings", { ...slot, date: day(-2) })).status).toBe(400);
+    const mine = await t.call("a@x.id", "POST", "/bookings", slot);
+    expect(mine.status).toBe(201);
+    const clash = await t.call("b@x.id", "POST", "/bookings", { ...slot, start: "10:00", end: "12:00" });
+    expect(clash.status).toBe(409);
+    expect((await json(clash)).error).toContain("A");
+    expect((await t.call("b@x.id", "POST", "/bookings", { ...slot, start: "11:00", end: "12:00" })).status).toBe(201); // touching is fine
+    expect((await json(await t.call("b@x.id", "GET", `/bookings?from=${day(0)}&to=${day(3)}`))).length).toBe(2);
+    const { id } = await json(mine);
+    expect((await t.call("b@x.id", "DELETE", `/bookings/${id}`)).status).toBe(403);
+    expect((await t.call("a@x.id", "DELETE", `/bookings/${id}`)).status).toBe(200);
+    await t.call("hcs@x.id", "PATCH", `/resources/${cam.id}`, { archived: true });
+    expect((await t.call("a@x.id", "POST", "/bookings", slot)).status).toBe(400);
+  });
+  it("counts how often a task is sent back", async () => {
+    const t = setup();
+    const id = (await json(await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Revisi", needProof: false }))).ids[0] as string;
+    for (let i = 0; i < 2; i++) {
+      const fd = new FormData(); fd.set("skipProof", "1");
+      await t.call("a@x.id", "POST", `/tasks/${id}/complete`, fd);
+      await t.call("hcs@x.id", "POST", `/tasks/${id}/return`);
+    }
+    expect((await json(await t.call("a@x.id", "GET", "/tasks"))).find((x: J) => x.id === id).revisions).toBe(2);
+  });
+});
