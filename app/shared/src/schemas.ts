@@ -2,6 +2,11 @@ import { z } from "zod";
 
 export const STATUSES = ["todo", "doing", "done"] as const;
 export type Status = (typeof STATUSES)[number];
+export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+export type Priority = (typeof PRIORITIES)[number];
+/** Colour tokens for projects and labels; the web app maps each to a pastel surface. */
+export const COLORS = ["lilac", "pink", "yellow", "lime", "mint", "sky", "peach", "gray"] as const;
+export type Color = (typeof COLORS)[number];
 
 const hm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -25,13 +30,29 @@ export const taskCreate = z.object({
   date: date.optional(),
   start: hm.nullish(), due: hm.nullish(),
   hot: z.boolean().default(false),
+  priority: z.enum(PRIORITIES).default("normal"),
+  projectId: z.string().nullish(),
+  labelIds: z.array(z.string()).max(10).default([]),
+  subtasks: z.array(z.string().trim().min(1).max(160)).max(30).default([]),
   needProof: z.boolean().default(true),
   // Routine: appears automatically on the chosen weekdays (0 = Sunday).
   routineDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
 }).refine(t => !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
+/** Partial edit of a task: title/notes/schedule/priority/project/labels, or reassigning to someone else. */
+export const taskPatch = z.object({
+  title: z.string().trim().min(1).max(160), note: z.string().trim().max(600),
+  date, start: hm.nullable(), due: hm.nullable(),
+  priority: z.enum(PRIORITIES), projectId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
+  needProof: z.boolean(), email,
+}).partial();
+export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
+export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
+export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.enum(COLORS).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
+export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.enum(COLORS).default("gray") });
+export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
 export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
-export const commentCreate = z.object({ text: z.string().trim().min(1).max(600) });
+export const commentCreate = z.object({ text: z.string().trim().min(1).max(600), mentions: z.array(email).max(10).default([]) });
 export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), url: z.string().trim().url().max(500) });
 export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
 
@@ -41,13 +62,29 @@ export interface MemberDTO {
   sortOrder: number; hasPhoto: boolean; photoV: number; seenAt: number | null; askAt: number | null;
 }
 export interface CommentDTO { id: string; by: string; byEmail: string; text: string; at: number }
+export interface SubtaskDTO { id: string; title: string; done: boolean }
+export interface ProjectDTO { id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number }
+export interface LabelDTO { id: string; name: string; color: Color }
+export interface ActivityDTO { id: string; taskId: string | null; taskTitle: string | null; actorEmail: string; actorName: string; kind: string; text: string; at: number }
+export interface NotificationDTO { id: string; kind: string; taskId: string | null; text: string; at: number; read: boolean }
+export interface PersonStat { email: string; name: string; total: number; done: number; onTime: number; late: number; open: number; overdue: number }
+export interface AnalyticsDTO {
+  from: string; to: string;
+  totals: { total: number; done: number; open: number; overdue: number; onTimeRate: number | null; avgCompletionMin: number | null };
+  perPerson: PersonStat[];
+  daily: { date: string; created: number; done: number }[];
+  byProject: { projectId: string | null; total: number; done: number }[];
+  byPriority: Record<Priority, number>;
+  byLabel: { labelId: string; total: number; done: number }[];
+}
 export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
-  status: Status; hot: boolean; needProof: boolean; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
+  status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];
 }
 export interface RoutineDTO { id: string; email: string; title: string; note: string; start: string | null; due: string | null; days: number[]; hot: boolean; needProof: boolean; byName: string | null }
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
+export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
 export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null }
