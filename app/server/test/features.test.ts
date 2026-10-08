@@ -201,3 +201,37 @@ describe("time tracking", () => {
     expect((await t.call("a@x.id", "DELETE", `/time/entry/${e.id}`)).status).toBe(200);
   });
 });
+
+describe("project closing report", () => {
+  it("managers close with a summary and links; open tasks need force; reopen works; report respects visibility", async () => {
+    const t = setup();
+    const proj = await json(await t.call(OWNER, "POST", "/meta/projects", { name: "Kampanye" }));
+    const mk = async (email: string, title: string) => (await json(await t.call(OWNER, "POST", "/tasks", { emails: [email], title, projectId: proj.id, needProof: false }))).ids[0] as string;
+    const a1 = await mk("a@x.id", "Dikerjakan"), b1 = await mk("b@x.id", "Unit lain");
+    const fd = new FormData(); fd.set("link", "https://example.com/hasil");
+    expect((await t.call("a@x.id", "POST", `/tasks/${a1}/complete`, fd)).status).toBe(200);
+
+    const body = { summary: "Selesai sesuai target", links: ["https://example.com/final"] };
+    expect((await t.call("a@x.id", "POST", `/meta/projects/${proj.id}/close`, body)).status).toBe(403);
+    const refused = await t.call(OWNER, "POST", `/meta/projects/${proj.id}/close`, body);
+    expect(refused.status).toBe(409);
+    expect((await json(refused)).open).toBe(1);
+    expect((await t.call(OWNER, "POST", `/meta/projects/${proj.id}/close`, { ...body, links: ["javascript:alert(1)"], force: true })).status).toBe(400);
+    expect((await t.call(OWNER, "POST", `/meta/projects/${proj.id}/close`, { ...body, force: true })).status).toBe(200);
+    expect((await t.call(OWNER, "POST", `/meta/projects/${proj.id}/close`, { ...body, force: true })).status).toBe(409);
+    const meta = await json(await t.call("a@x.id", "GET", "/meta"));
+    expect(meta.projects[0]).toMatchObject({ summary: "Selesai sesuai target", links: ["https://example.com/final"] });
+    expect(meta.projects[0].closedAt).toBeGreaterThan(0);
+
+    const own = await json(await t.call("a@x.id", "GET", `/reports/project/${proj.id}`));
+    expect(own.tasks.map((x: J) => x.title)).toEqual(["Dikerjakan"]);
+    expect(own.stats).toMatchObject({ total: 1, done: 1, withProof: 1 });
+    expect(own.tasks[0].proofLink).toBe("https://example.com/hasil");
+    expect((await json(await t.call(OWNER, "GET", `/reports/project/${proj.id}`))).stats.total).toBe(2);
+    expect(b1).toBeTruthy();
+
+    expect((await t.call("a@x.id", "POST", `/meta/projects/${proj.id}/reopen`)).status).toBe(403);
+    expect((await t.call(OWNER, "POST", `/meta/projects/${proj.id}/reopen`)).status).toBe(200);
+    expect((await json(await t.call(OWNER, "GET", "/meta"))).projects[0].closedAt).toBeNull();
+  });
+});
