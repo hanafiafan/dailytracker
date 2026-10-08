@@ -2,11 +2,14 @@ import { useMemo, useState } from "react";
 import type { TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { weekStart } from "../lib/tasks";
+import { CloseProject } from "../components/CloseProject";
 import { ProjectsLabels } from "../components/ProjectsLabels";
 import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
 import { today } from "../lib/format";
-import { useTasks, windowFrom } from "../lib/queries";
+import { useLocation } from "wouter";
+import { api, ok } from "../lib/api";
+import { keys, useAction, useTasks, windowFrom } from "../lib/queries";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -54,11 +57,13 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
 export function ProjectsPage() {
   const { projects, policy, member } = useViewer();
   const { date } = useUi();
-  const [tab, setTab] = useState("ringkas");
+  const [tab, setTab] = useState("ringkas"), [closing, setClosing] = useState<string | null>(null);
+  const [, go] = useLocation();
+  const reopen = useAction((id: string) => ok(api.meta.projects[":id"].reopen.$post({ param: { id } })), { done: "Proyek dibuka kembali", refresh: [keys.meta] });
   const tq = useTasks(windowFrom(date, today()), true);
   const rows = useMemo(() => {
     const all = tq.data ?? [];
-    return projects.filter(p => !p.archived).map(p => {
+    return projects.filter(p => !p.archived).sort((a, b) => Number(!!a.closedAt) - Number(!!b.closedAt)).map(p => {
       const l = all.filter(t => t.projectId === p.id), done = l.filter(t => t.status === "done").length;
       const late = l.filter(t => t.status !== "done" && t.date < today()).length;
       const who = [...new Set(l.map(t => t.email))].map(e => member(e)).filter(Boolean);
@@ -71,16 +76,21 @@ export function ProjectsPage() {
       {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length ? (
         <div className="pcards">
           {rows.map(({ p, total, done, late, open, pct, who }) => (
-            <article key={p.id} className="pcard" data-c={p.color}>
-              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h3 className="clamp1">{p.name}</h3><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
+            <article key={p.id} className={"pcard" + (p.closedAt ? " closed" : "")} data-c={p.color}>
+              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h3 className="clamp1">{p.name}{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h3><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
               <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
                 <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
               </div>
+              <div className="chips">
+                <button className="btn small" onClick={() => go("/proyek/" + p.id)}>{p.closedAt ? "Laporan akhir" : "Laporan"}</button>
+                {policy.isManager && (p.closedAt ? <button className="btn small ghost" onClick={() => reopen.mutate(p.id)}>Buka kembali</button> : <button className="btn small primary" onClick={() => setClosing(p.id)}>Tutup proyek</button>)}
+              </div>
             </article>))}
         </div>
       ) : <div className="bc"><Empty art="tasks" title="Belum ada proyek">{policy.isManager ? "Buat proyek di tab Kelola untuk mengelompokkan tugas." : "Proyek akan muncul di sini."}</Empty></div>}
+      {closing && <CloseProject p={projects.find(x => x.id === closing)!} openTasks={rows.find(r => r.p.id === closing)?.open ?? 0} onClose={() => setClosing(null)} />}
     </Page>
   );
 }
