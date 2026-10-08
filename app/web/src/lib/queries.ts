@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
+import type { ProjectReportDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
@@ -37,6 +37,7 @@ export const useLeaves = (enabled: boolean) => useQuery({ queryKey: keys.leaves,
 export const useRunning = (enabled: boolean) => useQuery({ queryKey: keys.timer, enabled, queryFn: () => ok(api.time.running.$get()) as unknown as Promise<RunningTimerDTO | null> });
 export const useTaskTime = (id: string) => useQuery({ queryKey: [...keys.timer, "task", id], queryFn: () => ok(api.time.task[":taskId"].$get({ param: { taskId: id } })) as unknown as Promise<{ entries: TimeEntryDTO[]; totalMin: number }> });
 export const useTimeReport = (from: string, to: string) => useQuery({ queryKey: [...keys.timer, "report", from, to], queryFn: () => ok(api.time.report.$get({ query: { from, to } })) as unknown as Promise<TimeReportDTO> });
+export const useProjectReport = (id: string) => useQuery({ queryKey: [...keys.analytics, "project", id], queryFn: () => ok(api.reports.project[":id"].$get({ param: { id } })) as unknown as Promise<ProjectReportDTO> });
 export const useMeta = (enabled: boolean) => useQuery({ queryKey: keys.meta, enabled, queryFn: () => ok(api.meta.$get()) as unknown as Promise<MetaDTO> });
 export const useInbox = (enabled: boolean) => useQuery({
   queryKey: keys.inbox, enabled,
