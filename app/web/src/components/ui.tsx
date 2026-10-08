@@ -3,8 +3,8 @@ import { Inbox, Sparkles } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
-/** Avatar fill colours: the bright brand colours. */
-const AVATAR = ["#2F6BFF", "#14B053", "#FF7A1A", "#8A4DFF", "#F0348B", "#08B7C8", "#EF4136"];
+/** Avatar fill colours: the brand palette. */
+const AVATAR = ["#2547E8", "#5F31C4", "#101114", "#55606D", "#5B7BFF", "#8F66E8"];
 
 export function Avatar({ m, big, src }: { m: Pick<MemberDTO, "email" | "name" | "role" | "hasPhoto" | "photoV">; big?: boolean; src?: string | null }) {
   const cls = "avatar" + (big ? " big" : "");
@@ -62,7 +62,7 @@ export function Ring({ done, total, size = 44 }: { done: number; total: number; 
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label={`${done} dari ${total} selesai`}>
       <circle cx="20" cy="20" r={r} fill="none" stroke="var(--sunk)" strokeWidth="5" />
-      {total > 0 && p > 0 && <circle cx="20" cy="20" r={r} fill="none" stroke={p === 1 ? "var(--ok)" : "var(--ink)"} strokeWidth="5" strokeLinecap="round" strokeDasharray={`${p * c} ${c}`} transform="rotate(-90 20 20)" style={{ transition: "stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)" }} />}
+      {total > 0 && p > 0 && <circle cx="20" cy="20" r={r} fill="none" stroke={p === 1 ? "var(--lime-d)" : "var(--primary)"} strokeWidth="5" strokeLinecap="round" strokeDasharray={`${p * c} ${c}`} transform="rotate(-90 20 20)" style={{ transition: "stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)" }} />}
       <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--ink)">{total ? Math.round(p * 100) : "–"}</text>
     </svg>
   );
