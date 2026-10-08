@@ -78,3 +78,17 @@ export const links = sqliteTable("links", {
   createdAt: integer("created_at").notNull(),
 });
 
+export const sessions = sqliteTable("sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name").notNull().default(""),
+  exp: integer("exp").notNull(),
+});
+
+export const pushSubs = sqliteTable("push_subs", {
+  endpoint: text("endpoint").primaryKey(),
+  email: text("email").notNull(),
+  sub: text("sub", { mode: "json" }).$type<{ endpoint: string; keys: { p256dh: string; auth: string } }>().notNull(),
+}, t => [index("push_email").on(t.email)]);
+
+export const meta = sqliteTable("meta", { k: text("k").primaryKey(), v: text("v").notNull() });
