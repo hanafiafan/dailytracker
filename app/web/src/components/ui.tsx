@@ -1,10 +1,11 @@
+import { Art, type ArtName } from "./Illus";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Inbox } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
 /** Avatar fill colours: the brand palette. */
-const AVATAR = ["#C7C6BB", "#BBBAAE", "#D2D1C6", "#B2B1A5", "#C0BFB3", "#CDCCC1"];
+const AVATAR = ["#C9D6FF", "#E4F7A0", "#FFD3E0", "#FFE0B8", "#CBEFE0", "#DAD3FF"];
 
 export function Avatar({ m, big, src }: { m: Pick<MemberDTO, "email" | "name" | "role" | "hasPhoto" | "photoV">; big?: boolean; src?: string | null }) {
   const cls = "avatar" + (big ? " big" : "");
@@ -52,8 +53,8 @@ export const Loading = () => (
 export const Skeleton = ({ h = 16, w = "100%" }: { h?: number; w?: number | string }) => <div className="sk" style={{ height: h, width: w }} />;
 
 /** Friendly empty state. */
-export function Empty({ icon = <Inbox size={22} />, title, children }: { icon?: ReactNode; title: string; children?: ReactNode }) {
-  return <div className="emptystate"><span aria-hidden="true">{icon}</span><b>{title}</b>{children && <p>{children}</p>}</div>;
+export function Empty({ art = "tasks", title, children }: { art?: ArtName; icon?: ReactNode; title: string; children?: ReactNode }) {
+  return <div className="emptyart"><Art name={art} /><b>{title}</b>{children && <p>{children}</p>}</div>;
 }
 
 /** Small circular progress with the percentage in the middle. */

@@ -38,7 +38,7 @@ export const useInbox = (enabled: boolean) => useQuery({
   queryKey: keys.inbox, enabled,
   queryFn: () => ok(api.inbox.notifications.$get()) as unknown as Promise<{ items: NotificationDTO[]; unread: number }>,
 });
-export const useFeed = (enabled: boolean) => useQuery({ queryKey: [...keys.activity, "feed"], enabled, queryFn: () => ok(api.inbox.activity.$get({ query: { limit: "25" } })) as unknown as Promise<ActivityDTO[]> });
+export const useFeed = (enabled: boolean, limit = 25) => useQuery({ queryKey: [...keys.activity, "feed", limit], enabled, queryFn: () => ok(api.inbox.activity.$get({ query: { limit: String(limit) } })) as unknown as Promise<ActivityDTO[]> });
 export const useTaskActivity = (id: string | null) => useQuery({
   queryKey: [...keys.activity, id], enabled: !!id,
   queryFn: () => ok(api.tasks[":id"].activity.$get({ param: { id: id! } })) as unknown as Promise<ActivityDTO[]>,

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Camera, Columns3 } from "lucide-react";
+import { CheckCheck } from "lucide-react";
+import { LoginScene } from "./Illus";
 import { toast } from "sonner";
 import { api, ok } from "../lib/api";
 import { keys } from "../lib/queries";
@@ -40,14 +41,11 @@ export function Login() {
   return (
     <div className="loginwrap">
       <section className="loginart" aria-hidden="true">
-        <div className="logo"><i />Tugas Harian</div>
+        <div className="logo"><i><CheckCheck size={18} /></i>Tugas Harian</div>
+        <LoginScene />
         <div>
-          <h2>Pekerjaan tim kreatif, rapi dalam satu tempat.</h2>
-          <ul>
-            <li><span><Columns3 size={18} /></span><div><b>Papan &amp; kalender</b>Bagi tugas, atur jadwal, dan pantau statusnya.</div></li>
-            <li><span><Camera size={18} /></span><div><b>Bukti kerja</b>Foto atau tautan hasil dilampirkan saat tugas selesai.</div></li>
-            <li><span><BarChart3 size={18} /></span><div><b>Laporan</b>Ketepatan waktu dan beban kerja tiap orang.</div></li>
-          </ul>
+          <h2>Kerja tim kreatif, <em>rapi</em> dalam satu tempat.</h2>
+          <p>Papan, kalender, bukti kerja, dan laporan ketepatan waktu untuk seluruh tim.</p>
         </div>
       </section>
       <main className="loginform">
