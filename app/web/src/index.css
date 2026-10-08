@@ -612,3 +612,9 @@
   .onode.owner .ocnt { background: rgb(255 255 255 / .16); color: inherit; } .onode.head .ocnt { background: rgb(16 17 20 / .12); color: #101114; }
   .otable td { max-width: none; }
 }
+@layer components {
+  .alist, .focus { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .arow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 6px; border-radius: 14px; } .arow:hover { background: var(--hover); } .arow b, .arow .linkbtn { font-weight: 600; font-size: .86rem; } .arow small { display: block; font-size: .76rem; }
+  .focus li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); } .focus li:last-child { border: 0; } .focus .n { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--surface); display: grid; place-items: center; font-weight: 800; font-size: .78rem; } .focus .linkbtn { font-weight: 600; font-size: .9rem; }
+  .badge { font-size: .74rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--glass); color: var(--muted); border: 1px dashed var(--line-2); } .badge.on { background: var(--volt); color: #101114; border: 0; }
+}
