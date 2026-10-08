@@ -105,3 +105,42 @@ describe("api", () => {
     expect(t.db.select().from(tasks).get()).toMatchObject({ status: "doing", doneAt: null });
   });
 
+  it("comments: visible people can write, only the author or a manager can delete", async () => {
+    const { ids } = await (await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T" })).json();
+    expect((await t.call("b@x.id", "POST", `/tasks/${ids[0]}/comments`, { text: "hi" })).status).toBe(404);
+    const c = await (await t.call("a@x.id", "POST", `/tasks/${ids[0]}/comments`, { text: "siap" })).json();
+    const list = await (await t.call("a@x.id", "GET", "/tasks?from=2000-01-01")).json();
+    expect(list[0].comments[0]).toMatchObject({ text: "siap", by: "A" });
+    expect((await t.call("b@x.id", "DELETE", `/tasks/${ids[0]}/comments/${c.id}`)).status).toBe(403);
+    expect((await t.call("hcs@x.id", "DELETE", `/tasks/${ids[0]}/comments/${c.id}`)).status).toBe(200);
+  });
+
+  it("routines create today's task once and renaming an email keeps the tasks", async () => {
+    const dow = new Date().getDay();
+    await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "Rutin", routineDays: [0, 1, 2, 3, 4, 5, 6] });
+    const date = wib().date;
+    expect(ensureRoutines(t.db, date)).toBe(0);              // already created at creation time
+    expect(t.db.select().from(tasks).all()).toHaveLength(1);
+    expect(ensureRoutines(t.db, "2099-01-04")).toBe(1);       // another day -> a new copy
+    expect(ensureRoutines(t.db, "2099-01-04")).toBe(0);       // idempotent
+    expect(dow).toBeGreaterThanOrEqual(0);
+    expect((await t.call(OWNER, "POST", "/team/a@x.id/move", { email: "new@x.id" })).status).toBe(200);
+    expect(t.db.select().from(tasks).all().every(x => x.email === "new@x.id")).toBe(true);
+  });
+
+  it("team: only a boss makes admins; members edit just their own name/role", async () => {
+    expect((await t.call("hcs@x.id", "PATCH", "/team/a@x.id", { isAdmin: true })).status).toBe(403);
+    expect((await t.call("a@x.id", "PATCH", "/team/a@x.id", { name: "Aa" })).status).toBe(200);
+    expect((await t.call("a@x.id", "PATCH", "/team/a@x.id", { isAdmin: true })).status).toBe(403);
+    expect((await t.call("a@x.id", "PATCH", "/team/b@x.id", { name: "x" })).status).toBe(403);
+    expect((await t.call(OWNER, "PATCH", "/team/a@x.id", { isAdmin: true })).status).toBe(200);
+    expect(t.db.select().from(members).all().find(m => m.email === "a@x.id")).toMatchObject({ isAdmin: true, adminGroups: ["HCS"] });
+  });
+
+  it("ask-for-work notifies managers", async () => {
+    expect((await t.call("a@x.id", "POST", "/ask")).status).toBe(200);
+    const s = t.sent.find(x => x.title.includes("minta tugas"));
+    expect(s?.to).toEqual(expect.arrayContaining([OWNER, "vero@x.id", "hcs@x.id"]));
+    expect(s?.to).not.toContain("a@x.id");
+  });
+
