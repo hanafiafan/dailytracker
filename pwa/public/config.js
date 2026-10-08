@@ -15,7 +15,7 @@ export const firebaseConfig = {
 
 // 2) Email Google pemilik aplikasi (yang bisa melihat dan mengatur semua).
 //    Harus sama dengan email di file firestore.rules.
-export const OWNER_EMAIL = "rtekidvector@gmail.com";
+export const OWNER_EMAIL = "hellensdev@gmail.com";
 
 // 3) Daftar tim awal. Email tiap orang diisi lewat aplikasi saat pertama kali dibuka.
 export const DEFAULT_TEAM = [

@@ -13,7 +13,7 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
     function me() { return request.auth.token.email.lower(); }
-    function isOwner() { return signedIn() && me() == 'rtekidvector@gmail.com'; }
+    function isOwner() { return signedIn() && me() == 'hellensdev@gmail.com'; }
     function memberPath() { return /databases/$(database)/documents/team/$(me()); }
     function isMember() { return signedIn() && exists(memberPath()); }
     function myDoc() { return get(memberPath()).data; }
