@@ -13,7 +13,7 @@ export function ensureRoutines(db: Db, date: string, now = Date.now()) {
   for (const r of db.select().from(routines).all()) {
     if (!r.days.includes(dow)) continue;
     const res = db.insert(tasks).values({
-      id: `r-${r.id}-${date}`, email: r.email, date, title: r.title, note: r.note, start: r.start, due: r.due, hot: r.hot,
+      id: `r-${r.id}-${date}`, email: r.email, date, title: r.title, note: r.note, start: r.start, due: r.due, hot: r.hot, priority: r.priority, projectId: r.projectId,
       needProof: r.needProof, by: "owner", fromAdmin: r.byName, routineId: r.id, createdAt: now,
     }).onConflictDoNothing().run();
     n += res.changes;

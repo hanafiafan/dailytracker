@@ -10,7 +10,10 @@ import { toMemberLite } from "./dto.js";
 import { endSession, requireUser, startSession } from "./auth.js";
 import { createNotify } from "./notify.js";
 import { memberColumns, type AppEnv, type Deps } from "./context.js";
+import { inboxRoutes } from "./routes/inbox.js";
 import { linkRoutes } from "./routes/links.js";
+import { metaRoutes } from "./routes/meta.js";
+import { reportRoutes } from "./routes/reports.js";
 import { routineRoutes } from "./routes/routines.js";
 import { taskRoutes } from "./routes/tasks.js";
 import { teamRoutes } from "./routes/team.js";
@@ -18,7 +21,7 @@ import { teamRoutes } from "./routes/team.js";
 export function createApp(deps: Deps) {
   const { db, env, push, bus } = deps;
   const nameOf = (email: string) => db.select({ n: members.name }).from(members).where(eq(members.email, email)).get()?.n ?? email;
-  const notify = createNotify(push, nameOf);
+  const notify = createNotify(push, db, bus, nameOf);
   const auth = requireUser(deps);
 
   const api = new Hono<AppEnv>()
@@ -32,6 +35,13 @@ export function createApp(deps: Deps) {
         startSession(c, deps, id.email, id.name);
         return c.json({ ok: true });
       } catch (e) { console.warn("login", (e as Error).message); return c.json({ error: "Login Google ditolak" }, 401); }
+    })
+    // Local preview only: sign in as any registered email without Google. Refused unless explicitly enabled AND served from localhost.
+    .post("/auth/dev", zValidator("json", z.object({ email: z.string().email() })), c => {
+      const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(env.PUBLIC_URL);
+      if (!env.ALLOW_DEV_LOGIN || !local) return c.json({ error: "not found" }, 404);
+      startSession(c, deps, c.req.valid("json").email.toLowerCase(), "Dev");
+      return c.json({ ok: true });
     })
     .post("/auth/logout", c => { endSession(c, deps); return c.json({ ok: true }); })
     .get("/me", auth, c => {
@@ -48,6 +58,9 @@ export function createApp(deps: Deps) {
     .use("/tasks/*", auth).route("/tasks", taskRoutes(deps, notify))
     .use("/routines/*", auth).route("/routines", routineRoutes(deps))
     .use("/links/*", auth).route("/links", linkRoutes(deps))
+    .use("/meta/*", auth).route("/meta", metaRoutes(deps))
+    .use("/inbox/*", auth).route("/inbox", inboxRoutes(deps))
+    .use("/reports/*", auth).route("/reports", reportRoutes(deps))
     // "I have nothing left to do": tells the admins.
     .post("/ask", auth, c => {
       const u = c.var.user;
