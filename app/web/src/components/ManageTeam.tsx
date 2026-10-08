@@ -80,3 +80,28 @@ function ScopeChips({ m }: { m: MemberDTO }) {
   );
 }
 
+function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (open: boolean) => void }) {
+  const { me, team, policy } = useViewer();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.email });
+  const toggleAdmin = useAction(() => ok(api.team[":email"].$patch({ param: { email: m.email }, json: { isAdmin: !m.isAdmin } })), { done: m.isAdmin ? `${m.name} bukan admin lagi` : `${m.name} sekarang admin` });
+  const remove = useAction(() => ok(api.team[":email"].$delete({ param: { email: m.email } })), { done: `${m.name} dihapus dari tim` });
+  const self = m.email === me.email;
+  return (
+    <>
+      <div ref={setNodeRef} className={"mrow" + (isDragging ? " dragging" : "")} style={{ transform: CSS.Translate.toString(transform), transition }}>
+        <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button>
+        <Avatar m={m} />
+        <div className="who"><b>{m.name}</b><small>{m.role || "—"}</small><small>{m.email}</small></div>
+        {m.group && <span className="tag due">{m.group}</span>}
+        {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
+        {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
+        {policy.isBoss && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
+        <button className="btn small" onClick={() => onEdit(!editing)}>{editing ? "Tutup" : "Ubah"}</button>
+        {!self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
+        {policy.isBoss && m.isAdmin && !self && units(team).length > 0 && <ScopeChips m={m} />}
+      </div>
+      {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
+    </>
+  );
+}
+
