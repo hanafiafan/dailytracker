@@ -117,3 +117,72 @@ import { DEFAULT_TEAM } from "./config.js";
     return c;
   };
 
+  // ---------- subscriptions ----------
+  let teamUnsub = null;
+  function subTeam() {
+    teamUnsub = db.collection("team").onSnapshot(snap => {
+      S.teamRaw = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || String(a.name).localeCompare(String(b.name)));
+      S.teamLoaded = true;
+      syncSubs();
+      markSeen();
+      render();
+    }, err => { console.warn(err); S.teamLoaded = true; render(); });
+  }
+  // Record (once a day) that this person has opened the app, so the owner sees who has signed in.
+  let seenDone = false;
+  function markSeen() {
+    const m = myMember();
+    if (seenDone || !m || S.owner) return;
+    seenDone = true;
+    if (m.seenAt && ymd(new Date(m.seenAt)) === today()) return;
+    db.doc("team/" + m.id).update({ seenAt: Date.now() }).catch(e => console.warn(e));
+  }
+  function wantedKeys() {
+    const m = myMember();
+    if (isManager()) return S.team.filter(m => isBoss() || (!m.isAdmin && inScope(m))).map(keyOf);
+    return m ? [S.meId] : [];
+  }
+  function subscribeKey(key) {
+    const s = {};
+    s.items = db.collection(`tasks/${key}/items`).where("date", ">=", S.winFrom).onSnapshot(snap => {
+      S.items[key] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!snap.metadata.fromCache) S.itemsLoaded[key] = true;
+      setTimeout(() => ensureRoutines(key), 0);
+      render();
+    }, err => console.warn(err));
+    s.doc = db.doc(`tasks/${key}`).onSnapshot(snap => {
+      S.keyDoc[key] = snap.exists ? snap.data() : {};
+      if (!snap.metadata.fromCache) watchAsk(key, S.keyDoc[key]);
+      if (!snap.metadata.fromCache) S.docLoaded[key] = true;
+      setTimeout(() => ensureRoutines(key), 0);
+      render();
+    }, err => console.warn(err));
+    subs[key] = s;
+  }
+  function syncSubs(force) {
+    const want = new Set(wantedKeys());
+    for (const k of Object.keys(subs)) {
+      if (!want.has(k) || force) { subs[k].items(); subs[k].doc(); delete subs[k]; if (!want.has(k)) { delete S.items[k]; delete S.keyDoc[k]; } S.itemsLoaded[k] = false; }
+    }
+    for (const k of want) if (!subs[k]) subscribeKey(k);
+  }
+
+  // Create today's copies of daily routines, once per person per day.
+  async function ensureRoutines(key) {
+    const d = today();
+    if (!(isManager() || key === S.meId)) return;
+    if (S.readOnly || !S.itemsLoaded[key] || !S.docLoaded[key] || ensured.has(key + "|" + d)) return;
+    ensured.add(key + "|" + d);
+    const routines = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    const dow = parse(d).getDay();
+    const have = new Set((S.items[key] || []).map(t => t.id));
+    for (const r of routines) {
+      if (!(r.days || []).includes(dow)) continue;
+      const id = `r-${r.id}-${d}`;
+      if (have.has(id)) continue;
+      try {
+        await db.doc(`tasks/${key}/items/${id}`).set({ title: r.title, note: r.note || "", date: d, start: r.start || null, due: r.due || null, status: "todo", hot: !!r.hot, needProof: r.needProof !== false, routine: r.id, by: "owner", createdAt: Date.now() });
+      } catch (e) { console.warn(e); break; }
+    }
+  }
+
