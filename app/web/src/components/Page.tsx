@@ -111,9 +111,9 @@ function Bell_() {
 }
 
 /** Page frame: title, optional day navigation and actions, then the optional tab row. */
-export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions }: {
+export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions, noNew }: {
   title: ReactNode; sub?: ReactNode; tabs?: { id: string; label: string }[]; tab?: string; onTab?: (id: string) => void;
-  dateNav?: boolean; actions?: ReactNode; children: ReactNode;
+  dateNav?: boolean; actions?: ReactNode; children: ReactNode; noNew?: boolean;
 }) {
   const { policy } = useViewer();
   const { date, setDate, newTask } = useUi();
@@ -130,7 +130,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
               <button aria-label="Hari berikutnya" onClick={() => setDate(addDays(date, 1))}><ChevronRight size={16} /></button>
             </div>
           )}
-          <button className="btn blue hide-mobile" style={{ height: 40 }} onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
+          {!noNew && <button className="btn blue hide-mobile" style={{ height: 40 }} onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>}
         </div>
       </div>
       <button className="fab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
