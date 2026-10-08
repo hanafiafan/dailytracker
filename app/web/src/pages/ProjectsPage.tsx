@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import type { TaskDTO } from "@shared/schemas";
+import { addDays } from "@shared/time";
+import { weekStart } from "../lib/tasks";
 import { ProjectsLabels } from "../components/ProjectsLabels";
 import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
@@ -12,6 +15,39 @@ function Ring({ pct }: { pct: number }) {
       <circle cx="20" cy="20" r="16" fill="none" stroke="var(--glass)" strokeWidth="5" />
       <circle cx="20" cy="20" r="16" fill="none" stroke="var(--d, var(--blue))" strokeWidth="5" strokeLinecap="round" pathLength="100" strokeDasharray={`${pct} 100`} transform="rotate(-90 20 20)" />
     </svg><b>{pct}%</b></div>
+  );
+}
+
+const DAYS = 28;
+/** Each project as a bar from its first to its last task day (inside a four-week window); the dark part is the share done. */
+function Gantt({ tasks }: { tasks: TaskDTO[] }) {
+  const { projects } = useViewer();
+  const { date } = useUi();
+  const start = addDays(weekStart(date), -7), end = addDays(start, DAYS - 1);
+  const days = Array.from({ length: DAYS }, (_, i) => addDays(start, i));
+  const pos = (d: string) => Math.max(0, Math.min(DAYS - 1, days.indexOf(d) >= 0 ? days.indexOf(d) : d < start ? 0 : DAYS - 1));
+  const rows = projects.filter(p => !p.archived).map(p => {
+    const l = tasks.filter(t => t.projectId === p.id && t.date <= end && t.date >= start);
+    if (!l.length) return null;
+    const a = l.reduce((m, t) => (t.date < m ? t.date : m), l[0]!.date), b = l.reduce((m, t) => (t.date > m ? t.date : m), l[0]!.date);
+    const done = l.filter(t => t.status === "done").length;
+    return { p, a: pos(a), b: pos(b), pct: Math.round(done / l.length * 100), l };
+  }).filter(Boolean) as { p: (typeof projects)[number]; a: number; b: number; pct: number; l: TaskDTO[] }[];
+  const todayIdx = days.indexOf(today());
+  if (!rows.length) return <div className="bc"><Empty art="calendar" title="Belum ada jadwal proyek">Tugas yang punya proyek akan tampil di sini.</Empty></div>;
+  return (
+    <section className="bc"><div className="bc-h"><h3>Garis waktu 4 minggu</h3><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Bagian gelap = selesai</span></span></div>
+      <div className="heatwrap"><div className="gantt" style={{ ["--n" as string]: DAYS }}>
+        <div />{days.map((d, i) => <div key={d} className={"gd" + (d === today() ? " today" : "") + (i % 7 === 0 ? " wk" : "")}>{i % 7 === 0 || d === today() ? <b>{Number(d.slice(8))}</b> : Number(d.slice(8))}</div>)}
+        {rows.map(({ p, a, b, pct, l }) => [
+          <div key={p.id} className="gp" data-c={p.color}><span className="clamp1">{p.name}</span><small className="muted">{l.length} tugas</small></div>,
+          <div key={p.id + "t"} className="gtrack" style={{ gridColumn: "2 / -1" }}>
+            {todayIdx >= 0 && <i className="gtoday" style={{ left: `${(todayIdx + .5) / DAYS * 100}%` }} />}
+            <div className="gbar" data-c={p.color} style={{ left: `${a / DAYS * 100}%`, width: `${(b - a + 1) / DAYS * 100}%` }} title={`${p.name}: ${pct}% selesai`}><i style={{ width: `${pct}%` }} /><span>{pct}%</span></div>
+          </div>,
+        ])}
+      </div></div>
+    </section>
   );
 }
 
@@ -31,8 +67,8 @@ export function ProjectsPage() {
   }, [tq.data, projects, member]);
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
-      tabs={policy.isManager ? [{ id: "ringkas", label: "Ringkasan" }, { id: "kelola", label: "Kelola proyek & label" }] : undefined} tab={tab} onTab={setTab}>
-      {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : rows.length ? (
+      tabs={[{ id: "ringkas", label: "Ringkasan" }, { id: "waktu", label: "Garis waktu" }, ...(policy.isManager ? [{ id: "kelola", label: "Kelola proyek & label" }] : [])]} tab={tab} onTab={setTab}>
+      {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length ? (
         <div className="pcards">
           {rows.map(({ p, total, done, late, open, pct, who }) => (
             <article key={p.id} className="pcard" data-c={p.color}>

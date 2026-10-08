@@ -11,6 +11,12 @@ import { keys, useTasks, windowFrom } from "../lib/queries";
 import { PRIORITY_LABEL, PRIORITY_RANK, subtaskProgress } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 
+type Group = "" | "status" | "who" | "project" | "date";
+interface View { name: string; st: Status | "open"; who: string; q: string; sort: { k: Key; asc: boolean }; group: Group }
+const VIEWS = "th-views";
+const loadViews = (): View[] => { try { const v = JSON.parse(localStorage.getItem(VIEWS) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
+const storeViews = (v: View[]) => { try { localStorage.setItem(VIEWS, JSON.stringify(v.slice(0, 10))); } catch { /* private mode */ } };
+
 type Key = "title" | "who" | "project" | "priority" | "date" | "status";
 
 export function TasksPage() {
@@ -22,6 +28,15 @@ export function TasksPage() {
   const [sort, setSort] = useState<{ k: Key; asc: boolean }>({ k: "date", asc: true });
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [group, setGroup] = useState<Group>(""), [views, setViews] = useState(loadViews);
+  const apply = (v: View) => { setSt(v.st); setWho(v.who); setQ(v.q); setSort(v.sort); setGroup(v.group); };
+  const saveView = () => {
+    const name = prompt("Nama tampilan ini?")?.trim();
+    if (!name) return;
+    const next = [{ name, st, who, q, sort, group }, ...views.filter(v => v.name !== name)];
+    setViews(next); storeViews(next);
+  };
+  const dropView = (name: string) => { const next = views.filter(v => v.name !== name); setViews(next); storeViews(next); };
   const people = team.filter(m => !m.isAdmin && policy.canSee(m.email));
 
   const rows = useMemo(() => {
@@ -35,6 +50,8 @@ export function TasksPage() {
       .sort((a, b) => d * val(a).localeCompare(val(b)));
   }, [tq.data, q, st, who, sort, member, project]);
 
+  const groupOf = (t: TaskDTO) => group === "status" ? STATUS[t.status] : group === "who" ? member(t.email)?.name ?? t.email : group === "project" ? project(t.projectId)?.name ?? "Tanpa proyek" : group === "date" ? fmtShort(t.date) : "";
+  const groups = group ? [...Map.groupBy(rows, groupOf)] : [["", rows] as [string, TaskDTO[]]];
   const ids = rows.map(t => t.id), picked = ids.filter(i => sel.has(i)), all = !!ids.length && picked.length === ids.length;
   const toggle = (id: string) => setSel(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const sortBy = (k: Key) => setSort(p => ({ k, asc: p.k === k ? !p.asc : true }));
@@ -64,8 +81,11 @@ export function TasksPage() {
         </div>
         <input className="input" style={{ width: 200 }} placeholder="Cari judul…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari judul" />
         {policy.isManager && <select className="input" value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
+        <select className="input" value={group} onChange={e => setGroup(e.target.value as Group)} aria-label="Kelompokkan"><option value="">Tanpa kelompok</option><option value="status">Per status</option>{policy.isManager && <option value="who">Per orang</option>}<option value="project">Per proyek</option><option value="date">Per tanggal</option></select>
         <span className="muted" style={{ marginLeft: "auto", fontSize: ".8rem" }}>{rows.length} tugas</span>
+        <button className="btn small" onClick={saveView}>Simpan tampilan</button>
       </div>
+      {views.length > 0 && <div className="chips" aria-label="Tampilan tersimpan">{views.map(v => <span key={v.name} className="chip" style={{ paddingRight: 4 }}><button className="linkbtn" style={{ textDecoration: "none" }} onClick={() => apply(v)}>{v.name}</button><button className="iconbtn" style={{ width: 22, height: 22 }} aria-label={`Hapus tampilan ${v.name}`} onClick={() => dropView(v.name)}>×</button></span>)}</div>}
       {picked.length > 0 && (
         <div className="bulkbar" role="region" aria-label="Aksi massal">
           <b>{picked.length} dipilih</b>
@@ -93,7 +113,9 @@ export function TasksPage() {
             <Th k="priority" cls="w-prio">Prioritas</Th><Th k="date" cls="w-date">Jadwal</Th><Th k="status" cls="w-st">Status</Th>
           </tr></thead>
           <tbody>
-            {rows.map(t => {
+            {groups.map(([g, gr]) => [
+              g && <tr key={"g" + g} className="grp"><td colSpan={7}><b>{g}</b> <span className="muted">{gr.length}</span></td></tr>,
+              ...(gr.map(t => {
               const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), late = t.status !== "done" && t.date < today();
               return (
                 <tr key={t.id} className={"ptr" + (sel.has(t.id) ? " open" : "")} onClick={() => openTask(t.id)}>
@@ -106,7 +128,8 @@ export function TasksPage() {
                   <td>{STATUS[t.status]}</td>
                 </tr>
               );
-            })}
+            }))
+            ])}
           </tbody>
         </table>
         {!rows.length && <Empty title="Tidak ada tugas">Ubah filter untuk melihat tugas lain.</Empty>}

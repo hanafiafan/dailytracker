@@ -105,7 +105,7 @@ function Signed({ me }: { me: MeDTO }) {
           </main>
         </div>
         {taskId && <TaskDrawer id={taskId} />}
-        {newTask && <NewTaskDialog prefill={newTask} date={date} onClose={() => setNewTask(null)} />}
+        {newTask && <NewTaskDialog key={JSON.stringify(newTask)} prefill={newTask} date={date} onClose={() => setNewTask(null)} onTemplate={setNewTask} />}
         {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}
       </UiContext>
     </ViewerContext>

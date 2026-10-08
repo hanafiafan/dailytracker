@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import type { Priority } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
@@ -27,6 +27,7 @@ export function ReportsPage() {
       tabs={[{ id: "ringkas", label: "Ringkasan" }, ...(policy.isManager ? [{ id: "orang", label: "Per orang" }] : []), { id: "proyek", label: "Proyek & label" }]} tab={tab} onTab={setTab}
       actions={<>
         <div className="seg" role="group" aria-label="Rentang">{[7, 30, 90].map(n => <button key={n} aria-pressed={days === n} onClick={() => setDays(n)}>{n} hari</button>)}</div>
+        <button className="btn small" onClick={() => window.print()}><Printer size={14} />Cetak</button>
         {policy.isManager && <a className="btn small primary" href={`/api/reports/tasks.csv?from=${from}&to=${to}`} download><Download size={14} />Ekspor CSV</a>}
       </>}>
       {!d ? <p className="muted">Memuat…</p> : <>
