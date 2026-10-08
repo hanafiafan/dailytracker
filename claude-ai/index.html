@@ -1,0 +1,2034 @@
+<title>Daily Task</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky header with date control; owner sees a summary strip, then one card per person; members see one narrow column of their own tasks. */
+:root {
+  --bg: #F2F4F8; --surface: #FFFFFF; --sunk: #F7F8FB; --ink: #131A25; --muted: #5A6476; --line: #DCE1EA;
+  --accent: #2343C9; --accent-ink: #FFFFFF; --accent-soft: #E7ECFC;
+  --ok: #1B8553; --ok-soft: #E2F3EA; --warn: #A86400; --warn-soft: #FCF0DB; --bad: #BE3328; --bad-soft: #FBE6E3;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E131A; --surface: #161D27; --sunk: #121821; --ink: #E7EBF2; --muted: #98A3B4; --line: #283141;
+  --accent: #8FA3FF; --accent-ink: #0E131A; --accent-soft: #1D2647;
+  --ok: #4FC58C; --ok-soft: #12301F; --warn: #F0B14C; --warn-soft: #33260F; --bad: #F2796E; --bad-soft: #3A1916; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0E131A; --surface: #161D27; --sunk: #121821; --ink: #E7EBF2; --muted: #98A3B4; --line: #283141;
+  --accent: #8FA3FF; --accent-ink: #0E131A; --accent-soft: #1D2647;
+  --ok: #4FC58C; --ok-soft: #12301F; --warn: #F0B14C; --warn-soft: #33260F; --bad: #F2796E; --bad-soft: #3A1916; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); }
+button, input, textarea, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em }
+p { margin: 0 }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
+.top-in { max-width: 1240px; margin: 0 auto; padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px }
+.brand h1 { font-size: 1.5rem; line-height: 1.15 }
+.brand p { color: var(--muted); font-size: .85rem }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 20px }
+.narrow { max-width: 680px }
+
+.datenav { display: flex; align-items: center; gap: 6px }
+.datenav .lbl { min-width: 9.5rem; text-align: center; font-weight: 600 }
+.datenav .lbl small { display: block; font-weight: 500; color: var(--muted); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase }
+.iconbtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 1.1rem; line-height: 1 }
+.iconbtn:hover { border-color: var(--accent) }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: .9rem }
+.btn:hover { border-color: var(--accent) }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.btn.primary:hover { filter: brightness(1.08) }
+.btn.ghost { background: transparent }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)) }
+.btn.small { padding: 4px 10px; font-size: .8rem }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: .85rem }
+
+/* Summary */
+.summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px }
+.summary .big { font-family: var(--font-display); font-size: 2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums }
+.summary .big span { font-size: 1rem; color: var(--muted); font-weight: 600; margin-left: 6px; font-family: var(--font-body) }
+.counts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums }
+.counts b { color: var(--ink) }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px }
+.dot.todo { background: var(--line); box-shadow: inset 0 0 0 1.5px var(--muted) }
+.dot.doing { background: var(--warn) }
+.dot.done { background: var(--ok) }
+.stackbar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--sunk); margin-top: 12px; box-shadow: inset 0 0 0 1px var(--line) }
+.stackbar i { display: block; height: 100% }
+.stackbar .s-done { background: var(--ok) }
+.stackbar .s-doing { background: var(--warn) }
+@media (max-width: 560px) { .summary { grid-template-columns: 1fr } }
+
+/* Notice */
+.notice { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px }
+.notice h3 { font-size: 1rem }
+.claim { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--surface); border-radius: 10px; padding: 10px 12px }
+.claim .who { flex: 1 1 220px; min-width: 0 }
+.claim .who b { display: block }
+.claim .who small { color: var(--muted); overflow-wrap: anywhere }
+
+/* Add panel */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px }
+.panel h2 { font-size: 1.15rem }
+.field { display: grid; gap: 6px }
+.field > span { font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted) }
+.input { width: 100%; border: 1px solid var(--line); background: var(--sunk); border-radius: var(--r); padding: 9px 12px }
+.input:focus { border-color: var(--accent); outline: none; background: var(--surface) }
+textarea.input { resize: vertical; min-height: 64px }
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end }
+.row > .field { flex: 1 1 180px; min-width: 0 }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .85rem; font-weight: 500 }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 500 }
+.check input { width: 18px; height: 18px; accent-color: var(--accent) }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end }
+
+/* People */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0 }
+.card-h { display: flex; align-items: center; gap: 12px }
+.avatar { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: .9rem; color: #fff; flex: none; font-family: var(--font-display) }
+.card-h .nm { flex: 1; min-width: 0 }
+.card-h .nm h3 { font-size: 1.1rem; line-height: 1.2 }
+.card-h .nm p { color: var(--muted); font-size: .82rem }
+.tag { font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-radius: 6px; padding: 3px 7px; white-space: nowrap }
+.tag.on { background: var(--ok-soft); color: var(--ok) }
+.tag.off { background: var(--sunk); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line) }
+.tag.hot { background: var(--bad-soft); color: var(--bad) }
+.tag.late { background: var(--warn-soft); color: var(--warn) }
+.tag.due { background: var(--sunk); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-variant-numeric: tabular-nums }
+.tag.rut { background: var(--accent-soft); color: var(--accent) }
+.meter { display: flex; align-items: center; gap: 10px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums }
+.meter .stackbar { flex: 1; margin: 0; height: 6px }
+
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 6px; border-radius: 8px }
+.task:hover { background: var(--sunk) }
+.task .tt { min-width: 0 }
+.task .tt b { font-weight: 600; overflow-wrap: anywhere }
+.task[data-status="done"] .tt b { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent) }
+.task .tt p { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; white-space: pre-wrap }
+.task .meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px }
+.status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px 4px 6px; font-size: .78rem; font-weight: 600; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; min-width: 6.6rem }
+.status::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); box-sizing: border-box; flex: none }
+.status.doing { background: var(--warn-soft); border-color: transparent; color: var(--warn) }
+.status.doing::before { border-color: var(--warn); background: linear-gradient(90deg, var(--warn) 50%, transparent 50%) }
+.status.done { background: var(--ok-soft); border-color: transparent; color: var(--ok) }
+.status.done::before { border-color: var(--ok); background: var(--ok) radial-gradient(circle, var(--ok-soft) 0 2px, transparent 2.5px) }
+.del { background: none; border: 0; color: var(--muted); font-size: .8rem; padding: 4px 6px; border-radius: 6px }
+.del:hover { color: var(--bad); background: var(--bad-soft) }
+.del.arm { color: var(--bad); background: var(--bad-soft); font-weight: 700 }
+.empty { color: var(--muted); font-size: .88rem; padding: 6px }
+.sub { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px 0 }
+.routines { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.routines .rt { display: inline-flex; align-items: center; gap: 4px; background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px 2px 8px; color: var(--ink) }
+.routines .rt button { background: none; border: 0; color: var(--muted); padding: 0 4px; font-size: .9rem }
+.quick { display: flex; gap: 8px }
+.quick .input { flex: 1; min-width: 0 }
+.quick .input.timein, .input.timein { flex: 0 0 auto; width: 7.2rem; padding-inline: 8px }
+@media (max-width: 420px) { .quick { flex-wrap: wrap } .quick .input:not(.timein) { flex-basis: 100% } .quick .input.timein { flex: 1 } }
+
+/* Member view */
+.hello { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 4px }
+.hello .big { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums }
+.hello .big span { color: var(--muted); font-size: 1rem; font-weight: 600; font-family: var(--font-body) }
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px; display: grid; gap: 4px }
+.list h2 { font-size: 1rem; padding: 6px 6px 2px }
+.pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 8px }
+.pick button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center }
+.pick button:hover:not(:disabled) { border-color: var(--accent) }
+.pick button:disabled { opacity: .5; cursor: not-allowed }
+.pick b { display: block; font-size: .95rem }
+.pick small { color: var(--muted); font-size: .78rem }
+.center { min-height: 50vh; display: grid; place-items: center; text-align: center; padding: 24px 16px }
+.center > div { max-width: 440px; display: grid; gap: 10px }
+.muted { color: var(--muted) }
+.foot { color: var(--muted); font-size: .82rem }
+
+details.manage { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px }
+details.manage summary { cursor: pointer; font-weight: 700; font-family: var(--font-display); font-size: 1.05rem }
+.mrow { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line) }
+.mrow .who { flex: 1 1 200px; min-width: 0 }
+.pform { flex-basis: 100%; display: grid; gap: 12px; background: var(--sunk); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 4px 0 10px }
+.hello .pform { background: transparent; border: 0; padding: 0; margin: 0 }
+.prow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center }
+.avatar.big { width: 64px; height: 64px; border-radius: 18px; font-size: 1.3rem }
+img.avatar { object-fit: cover; background: var(--sunk) }
+.filebtn { position: relative; overflow: hidden; cursor: pointer }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer }
+.filebtn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px }
+.brand.me { display: flex; align-items: center; gap: 12px }
+.handle { border: 0; background: none; color: var(--muted); font-size: 1.2rem; line-height: 1; padding: 8px 4px; cursor: grab; touch-action: none; border-radius: 6px; user-select: none; -webkit-user-select: none }
+.handle:hover { color: var(--ink); background: var(--sunk) }
+.handle:active { cursor: grabbing }
+.mrow { position: relative; background: var(--surface) }
+.mrow.dragging { z-index: 3; opacity: .92; box-shadow: 0 8px 24px rgb(0 0 0 / .18); border-radius: 10px; border-top-color: transparent }
+.mrow.drop-before { box-shadow: inset 0 3px 0 var(--accent) }
+.mrow.drop-after { box-shadow: inset 0 -3px 0 var(--accent) }
+.mrow .who small { color: var(--muted); display: block; overflow-wrap: anywhere }
+
+/* Recap matrix */
+.recap { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0 }
+.recap-h { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between }
+.recap-h h2 { font-size: 1.15rem }
+.recap-h p { color: var(--muted); font-size: .82rem }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--sunk) }
+.seg button { border: 0; background: none; padding: 4px 12px; border-radius: 999px; font-size: .82rem; font-weight: 600; color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12) }
+.mxwrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px }
+table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; min-width: 100% }
+.mx th { font-weight: 600; font-size: .74rem; color: var(--muted); text-align: center; padding: 2px 0 4px; white-space: nowrap }
+.mx th.today { color: var(--accent) }
+.mx th small { display: block; font-size: .9rem; color: var(--ink); font-weight: 700 }
+.mx th.today small { color: var(--accent) }
+.mx th.who { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; padding-right: 8px; min-width: 128px }
+.mx th.who b { color: var(--ink); font-size: .9rem; display: flex; align-items: center; gap: 6px }
+.mx th.who span { font-weight: 500 }
+.mx td { padding: 0 }
+.cell { width: 100%; min-width: 46px; height: 38px; border: 0; border-radius: 6px; font-size: .78rem; font-weight: 600; display: grid; place-items: center }
+.cell:hover { outline: 2px solid var(--ink); outline-offset: -2px }
+.cell.none { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); font-weight: 500 }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--ink) }
+.mx .tot { text-align: right; padding-left: 8px; white-space: nowrap; font-size: .82rem }
+.mx .tot b { font-size: .95rem }
+.mx .tot small { display: block; color: var(--muted); font-size: .72rem }
+.mx tfoot th.who, .mx tfoot .tot { border-top: 1px solid var(--line); padding-top: 6px }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: .78rem; color: var(--muted) }
+.legend .ramp { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 6px }
+.legend .ramp i { width: 18px; height: 12px; border-radius: 3px }
+.legend .nobox { display: inline-block; width: 18px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); vertical-align: middle; margin-right: 6px }
+.warnico { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); color: var(--surface); font-size: .7rem; font-weight: 800; flex: none }
+
+/* Warnings & notes */
+.warnbox { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--warn-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); border-radius: 10px; padding: 10px 12px; font-size: .88rem }
+.warnbox .txt { flex: 1 1 200px; min-width: 0 }
+.warnbox .txt b { color: var(--warn); display: block }
+.warnbox.big { padding: 14px 16px; border-radius: 14px }
+.tagbox { display: grid; gap: 8px; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px }
+.tagbox .tg { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line) }
+.tagbox .tg:first-of-type { border-top: 0; padding-top: 0 }
+.tagbox .tg small { color: var(--muted) }
+.tagbox .tg p { margin: 0; white-space: pre-wrap }
+.tagsent { font-size: .8rem; color: var(--muted); margin: 6px 0 0 }
+.idle-list { display: flex; flex-wrap: wrap; gap: 6px }
+.report { margin-top: 6px; background: var(--sunk); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 6px 10px }
+.report span { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent) }
+.report p { color: var(--ink) !important; font-size: .86rem }
+.notebtn { margin-top: 4px; font-size: .78rem }
+.noteform { display: grid; gap: 6px; margin-top: 6px }
+
+.proof { display: flex; gap: 10px; align-items: center; margin-top: 6px }
+.thumb { padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: 56px; height: 56px; flex: none; background: var(--sunk) }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+.pmeta { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; min-width: 0 }
+.pmeta span { color: var(--muted) }
+.pmeta a { color: var(--accent); font-weight: 600; overflow-wrap: anywhere }
+.proofpanel { margin-top: 8px; display: grid; gap: 8px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 12px }
+.drop { position: relative; display: grid; place-items: center; border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 10px; padding: 16px; cursor: pointer; font-weight: 600; color: var(--accent); background: var(--surface) }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0 }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px }
+.pv { display: flex; gap: 10px; align-items: end }
+.pv img { max-height: 140px; border-radius: 8px; border: 1px solid var(--line) }
+.lightbox { position: fixed; inset: 0; z-index: 30; background: rgb(0 0 0 / .82); display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)) }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px }
+.lightbox .iconbtn { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px }
+
+.tip { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; font-size: .88rem }
+.tip b { font-family: var(--font-display); font-size: 1rem }
+.tip ul { margin: 0; padding-left: 18px; display: grid; gap: 4px }
+
+.tl { display: inline-flex; flex-direction: column; gap: 2px; font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+.quick { flex-wrap: wrap; align-items: end }
+.quick > .input:not(.timein) { flex: 1 1 100% }
+.quick .tl { flex: 1 1 6rem }
+.quick .tl .input.timein { width: 100% }
+.quick > .btn { flex: 0 0 auto }
+.scope { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78rem; color: var(--muted); padding-left: 34px }
+.alert { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 14px; padding: 12px 14px }
+.alert .bell { font-size: 1.3rem }
+.alert .txt { flex: 1 1 200px; min-width: 0; display: grid }
+.alert .txt span { color: var(--muted); font-size: .85rem }
+@media (prefers-reduced-motion: no-preference) { .alert { animation: pulse 1.2s ease-out 2 } @keyframes pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent) } } }
+
+.input.timein { font-variant-numeric: tabular-nums; letter-spacing: .04em }
+.lklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.lklist li { display: flex; align-items: center; gap: 8px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px }
+.lklist a { flex: 1; min-width: 0; display: grid; text-decoration: none; color: var(--ink) }
+.lklist a span { color: var(--accent); font-size: .82rem; overflow-wrap: anywhere }
+.lklist a small { color: var(--muted); font-size: .75rem }
+.cmts { display: grid; gap: 6px; margin-top: 8px }
+.cmt { background: var(--accent-soft); border-radius: 4px 12px 12px 12px; padding: 6px 10px; max-width: 100% }
+.cmt .who { font-size: .72rem; font-weight: 700; color: var(--accent) }
+.cmt p { color: var(--ink) !important; font-size: .86rem; white-space: pre-wrap; overflow-wrap: anywhere }
+.cmt.auto { background: var(--warn-soft) }
+.cmt.auto .who { color: var(--warn) }
+.inlink { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .9rem; max-width: calc(100% - 32px); z-index: 20 }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: up .2s ease-out } @keyframes up { from { transform: translate(-50%, 8px); opacity: 0 } } }
+</style>
+
+<div id="app"></div>
+
+<script>
+(() => {
+  const app = document.getElementById("app");
+  const DAYN = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+  const STATUS = { todo: "Belum", doing: "Dikerjakan", done: "Selesai" };
+  const NEXT = { todo: "doing", doing: "done", done: "todo" };
+  const pad = n => String(n).padStart(2, "0");
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const today = () => ymd(new Date());
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const fmtLong = s => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(parse(s));
+  const fmtShort = s => new Intl.DateTimeFormat("id-ID", { weekday: "short", day: "numeric", month: "short" }).format(parse(s));
+  const hue = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+  const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?";
+
+  const S = {
+    mode: "loading", meId: null, owner: false,
+    teamRaw: [], teamLoaded: false, editMember: null, photoDraft: undefined, tab: "pantau", ro: false, claims: [], myClaim: undefined,
+    items: {}, keyDoc: {}, itemsLoaded: {}, docLoaded: {},
+    date: today(), winFrom: addDays(today(), -30),
+    showAdd: false, addSel: new Set(), addRoutine: false, addDays: new Set([1, 2, 3, 4, 5, 6]), addHot: false,
+    arm: null, toast: "", readOnly: false, recapDays: 7, editNote: null, showRecap: false, proofFor: null, proofDraft: {}, busy: false, lightbox: null, addProof: true,
+  };
+  const fmtTime = ms => new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(ms));
+  const askedToday = key => { const kd = S.keyDoc[key]; return !!(kd && kd.askAt && ymd(new Date(kd.askAt)) === today()); };
+  // Idle = nothing unfinished for today (including leftovers from earlier days).
+  const isIdle = key => !!S.itemsLoaded[key] && !(S.items[key] || []).some(t => t.date <= today() && t.status !== "done");
+  let db = null, user = null, assets = null;
+  // Display profile: a linked person's own edits (kept in their private doc) override the roster entry.
+  const P = m => {
+    const pr = m.uid && S.keyDoc[m.uid] && S.keyDoc[m.uid].profile;
+    if (!pr) return m;
+    return { ...m, name: pr.name || m.name, role: pr.role != null ? pr.role : m.role, photo: pr.photo !== undefined ? pr.photo : m.photo };
+  };
+  Object.defineProperty(S, "team", { get: () => S.teamRaw.map(P), configurable: true });
+  const subs = {};
+  const ensured = new Set();
+
+  // ---------- helpers ----------
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k === "style") el.setAttribute("style", v);
+      else if (v === true) el.setAttribute(k, "");
+      else el.setAttribute(k, v);
+    }
+    for (const c of kids.flat(Infinity)) {
+      if (c == null || c === false) continue;
+      el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return el;
+  }
+  let toastT;
+  function toast(msg) { S.toast = msg; render(); clearTimeout(toastT); toastT = setTimeout(() => { S.toast = ""; render(); }, 3200); }
+  async function safe(fn, okMsg) {
+    try { await fn(); if (okMsg) toast(okMsg); }
+    catch (e) {
+      const code = e && e.code;
+      if (code === "invalid_argument" && !S.owner) { S.readOnly = true; toast("Akunmu hanya bisa melihat. Minta pemilik mengundangmu sebagai Editor."); }
+      else if (code === "quota_exceeded") toast("Penyimpanan penuh. Hapus tugas lama yang sudah selesai.");
+      else if (code === "resource_exhausted") toast("Terlalu cepat. Tunggu sebentar lalu coba lagi.");
+      else toast("Gagal menyimpan. Periksa koneksi lalu coba lagi.");
+      console.warn(e);
+    }
+  }
+  const keyOf = m => m.uid || "m-" + m.id;
+  const myMember = () => S.team.find(m => m.uid && m.uid === S.meId);
+  // Admins (monitors) are kept out of the workforce lists.
+  // Units (e.g. HCS, HCM). An admin with adminGroups only receives and sees people in those units.
+  const myAdminGroups = () => { const m = myMember(); return m && m.isAdmin && Array.isArray(m.adminGroups) ? m.adminGroups : []; };
+  const isManager = () => S.owner || !!(myMember() && myMember().isAdmin);
+  const units = () => [...new Set(S.team.map(m => m.group).filter(Boolean))].sort();
+  const myUnits = () => S.owner || !myAdminGroups().length ? units() : myAdminGroups();
+  const inScope = m => !S.ro || !myAdminGroups().length || myAdminGroups().includes(m.group || "");
+  const adminSees = (a, m) => !(Array.isArray(a.adminGroups) && a.adminGroups.length) || a.adminGroups.includes(m.group || "");
+  // The owner and admins without a unit limit may also give tasks to other admins.
+  const canAssignAdmins = () => S.owner || !!(myMember() && myMember().isAdmin && !myAdminGroups().length);
+  const workers = () => S.team.filter(m => (!m.isAdmin || canAssignAdmins()) && !(m.uid && m.uid === S.meId) && inScope(m) && (!S.unit || (m.group || "") === S.unit));
+  // In the admin's read-only monitor, a person's data comes from that admin's mirror copy.
+  const keyFor = m => S.ro ? "mx-" + m.id : keyOf(m);
+  const sortTasks = arr => arr.slice().sort((a, b) => {
+    const st = { todo: 0, doing: 0, done: 1 };
+    const da = a.start || a.due || "99:99", dbb = b.start || b.due || "99:99";
+    return (st[a.status] - st[b.status]) || (da < dbb ? -1 : da > dbb ? 1 : 0) || ((b.hot ? 1 : 0) - (a.hot ? 1 : 0)) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || ((a.createdAt || 0) - (b.createdAt || 0));
+  });
+  const at = (date, hm) => { const d = parse(date); const [hh, mm] = hm.split(":").map(Number); d.setHours(hh, mm, 0, 0); return d.getTime(); };
+  const deadline = t => t.due ? at(t.date, t.due) : null;
+  const startAt = t => t.start ? at(t.date, t.start) : null;
+  const dur = ms => { const m = Math.round(ms / 60000); if (m < 60) return m + " menit"; if (m < 1440) return Math.floor(m / 60) + " jam" + (m % 60 ? " " + (m % 60) + " mnt" : ""); return Math.floor(m / 1440) + " hari"; };
+  function timeTags(t) {
+    const dl = deadline(t), st = startAt(t), now = Date.now();
+    const out = [];
+    if (st || dl) out.push(h("span", { class: "tag due" }, "⏰ " + (t.start && t.due ? `${t.start}–${t.due}` : t.start ? "mulai " + t.start : "s/d " + t.due)));
+    if (t.status === "done" && t.doneAt && dl) {
+      const diff = t.doneAt - dl;
+      out.push(diff <= 60000 ? h("span", { class: "tag on" }, "Tepat waktu") : h("span", { class: "tag late" }, "Telat " + dur(diff)));
+    } else if (t.status !== "done" && dl && now > dl) {
+      out.push(h("span", { class: "tag hot" }, "Terlambat " + dur(now - dl)));
+    } else if (t.status === "todo" && st && now > st) {
+      out.push(h("span", { class: "tag late" }, "Belum mulai · lewat " + dur(now - st)));
+    }
+    // Actual times, recorded when the status changes.
+    if (t.startedAt) out.push(h("span", { class: "tag off" }, "Mulai " + fmtTime(t.startedAt)));
+    if (t.status === "done" && t.doneAt) out.push(h("span", { class: "tag off" }, "Selesai " + fmtTime(t.doneAt)));
+    return out;
+  }
+  function tasksFor(key) {
+    const all = S.items[key] || [];
+    const day = all.filter(t => t.date === S.date);
+    const late = S.date === today() ? all.filter(t => t.date < S.date && t.status !== "done") : [];
+    return { day: sortTasks(day), late: sortTasks(late) };
+  }
+  const tally = list => {
+    const c = { todo: 0, doing: 0, done: 0 };
+    for (const t of list) c[t.status in c ? t.status : "todo"]++;
+    return c;
+  };
+
+  // ---------- subscriptions ----------
+  function subTeam() {
+    db.collection("team").onSnapshot(snap => {
+      S.teamRaw = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || String(a.name).localeCompare(String(b.name)));
+      S.teamLoaded = true;
+      syncSubs();
+      if (S.owner) { for (const k of Object.keys(mirrorHash)) if (k.includes("|gone|")) delete mirrorHash[k]; for (const k of Object.keys(subs)) queueMirror(k); subLinks(); subLinkInbox(); pushLinks(); subOwnerCmds(); loadTagLog(); }
+      else {
+        const me = myMember();
+        if (me) { ensureKeys().then(ok => { if (ok) subCmds(); }); }
+        if (me && me.isAdmin) { subMirror(); syncPending(); subLinks(); pushLinks(); loadTagLog(); }
+      }
+      render();
+    }, err => { console.warn(err); S.teamLoaded = true; render(); });
+  }
+  function subClaims() {
+    db.collection("claims").onSnapshot(snap => {
+      S.claims = snap.docs.map(d => ({ uid: d.id, ...d.data() })).sort((a, b) => (a.at || 0) - (b.at || 0));
+      render();
+    }, err => console.warn(err));
+  }
+  function subMyClaim() {
+    db.doc("claims/" + S.meId).onSnapshot(s => { S.myClaim = s.exists ? s.data() : null; render(); }, err => console.warn(err));
+  }
+  function wantedKeys() {
+    if (S.owner) return S.team.map(keyOf);
+    const m = myMember();
+    return m ? [S.meId] : [];
+  }
+  function subscribeKey(key) {
+    const s = {};
+    s.items = db.collection(`tasks/${key}/items`).where("date", ">=", S.winFrom).onSnapshot(snap => {
+      S.items[key] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!snap.metadata.fromCache) watchNotes(key);
+      if (!snap.metadata.fromCache) S.itemsLoaded[key] = true;
+      setTimeout(() => ensureRoutines(key), 0);
+      if (!snap.metadata.fromCache) queueMirror(key);
+      render();
+    }, err => console.warn(err));
+    s.doc = db.doc(`tasks/${key}`).onSnapshot(snap => {
+      S.keyDoc[key] = snap.exists ? snap.data() : {};
+      if (!snap.metadata.fromCache) watchAsk(key, S.keyDoc[key]);
+      if (!snap.metadata.fromCache) S.docLoaded[key] = true;
+      setTimeout(() => ensureRoutines(key), 0);
+      if (!snap.metadata.fromCache) queueMirror(key);
+      render();
+    }, err => console.warn(err));
+    subs[key] = s;
+  }
+  function syncSubs(force) {
+    const want = new Set(wantedKeys());
+    for (const k of Object.keys(subs)) {
+      if (!want.has(k) || force) { subs[k].items(); subs[k].doc(); delete subs[k]; if (!want.has(k)) { delete S.items[k]; delete S.keyDoc[k]; } S.itemsLoaded[k] = false; }
+    }
+    for (const k of want) if (!subs[k]) subscribeKey(k);
+  }
+
+  // ---------- admin mirror ----------
+  // Each change to a person's tasks is copied into every admin's private space (mirror/<adminUid>/people/<memberId>).
+  const mirrorHash = {}, mirrorTimers = {};
+  const baseline = new Set();
+  function compactTasks(key) {
+    const from = addDays(today(), -14);
+    return (S.items[key] || []).filter(t => t.date >= from).map(t => {
+      const o = { id: t.id, title: t.title, date: t.date, status: t.status };
+      for (const f of ["note", "start", "due", "startedAt", "fromAdmin", "source", "comments", "autoRemindAt", "editedBy", "editedAt", "hot", "needProof", "report", "reportAt", "doneAt", "returnedAt", "by", "createdAt"]) if (t[f] != null && t[f] !== "" && t[f] !== false) o[f] = t[f];
+      if (t.routine) o.routine = t.routine;
+      if (t.proof) o.proof = { at: t.proof.at, ...(t.proof.link ? { link: t.proof.link } : {}), ...(t.proof.asset ? { asset: t.proof.asset } : {}), ...(t.proof.data ? { photo: true } : {}) };
+      return o;
+    });
+  }
+  function queueMirror(key) {
+    if (!S.teamLoaded || !S.itemsLoaded[key]) return;
+    clearTimeout(mirrorTimers[key]);
+    mirrorTimers[key] = setTimeout(() => pushMirror(key), 1500);
+  }
+  // Copies are end-to-end encrypted with each admin's public key, so only that admin can read them.
+  const b64 = buf => { const u = new Uint8Array(buf); let out = ""; for (let i = 0; i < u.length; i += 8192) out += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(out); };
+  const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  const EC = { name: "ECDH", namedCurve: "P-256" };
+  const hasCrypto = () => !!(window.crypto && crypto.subtle);
+  async function sha(str) { return b64(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str))); }
+  async function encryptFor(pubJwk, obj) {
+    const pub = await crypto.subtle.importKey("jwk", pubJwk, EC, false, []);
+    const eph = await crypto.subtle.generateKey(EC, true, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey({ name: "ECDH", public: pub }, eph.privateKey, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+    const e = await crypto.subtle.exportKey("jwk", eph.publicKey);
+    return { epk: { kty: e.kty, crv: e.crv, x: e.x, y: e.y }, iv: b64(iv), ct: b64(ct) };
+  }
+  async function decryptWith(priv, rec) {
+    const epk = await crypto.subtle.importKey("jwk", rec.epk, EC, false, []);
+    const key = await crypto.subtle.deriveKey({ name: "ECDH", public: epk }, priv, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(rec.iv) }, key, unb64(rec.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  const pubCache = {};
+  async function adminPub(uid) {
+    if (pubCache[uid] !== undefined) return pubCache[uid];
+    const d = await db.doc("pub/" + uid).get();
+    pubCache[uid] = d.exists && d.data().jwk ? d.data() : null;
+    return pubCache[uid];
+  }
+  async function pushMirror(key) {
+    if (!hasCrypto()) return;
+    const m = S.team.find(x => keyOf(x) === key);
+    if (!m) return;
+    const allAdmins = S.team.filter(a => a.isAdmin && a.uid);
+    if (!allAdmins.length) return;
+    // An admin limited to other units must not hold this person's copy: remove it.
+    for (const a of allAdmins.filter(a => !adminSees(a, m))) {
+      const k = a.uid + "|gone|" + m.id;
+      if (mirrorHash[k]) continue;
+      try { await db.doc(`mirror/${a.uid}/people/${m.id}`).delete(); mirrorHash[k] = 1; } catch (e) { console.warn("mirror", e); }
+      for (const x of Object.keys(mirrorHash)) if (x.startsWith(a.uid + "|") && x.endsWith("|" + m.id) && !x.includes("|gone|")) delete mirrorHash[x];
+    }
+    const admins = allAdmins.filter(a => adminSees(a, m));
+    for (const a of admins) delete mirrorHash[a.uid + "|gone|" + m.id];
+    if (!admins.length) return;
+    const kd = S.keyDoc[key] || {};
+    const body = { tasks: compactTasks(key), askAt: kd.askAt || null, routines: (kd.routines || []).map(r => ({ id: r.id, title: r.title, start: r.start || null, due: r.due || null, days: r.days || [] })) };
+    const hash = await sha(JSON.stringify(body));
+    for (const a of admins) {
+      try {
+        const pk = await adminPub(a.uid);
+        if (!pk) continue;
+        const k = a.uid + "|" + pk.kid + "|" + m.id;
+        if (mirrorHash[k] === hash) continue;
+        const ref = db.doc(`mirror/${a.uid}/people/${m.id}`);
+        if (mirrorHash[k] === undefined) {
+          const cur = await ref.get();
+          if (cur.exists && cur.data().h === hash && cur.data().kid === pk.kid) { mirrorHash[k] = hash; continue; }
+        }
+        const enc = await encryptFor(pk.jwk, body);
+        await ref.set({ ...enc, h: hash, kid: pk.kid, at: Date.now() });
+        mirrorHash[k] = hash;
+      } catch (e) { console.warn("mirror", e); }
+    }
+  }
+  let mirrorSub = null, myPriv = null, myKid = null, mySign = null, keysReady = null;
+  const ES = { name: "ECDSA", namedCurve: "P-256" }, SIG = { name: "ECDSA", hash: "SHA-256" };
+  const pubOnly = p => ({ kty: p.kty, crv: p.crv, x: p.x, y: p.y });
+  // Every linked person keeps an encryption key (to receive private copies and instructions)
+  // and a signing key (so instructions from admins can be checked). Private halves stay in their own private space.
+  function ensureKeys() { if (!keysReady) keysReady = makeKeys().catch(e => { console.warn(e); keysReady = null; return false; }); return keysReady; }
+  async function makeKeys() {
+    if (!hasCrypto()) return false;
+    const ref = db.doc(`data/users/${S.meId}/keys`);
+    const snap = await ref.get();
+    let kd = snap.exists ? { ...snap.data() } : {};
+    let changed = false;
+    if (!kd.jwk || !kd.pub) {
+      const pair = await crypto.subtle.generateKey(EC, true, ["deriveKey"]);
+      kd.jwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+      kd.pub = pubOnly(await crypto.subtle.exportKey("jwk", pair.publicKey));
+      kd.kid = Math.random().toString(36).slice(2, 10);
+      changed = true;
+    }
+    if (!kd.sjwk || !kd.spub) {
+      const pair = await crypto.subtle.generateKey(ES, true, ["sign", "verify"]);
+      kd.sjwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+      kd.spub = pubOnly(await crypto.subtle.exportKey("jwk", pair.publicKey));
+      changed = true;
+    }
+    if (changed) await ref.set(kd);
+    myPriv = await crypto.subtle.importKey("jwk", kd.jwk, EC, false, ["deriveKey"]);
+    mySign = await crypto.subtle.importKey("jwk", kd.sjwk, ES, false, ["sign"]);
+    myKid = kd.kid;
+    const pub = await db.doc("pub/" + S.meId).get();
+    if (!pub.exists || pub.data().kid !== myKid || !pub.data().sjwk) await db.doc("pub/" + S.meId).set({ jwk: kd.pub, kid: myKid, sjwk: kd.spub });
+    return true;
+  }
+  const ensureAdminKeys = ensureKeys;
+  async function freshPub(uid) {
+    const d = await db.doc("pub/" + uid).get();
+    pubCache[uid] = d.exists && d.data().jwk ? d.data() : null;
+    return pubCache[uid];
+  }
+  const enc8 = t => new TextEncoder().encode(t);
+  const signedText = c => JSON.stringify([c.to, c.from, c.id, c.at, c.iv, c.ct]);
+
+  // ---------- admin instructions ----------
+  // On claude.ai an admin cannot write into another person's private tasks, so the admin's app sends a
+  // signed, encrypted instruction to cmd/<personUid>/items; that person's own app checks it and applies it.
+  const adminMode = () => !S.owner && !!(myMember() && myMember().isAdmin);
+  const memberByKey = key => S.team.find(x => keyOf(x) === key || "mx-" + x.id === key);
+  async function sendCmd(m, type, data) {
+    if (!m || !m.uid) throw { code: "not_linked", who: m && m.name };
+    if (!(await ensureKeys())) throw { code: "no_crypto" };
+    const pk = await freshPub(m.uid);
+    const o = await ownerUid();
+    const opk = o && o !== S.meId ? await freshPub(o) : null;
+    // Needs at least one app that can apply it: the person's own, or the owner's.
+    if (!(pk && pk.jwk) && !(opk && opk.jwk)) throw { code: "no_key", who: m.name };
+    const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8), at = Date.now();
+    const make = async key => { const c = { to: m.uid, from: S.meId, id, at, kid: key.kid, ...(await encryptFor(key.jwk, { type, data })) }; c.sig = b64(await crypto.subtle.sign(SIG, mySign, enc8(signedText(c)))); return c; };
+    if (pk && pk.jwk) await db.doc(`cmd/${m.uid}/items/${id}`).set(await make(pk));
+    // A second copy for the owner's app, so the task is applied as soon as either the person or the owner has the app open.
+    if (opk && opk.jwk) { try { await db.doc(`cmd/_owner/items/${id}`).set(await make(opk)); } catch (e) { console.warn("owner copy", e); } }
+    if (type === "add") noteSent(m, id, data);
+  }
+  // Wraps admin actions with friendly messages for the cases an instruction cannot be sent.
+  async function adminDo(fn, okMsg) {
+    try { await fn(); if (okMsg) toast(okMsg); }
+    catch (e) {
+      if (e && e.code === "not_linked") toast(`${e.who || "Orang ini"} belum terhubung ke aplikasi.`);
+      else if (e && e.code === "no_key") toast(`${e.who} perlu membuka aplikasi sekali dulu sebelum bisa menerima tugas dari admin.`);
+      else if (e && e.code === "no_crypto") toast("Browser ini tidak mendukung pengiriman tugas. Coba browser lain.");
+      else { console.warn(e); toast("Gagal mengirim. Periksa koneksi lalu coba lagi."); }
+    }
+  }
+  // Owner side: applies admin instructions straight into the person's tasks.
+  let ownerCmdSub = null;
+  function subOwnerCmds() {
+    if (ownerCmdSub || !S.owner) return;
+    ownerCmdSub = "starting";
+    ensureKeys().then(ok => {
+      if (!ok) { ownerCmdSub = null; return; }
+      ownerCmdSub = db.collection("cmd/_owner/items").onSnapshot(snap => {
+        for (const d of snap.docs) if (!cmdBusy.has("o" + d.id)) processOwnerCmd(d.id, d.data());
+      }, err => console.warn(err));
+    });
+  }
+  async function processOwnerCmd(id, c) {
+    cmdBusy.add("o" + id);
+    const ref = db.doc(`cmd/_owner/items/${id}`);
+    try {
+      if (!S.teamLoaded) { cmdBusy.delete("o" + id); return; }
+      const target = S.team.find(x => x.uid === c.to), admin = S.team.find(x => x.uid === c.from);
+      let ok = !!(target && admin && admin.isAdmin && adminSees(admin, target) && c.id === id && c.sig && c.kid === myKid
+        && !(target.isAdmin && Array.isArray(admin.adminGroups) && admin.adminGroups.length) && Date.now() - (c.at || 0) < 7 * 864e5);
+      if (ok) {
+        const pk = await freshPub(c.from);
+        ok = !!(pk && pk.sjwk) && await crypto.subtle.verify(SIG, await crypto.subtle.importKey("jwk", pk.sjwk, ES, false, ["verify"]), unb64(c.sig), enc8(signedText(c)));
+      }
+      if (ok) {
+        await applyCmd(id, await decryptWith(myPriv, c), admin, c.to);
+        try { await db.doc(`cmd/${c.to}/items/${id}`).delete(); } catch (_) {}
+      }
+      await ref.delete();
+    } catch (e) { console.warn("owner cmd", e); setTimeout(() => cmdBusy.delete("o" + id), 30000); }
+  }
+
+  // Receiving side: runs in each person's own app.
+  const cmdBusy = new Set();
+  let cmdSub = null;
+  function subCmds() {
+    if (cmdSub) return;
+    cmdSub = db.collection(`cmd/${S.meId}/items`).onSnapshot(snap => {
+      for (const d of snap.docs) if (!cmdBusy.has(d.id) && !d.data().rejected) processCmd(d.id, d.data());
+    }, err => console.warn(err));
+  }
+  async function processCmd(id, c) {
+    cmdBusy.add(id);
+    const ref = db.doc(`cmd/${S.meId}/items/${id}`);
+    try {
+      if (!S.teamLoaded || !(await ensureKeys())) { cmdBusy.delete(id); return; }
+      const me = myMember(), admin = S.team.find(x => x.uid === c.from);
+      // Anything that is not a genuine instruction from an admin who manages this person is refused,
+      // and the reason is left on the instruction so the admin can see it.
+      let why = null;
+      if (!me) why = "penerima belum terhubung";
+      else if (!admin || !admin.isAdmin) why = "pengirim bukan admin";
+      else if (!adminSees(admin, me)) why = "di luar unit yang dikelola admin ini";
+      else if (me.isAdmin && Array.isArray(admin.adminGroups) && admin.adminGroups.length) why = "admin unit tidak bisa memberi tugas ke admin lain";
+      else if (c.to !== S.meId || c.id !== id || !c.sig) why = "perintah tidak lengkap";
+      else if (Date.now() - (c.at || 0) > 7 * 864e5) why = "kedaluwarsa (lebih dari 7 hari)";
+      else if (c.kid !== myKid) why = "kunci penerima sudah berganti, kirim ulang";
+      if (!why) {
+        const pk = await freshPub(c.from);
+        const ok = !!(pk && pk.sjwk) && await crypto.subtle.verify(SIG, await crypto.subtle.importKey("jwk", pk.sjwk, ES, false, ["verify"]), unb64(c.sig), enc8(signedText(c)));
+        if (!ok) why = "tanda tangan tidak cocok";
+      }
+      if (why) { await ref.update({ rejected: why, rejectedAt: Date.now() }); return; }
+      await applyCmd(id, await decryptWith(myPriv, c), admin);
+      await ref.delete();
+    } catch (e) { console.warn("cmd", e); setTimeout(() => cmdBusy.delete(id), 30000); }
+  }
+  async function applyCmd(id, body, admin, key = S.meId) {
+    const d = body.data || {};
+    const items = `tasks/${key}/items`;
+    if (body.type === "add") {
+      // The owner's app may already have applied it; never overwrite progress.
+      if ((await db.doc(`${items}/${id}`).get()).exists) return;
+      await db.doc(`${items}/${id}`).set({ title: String(d.title || "").slice(0, 160), note: String(d.note || "").slice(0, 600), date: d.date || today(), start: d.start || null, due: d.due || null,
+        status: "todo", hot: !!d.hot, needProof: d.needProof !== false, by: "owner", fromAdmin: admin.name, createdAt: Date.now() });
+      if (S.keyDoc[key] && S.keyDoc[key].askAt) await db.doc(`tasks/${key}`).update({ askAt: null });
+    } else if (body.type === "routine" && d.r) {
+      const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+      const r = { ...d.r, id: String(d.r.id), byName: admin.name };
+      if (!cur.some(x => x.id === r.id)) await db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: [...cur, r], askAt: null });
+      const t = today();
+      if ((r.days || []).includes(parse(t).getDay()) && !(await db.doc(`${items}/r-${r.id}-${t}`).get()).exists) await db.doc(`${items}/r-${r.id}-${t}`).set({ title: r.title, note: r.note || "", date: t, start: r.start || null, due: r.due || null, status: "todo", hot: !!r.hot, needProof: r.needProof !== false, routine: r.id, by: "owner", fromAdmin: admin.name, createdAt: Date.now() });
+    } else if (body.type === "unroutine") {
+      const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+      await db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: cur.filter(r => r.id !== d.rid) });
+    } else if (body.type === "sendBack" && d.taskId) {
+      if (!(await db.doc(`${items}/${d.taskId}`).get()).exists) return;
+      await db.doc(`${items}/${d.taskId}`).update({ status: "doing", doneAt: null, returnedAt: Date.now() });
+    } else if (body.type === "comment" && d.taskId && d.text) {
+      await addComment(key, d.taskId, { id, by: admin.name, text: d.text });
+    } else if (body.type === "edit" && d.taskId) {
+      const ref = db.doc(`${items}/${d.taskId}`);
+      if (!(await ref.get()).exists) return;
+      await ref.update({ ...cleanEdit(d.fields || {}), editedBy: admin.name, editedAt: Date.now() });
+    } else if (body.type === "del" && d.taskId) {
+      await db.doc(`${items}/${d.taskId}`).delete();
+    }
+  }
+  // Appends a comment to a task (kept to the latest 30). Safe to repeat: the same comment id is added once.
+  async function addComment(key, taskId, c) {
+    const ref = db.doc(`tasks/${key}/items/${taskId}`);
+    const snap = await ref.get();
+    if (!snap.exists) return false;
+    const cur = snap.data().comments || [];
+    if (c.id && cur.some(x => x.id === c.id)) return true;
+    const entry = { id: c.id || "k" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), by: c.by, at: Date.now(), text: String(c.text).slice(0, 500), ...(c.auto ? { auto: true } : {}) };
+    await ref.update({ comments: [...cur, entry].slice(-30), ...(c.extra || {}) });
+    return true;
+  }
+  // Only these task details can be changed after sending; progress, proof and notes stay with the person.
+  function cleanEdit(f) {
+    const u = {};
+    if (typeof f.title === "string" && f.title.trim()) u.title = f.title.trim().slice(0, 160);
+    if (typeof f.note === "string") u.note = f.note.slice(0, 600);
+    if (typeof f.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(f.date)) u.date = f.date;
+    for (const k of ["start", "due"]) if (k in f) u[k] = f[k] ? normTime(f[k]) || null : null;
+    if ("hot" in f) u.hot = !!f.hot;
+    if ("needProof" in f) u.needProof = !!f.needProof;
+    return u;
+  }
+  // Admin side: a task the admin just sent shows straight away in that person's list (marked "Terkirim"),
+  // without waiting for anyone to accept it; it is replaced by the person's own copy once their app syncs.
+  S.sent = {}; S.mxBase = {};
+  let sentT = null;
+  const saveSent = () => { clearTimeout(sentT); sentT = setTimeout(() => db.doc(`data/users/${S.meId}/sent`).set({ byKey: S.sent }).catch(e => console.warn(e)), 400); };
+  function mergeSent(k) {
+    const base = S.mxBase[k] || [], have = new Set(base.map(t => t.id));
+    const m = S.team.find(x => "mx-" + x.id === k);
+    const bad = new Set(((m && m.uid && (S.rejected || {})[m.uid]) || []).map(r => r.id));
+    const cur = S.sent[k] || [];
+    const keep = cur.filter(t => !have.has(t.id) && !bad.has(t.id) && Date.now() - (t.createdAt || 0) < 7 * 864e5);
+    if (keep.length !== cur.length) { if (keep.length) S.sent[k] = keep; else delete S.sent[k]; saveSent(); }
+    S.items[k] = keep.length ? [...base, ...keep] : base;
+  }
+  function noteSent(m, id, d) {
+    const k = "mx-" + m.id;
+    S.sent[k] = [...(S.sent[k] || []), { id, title: String(d.title || "").slice(0, 160), note: String(d.note || "").slice(0, 600), date: d.date || today(), start: d.start || null, due: d.due || null,
+      status: "todo", hot: !!d.hot, needProof: d.needProof !== false, by: "owner", fromAdmin: (myMember() && myMember().name) || "Admin", createdAt: Date.now(), _sent: true }];
+    mergeSent(k); saveSent();
+  }
+  // Admin side: count instructions still waiting to be picked up, per person.
+  const pendSubs = {};
+  function syncPending() {
+    if (!adminMode()) return;
+    const want = new Set(S.team.filter(m => m.uid && m.uid !== S.meId && (!m.isAdmin || canAssignAdmins()) && adminSees(myMember(), m)).map(m => m.uid));
+    for (const u of Object.keys(pendSubs)) if (!want.has(u)) { pendSubs[u](); delete pendSubs[u]; }
+    for (const u of want) if (!pendSubs[u]) pendSubs[u] = db.collection(`cmd/${u}/items`).onSnapshot(snap => {
+      const mine = snap.docs.filter(d => d.data().from === S.meId);
+      S.pending = { ...(S.pending || {}), [u]: mine.filter(d => !d.data().rejected).length };
+      S.rejected = { ...(S.rejected || {}), [u]: mine.filter(d => d.data().rejected).map(d => ({ id: d.id, why: d.data().rejected })) };
+      const pm = S.team.find(x => x.uid === u); if (pm) mergeSent("mx-" + pm.id);
+      render();
+    }, err => console.warn(err));
+  }
+  async function subMirror() {
+    if (mirrorSub) return;
+    mirrorSub = "starting";
+    let ok = false;
+    try { ok = await ensureAdminKeys(); } catch (e) { console.warn(e); }
+    if (!ok) { S.mirrorErr = true; render(); return; }
+    try { const d = await db.doc(`data/users/${S.meId}/sent`).get(); if (d.exists) S.sent = d.data().byKey || {}; } catch (_) {}
+    mirrorSub = db.collection(`mirror/${S.meId}/people`).onSnapshot(async snap => {
+      for (const d of snap.docs) {
+        const v = d.data(), k = "mx-" + d.id;
+        if (d.id.startsWith("__links") || d.id.startsWith("__tag")) continue;
+        if (v.kid !== myKid) continue;
+        try {
+          const body = await decryptWith(myPriv, v);
+          S.mxBase[k] = body.tasks || []; mergeSent(k);
+          watchNotes(k);
+          S.itemsLoaded[k] = true;
+          S.keyDoc[k] = { askAt: body.askAt || null, routines: body.routines || [] };
+          watchAsk(k, S.keyDoc[k]);
+          S.mirrorAt = Math.max(S.mirrorAt || 0, v.at || 0);
+        } catch (e) { console.warn("decrypt", e); }
+      }
+      await readLinkDocs(snap.docs);
+      await readTags(snap.docs);
+      for (const m of S.team) if (!S.itemsLoaded["mx-" + m.id]) { S.mxBase["mx-" + m.id] = []; mergeSent("mx-" + m.id); S.itemsLoaded["mx-" + m.id] = true; }
+      render();
+    }, err => console.warn(err));
+  }
+
+  // Create today's copies of daily routines, once per person per day.
+  async function ensureRoutines(key) {
+    const d = today();
+    if (S.readOnly || !S.itemsLoaded[key] || !S.docLoaded[key] || ensured.has(key + "|" + d)) return;
+    ensured.add(key + "|" + d);
+    const routines = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    const dow = parse(d).getDay();
+    const have = new Set((S.items[key] || []).map(t => t.id));
+    for (const r of routines) {
+      if (!(r.days || []).includes(dow)) continue;
+      const id = `r-${r.id}-${d}`;
+      if (have.has(id)) continue;
+      try {
+        await db.doc(`tasks/${key}/items/${id}`).set({ title: r.title, note: r.note || "", date: d, start: r.start || null, due: r.due || null, status: "todo", hot: !!r.hot, needProof: r.needProof !== false, routine: r.id, by: "owner", ...(r.byName ? { fromAdmin: r.byName } : {}), createdAt: Date.now() });
+      } catch (e) { console.warn(e); if (e && e.code === "invalid_argument" && !S.owner) S.readOnly = true; break; }
+    }
+  }
+
+  // ---------- actions ----------
+  function setDate(d) {
+    S.date = d;
+    if (d < S.winFrom) { S.winFrom = addDays(d, -14); syncSubs(true); }
+    render();
+  }
+  function cycle(key, t) {
+    const next = NEXT[t.status] || "doing";
+    if (!S.owner && next === "done") { S.proofFor = key + "/" + t.id; render(); return; }
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ status: next, doneAt: next === "done" ? Date.now() : null, ...(next === "done" ? { returnedAt: null } : {}), ...(next === "doing" && !t.startedAt ? { startedAt: Date.now() } : {}) }));
+  }
+  const proofSrc = p => p && (p.asset ? "/_blob/" + p.asset : p.data) || null;
+  async function shrink(file, maxDim, q) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const sc = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return await new Promise(r => c.toBlob(r, "image/jpeg", q));
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const toDataURL = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+  async function pickProof(tag, file) {
+    if (!file) return;
+    try {
+      const blob = await shrink(file, 1400, 0.72);
+      if (!blob) throw new Error("no blob");
+      const old = S.proofDraft[tag]; if (old) URL.revokeObjectURL(old.preview);
+      S.proofDraft[tag] = { blob, file, preview: URL.createObjectURL(blob) };
+      render();
+    } catch (e) { toast("Foto tidak bisa dibaca. Coba screenshot atau foto format JPG/PNG."); }
+  }
+  function closeProof(tag) {
+    const d = S.proofDraft[tag]; if (d) URL.revokeObjectURL(d.preview);
+    delete S.proofDraft[tag]; S.proofFor = null; render();
+  }
+  async function submitProof(key, t, withoutProof) {
+    const tag = key + "/" + t.id;
+    const draft = S.proofDraft[tag];
+    const linkEl = document.getElementById("pl-" + t.id), noteEl = document.getElementById("pn-" + t.id);
+    let link = (linkEl && linkEl.value || "").trim();
+    const note = (noteEl && noteEl.value || "").trim();
+    if (link && !/^https?:\/\//i.test(link)) link = "https://" + link;
+    if (!withoutProof && !draft && !link) return toast("Lampirkan foto/screenshot atau link sebagai bukti");
+    S.busy = true; render();
+    await safe(async () => {
+      let proof = null;
+      if (!withoutProof) {
+        proof = { at: Date.now() };
+        if (link) proof.link = link.slice(0, 500);
+        if (draft) {
+          if (assets) {
+            const res = await assets.upload(draft.blob, { type: "image/jpeg" });
+            proof.asset = res.id;
+          } else {
+            let small = await shrink(draft.file, 900, 0.6);
+            let data = await toDataURL(small);
+            if (data.length > 180000) { small = await shrink(draft.file, 640, 0.5); data = await toDataURL(small); }
+            proof.data = data;
+          }
+        }
+      }
+      const upd = { status: "done", doneAt: Date.now(), returnedAt: null };
+      if (proof) upd.proof = proof;
+      if (note) { upd.report = note; upd.reportAt = Date.now(); }
+      await db.doc(`tasks/${key}/items/${t.id}`).update(upd);
+      closeProof(tag);
+    }, withoutProof ? "Tugas selesai" : "Tugas selesai dengan bukti");
+    S.busy = false; render();
+  }
+  function sendBack(key, t) {
+    const tag = "bk/" + key + "/" + t.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    if (adminMode()) return adminDo(() => sendCmd(memberByKey(key), "sendBack", { taskId: t.id }), "Dikembalikan. Berlaku saat aplikasinya terbuka.");
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ status: "doing", doneAt: null, returnedAt: Date.now() }), "Tugas dikembalikan. Tulis alasannya di catatan.");
+  }
+  function del(key, t) {
+    const tag = key + "/" + t.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    if (adminMode()) return adminDo(() => sendCmd(memberByKey(key), "del", { taskId: t.id }), "Perintah hapus terkirim");
+    safe(async () => {
+      await db.doc(`tasks/${key}/items/${t.id}`).delete();
+      if (t.proof && t.proof.asset && assets) { try { await assets.delete(t.proof.asset); } catch (_) {} }
+    }, "Tugas dihapus");
+  }
+  // Name shown on tasks the owner creates ("Dari ...").
+  // Everything the owner sends (tasks, edits, comments, links) is signed with Aziz's name.
+  const ownerName = () => { const az = S.team.find(m => m.isAdmin && /^aziz$/i.test(String(m.name || "").trim())); return az ? az.name : "Aziz"; };
+  // ---------- admin links (omzet, daily tracker, ...) ----------
+  // Each author (the owner or an admin) keeps their own list privately and sends an encrypted copy
+  // to every admin and to the owner. Employees never receive it.
+  //   owner's list: tasks/_links (owner-only)   admin's list: data/users/<id>/links (private)
+  //   copies: mirror/<recipient>/people/__links_<author>
+  let linksSub = null, ownerUidCache;
+  const myLinkName = () => S.owner ? ownerName() : ((myMember() && myMember().name) || "Admin");
+  const myLinksRef = () => S.owner ? db.doc("tasks/_links") : db.doc(`data/users/${S.meId}/links`);
+  function subLinks() {
+    if (linksSub || !(S.owner || (myMember() && myMember().isAdmin))) return;
+    linksSub = myLinksRef().onSnapshot(snap => {
+      S.myLinks = (snap.exists && snap.data().list) || [];
+      if (!snap.metadata.fromCache) { S.myLinksLoaded = true; pushLinks(); }
+      render();
+    }, err => console.warn(err));
+  }
+  // The owner's id is published at pub/_owner, which only the owner can write, so admins know where to send.
+  async function ownerUid() {
+    if (ownerUidCache !== undefined) return ownerUidCache;
+    try { const d = await db.doc("pub/_owner").get(); ownerUidCache = d.exists ? d.data().uid || null : null; } catch (_) { ownerUidCache = null; }
+    return ownerUidCache;
+  }
+  async function pushLinks() {
+    if (!S.myLinksLoaded || !S.teamLoaded || !hasCrypto()) return;
+    if (!(await ensureKeys())) return;
+    if (S.owner) {
+      const o = await db.doc("pub/_owner").get();
+      if (!o.exists || o.data().uid !== S.meId) await db.doc("pub/_owner").set({ uid: S.meId });
+    }
+    const recips = S.team.filter(a => a.isAdmin && a.uid && a.uid !== S.meId).map(a => a.uid);
+    if (!S.owner) { const o = await ownerUid(); if (o && o !== S.meId) recips.push(o); }
+    const body = { author: myLinkName(), links: S.myLinks || [] };
+    const hash = await sha(JSON.stringify(body));
+    const docId = "__links_" + S.meId;
+    for (const u of recips) {
+      try {
+        const pk = (await adminPub(u)) || (await freshPub(u));
+        if (!pk) continue;
+        const k = u + "|" + pk.kid + "|" + docId;
+        if (mirrorHash[k] === hash) continue;
+        const ref = db.doc(`mirror/${u}/people/${docId}`);
+        if (mirrorHash[k] === undefined) {
+          const cur = await ref.get();
+          if (cur.exists && cur.data().h === hash && cur.data().kid === pk.kid) { mirrorHash[k] = hash; continue; }
+        }
+        await ref.set({ ...(await encryptFor(pk.jwk, body)), h: hash, kid: pk.kid, at: Date.now() });
+        mirrorHash[k] = hash;
+        // Retire the copy from the earlier single-list version.
+        if (S.owner && !mirrorHash[u + "|old"]) { mirrorHash[u + "|old"] = 1; try { await db.doc(`mirror/${u}/people/__links`).delete(); } catch (_) {} }
+      } catch (e) { console.warn("links", e); }
+    }
+  }
+  // Reads the copies other authors sent to me.
+  async function readLinkDocs(docs) {
+    const sets = {};
+    for (const d of docs) {
+      if (!d.id.startsWith("__links")) continue;
+      const v = d.data();
+      if (v.kid !== myKid) continue;
+      try { const b = await decryptWith(myPriv, v); sets[d.id] = { author: b.author || "Pemilik", links: b.links || [] }; } catch (e) { console.warn("links", e); }
+    }
+    // A copy from the earlier version duplicates the owner's current one; prefer the current one.
+    if (sets.__links && Object.keys(sets).some(k => k !== "__links" && sets[k].author === sets.__links.author)) delete sets.__links;
+    S.linkSets = sets;
+  }
+  // ---------- tagging admins ----------
+  // The owner (shown as Aziz) and full admins can tag another admin, e.g. "Nayla belum dikasih tugas".
+  // The tag is signed and encrypted for that admin: mirror/<adminUid>/people/__tag_<id>.
+  const canTag = () => canAssignAdmins();
+  const tagTargets = () => S.team.filter(a => a.isAdmin && a.uid && a.uid !== S.meId && !(S.owner && a.name === ownerName()));
+  S.tags = []; S.tagLog = [];
+  const tagSeen = new Set();
+  function openTag(about) {
+    S.tagOpen = about.join(",");
+    const groups = new Set(about.map(id => (S.team.find(x => x.id === id) || {}).group).filter(Boolean));
+    S.tagSel = new Set(tagTargets().filter(a => (a.adminGroups || []).some(g => groups.has(g))).map(a => a.id));
+    render();
+    setTimeout(() => { const el = document.getElementById("tag-text"); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 0);
+  }
+  function tagForm(about) {
+    const names = about.map(id => (S.team.find(x => x.id === id) || {}).name).filter(Boolean);
+    const def = names.length ? `${names.join(", ")} belum dikasih tugas. Tolong segera diberi tugas ya.` : "";
+    return h("div", { class: "noteform", style: "margin-top:8px" },
+      h("span", { class: "muted", style: "font-size:.85rem" }, "Tag admin:"),
+      h("div", { class: "chips" }, tagTargets().map(a => h("button", { class: "chip", type: "button", "aria-pressed": String(S.tagSel.has(a.id)),
+        onclick: () => { S.tagSel.has(a.id) ? S.tagSel.delete(a.id) : S.tagSel.add(a.id); render(); } }, "@" + a.name))),
+      h("textarea", { class: "input", id: "tag-text", rows: "2", maxlength: "500", value: def, "aria-label": "Pesan untuk admin" }, def),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: () => { S.tagOpen = null; render(); } }, "Batal"),
+        h("button", { class: "btn small primary", type: "button", onclick: () => {
+          const el = document.getElementById("tag-text"), text = (el && el.value || "").trim();
+          const who = tagTargets().filter(a => S.tagSel.has(a.id));
+          if (!who.length) return toast("Pilih admin yang mau ditandai");
+          if (!text) return toast("Tulis pesannya dulu");
+          S.tagOpen = null; render(); sendTag(who, about, text);
+        } }, "Kirim tag")));
+  }
+  async function sendTag(admins, about, text, taskTitle) {
+    try {
+      if (!(await ensureKeys())) return toast("Perangkat ini tidak mendukung pengiriman tag.");
+      const id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), at = Date.now(), ok = [], fail = [];
+      for (const a of admins) {
+        try {
+          const pk = await freshPub(a.uid);
+          if (!(pk && pk.jwk)) { fail.push(a.name); continue; }
+          const c = { to: a.uid, from: S.meId, id, at, kid: pk.kid, ...(await encryptFor(pk.jwk, { by: myDisplayName(), text, about, task: taskTitle || null })) };
+          c.sig = b64(await crypto.subtle.sign(SIG, mySign, enc8(signedText(c))));
+          await db.doc(`mirror/${a.uid}/people/__tag_${id}`).set(c);
+          ok.push(a);
+        } catch (e) { console.warn("tag", e); fail.push(a.name); }
+      }
+      if (ok.length) {
+        S.tagLog = [{ id, to: ok.map(a => ({ uid: a.uid, name: a.name })), about, text, at, open: ok.map(a => a.uid) }, ...S.tagLog].filter(x => Date.now() - x.at < 3 * 864e5).slice(0, 60);
+        saveTagLog();
+      }
+      toast(ok.length ? `${ok.map(a => "@" + a.name).join(", ")} sudah ditandai` + (fail.length ? `. Belum bisa: ${fail.join(", ")} (perlu membuka aplikasi dulu)` : "") : `Belum bisa menandai ${fail.join(", ")} (perlu membuka aplikasi dulu)`);
+    } catch (e) { console.warn(e); toast("Gagal mengirim tag. Coba lagi."); }
+  }
+  const saveTagLog = () => db.doc(`data/users/${S.meId}/tagsent`).set({ list: S.tagLog }).catch(e => console.warn(e));
+  let tagLogLoaded = false;
+  async function loadTagLog() {
+    if (tagLogLoaded || !canTag()) return;
+    tagLogLoaded = true;
+    try { const d = await db.doc(`data/users/${S.meId}/tagsent`).get(); if (d.exists) S.tagLog = (d.data().list || []).filter(x => Date.now() - x.at < 3 * 864e5); } catch (_) {}
+    checkTagLog(); setInterval(checkTagLog, 60000);
+  }
+  // The tagged admin marks a tag as handled by removing it; the sender sees that here.
+  async function checkTagLog() {
+    let changed = false;
+    for (const x of S.tagLog) for (const u of [...(x.open || [])]) {
+      try { if (!(await db.doc(`mirror/${u}/people/__tag_${x.id}`).get()).exists) { x.open = x.open.filter(v => v !== u); changed = true; } } catch (_) {}
+    }
+    if (changed) { saveTagLog(); render(); }
+  }
+  function tagSentFor(mid) {
+    const list = S.tagLog.filter(x => (x.about || []).includes(mid)).slice(0, 2);
+    return list.map(x => h("p", { class: "tagsent" }, `🏷️ Kamu menandai · ${ymd(new Date(x.at)) === today() ? "" : fmtShort(ymd(new Date(x.at))) + " "}${fmtTime(x.at)}: ` +
+      x.to.map(t => "@" + t.name + ((x.open || []).includes(t.uid) ? " (menunggu)" : " ✓")).join(", ")));
+  }
+  async function readTags(docs) {
+    const out = [], o = await ownerUid();
+    for (const d of docs) {
+      if (!d.id.startsWith("__tag_")) continue;
+      const v = d.data();
+      if (v.kid !== myKid || v.to !== S.meId) continue;
+      try {
+        const sender = S.team.find(x => x.uid === v.from && x.isAdmin);
+        if (!(sender || (o && v.from === o))) continue;
+        const pk = await adminPub(v.from) || await freshPub(v.from);
+        const ok = !!(pk && pk.sjwk) && await crypto.subtle.verify(SIG, await crypto.subtle.importKey("jwk", pk.sjwk, ES, false, ["verify"]), unb64(v.sig || ""), enc8(signedText(v)));
+        if (!ok) continue;
+        const b = await decryptWith(myPriv, v);
+        out.push({ doc: d.id, at: v.at, by: b.by || (sender && sender.name) || "Aziz", text: b.text || "", about: b.about || [], task: b.task || null });
+      } catch (e) { console.warn("tag", e); }
+    }
+    out.sort((a, b) => b.at - a.at);
+    for (const t of out) if (!tagSeen.has(t.doc)) {
+      tagSeen.add(t.doc);
+      if (Date.now() - t.at < 6 * 3600e3) {
+        try { if ("Notification" in window && Notification.permission === "granted") new Notification(`${t.by} menandai kamu`, { body: t.text }); } catch (_) {}
+      }
+    }
+    S.tags = out;
+  }
+  function tagInbox() {
+    if (!(S.tags || []).length) return null;
+    return h("section", { class: "tagbox", "aria-label": "Kamu ditandai" },
+      h("b", {}, `🏷️ Kamu ditandai (${S.tags.length})`),
+      S.tags.map(t => {
+        const people = (t.about || []).map(id => S.team.find(x => x.id === id)).filter(Boolean);
+        return h("div", { class: "tg" },
+          h("small", {}, `${t.by} · ${ymd(new Date(t.at)) === today() ? "hari ini" : fmtShort(ymd(new Date(t.at)))} ${fmtTime(t.at)}` + (t.task ? ` · tugas "${t.task}"` : "")),
+          h("p", {}, linkify(t.text)),
+          h("div", { class: "chips" },
+            people.filter(m => m.uid !== S.meId && (!m.isAdmin || canAssignAdmins()) && adminSees(myMember() || {}, m)).map(m => h("button", { class: "chip", type: "button", onclick: () => { S.tab = "pantau"; openAddFor(m); } }, "Beri tugas ke " + m.name + " +")),
+            h("button", { class: "btn small", type: "button", onclick: () => safe(async () => { await db.doc(`mirror/${S.meId}/people/${t.doc}`).delete(); S.tags = S.tags.filter(x => x.doc !== t.doc); }, "Ditandai sudah ditangani") }, "✓ Sudah ditangani")));
+      }));
+  }
+
+  let inboxSub = null;
+  async function subLinkInbox() {
+    if (inboxSub || !S.owner) return;
+    inboxSub = "starting";
+    if (!(await ensureKeys())) { inboxSub = null; return; }
+    inboxSub = db.collection(`mirror/${S.meId}/people`).onSnapshot(async snap => { await readLinkDocs(snap.docs); render(); }, err => console.warn(err));
+  }
+  const allLinks = () => [
+    ...(S.myLinks || []).map(l => ({ ...l, author: myLinkName(), mine: true })),
+    ...Object.values(S.linkSets || {}).flatMap(set => set.links.map(l => ({ ...l, author: set.author }))),
+  ].sort((a, b) => (a.at || 0) - (b.at || 0));
+  function addLink() {
+    const t = document.getElementById("lk-title"), u = document.getElementById("lk-url");
+    const title = (t.value || "").trim(); let url = (u.value || "").trim();
+    if (!title) return toast("Tulis nama link, misalnya Omzet Oktober");
+    if (!url) return toast("Tempel link-nya dulu");
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    t.value = ""; u.value = "";
+    const list = [...(S.myLinks || []), { id: Math.random().toString(36).slice(2, 9), title: title.slice(0, 80), url: url.slice(0, 1000), at: Date.now() }];
+    safe(() => myLinksRef().set({ list }), "Link disimpan dan dibagikan ke admin");
+  }
+  function delLink(id) {
+    const tag = "lk/" + id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(() => myLinksRef().set({ list: (S.myLinks || []).filter(l => l.id !== id) }), "Link dihapus");
+  }
+  function linksPanel() {
+    if (!S.showLinks) return null;
+    const list = allLinks();
+    return h("section", { class: "panel links", "aria-label": "Link khusus admin" },
+      h("div", { class: "recap-h" },
+        h("div", {}, h("h2", {}, "🔗 Link khusus admin"), h("p", { class: "foot" }, "Hanya pemilik dan admin yang bisa melihat link ini. Setiap orang bisa menambah link dan menghapus link miliknya sendiri.")),
+        h("button", { class: "btn small ghost", onclick: () => { S.showLinks = false; render(); } }, "Tutup")),
+      list.length ? h("ul", { class: "lklist" }, list.map(l => h("li", {},
+          h("a", { href: l.url, target: "_blank", rel: "noopener noreferrer" }, h("b", {}, l.title), h("span", {}, shortUrl(l.url) + " ↗"), h("small", {}, "oleh " + (l.mine ? "kamu" : l.author))),
+          l.mine && h("button", { class: "del" + (S.arm === "lk/" + l.id ? " arm" : ""), onclick: () => delLink(l.id), "aria-label": "Hapus link " + l.title }, S.arm === "lk/" + l.id ? "Hapus?" : "✕"))))
+        : h("p", { class: "empty" }, "Belum ada link. Tambahkan link omzet, daily tracker, atau laporan lain di bawah."),
+      h("div", { class: "row" },
+        h("label", { class: "field" }, h("span", {}, "Nama"), h("input", { class: "input", id: "lk-title", maxlength: "80", placeholder: "Contoh: Omzet Oktober" })),
+        h("label", { class: "field", style: "flex:2 1 240px" }, h("span", {}, "Link"), h("input", { class: "input", id: "lk-url", type: "url", inputmode: "url", maxlength: "1000", placeholder: "https://docs.google.com/…", onkeydown: e => { if (e.key === "Enter") addLink(); } })),
+        h("button", { class: "btn primary", onclick: addLink }, "Tambah link")));
+  }
+  const newTask = (title, extra) => ({ title, note: "", date: S.date, status: "todo", hot: false, createdAt: Date.now(), ...extra });
+  function quickAdd(key, inputId, by) {
+    const el = document.getElementById(inputId);
+    const title = (el && el.value || "").trim();
+    if (!title) { el && el.focus(); return; }
+    el.value = "";
+    const due0 = readTime(inputId + "-t"), start0 = readTime(inputId + "-s");
+    if (due0 === null || start0 === null) { el.value = title; return toast("Jam tidak valid. Pakai format 24 jam, misalnya 08:00."); }
+    if (start0 && due0 && start0 >= due0) { el.value = title; return toast("Jam selesai harus setelah jam mulai"); }
+    const due = due0 || null, start = start0 || null;
+    setTime(inputId + "-t", ""); setTime(inputId + "-s", "");
+    if (adminMode() && key !== S.meId) return adminDo(() => sendCmd(memberByKey(key), "add", { title, date: S.date, start, due, needProof: true }), "Tugas terkirim — langsung masuk ke daftarnya tanpa perlu persetujuan.");
+    // For tasks people add themselves: who asked for it.
+    const srcEl = by === "self" ? document.getElementById(inputId + "-src") : null;
+    const source = srcEl ? (srcEl.value || "").trim().slice(0, 60) : "";
+    if (srcEl) srcEl.value = "";
+    safe(async () => { await db.collection(`tasks/${key}/items`).add(newTask(title, { by, start, due, ...(source ? { source } : {}), needProof: by === "owner", ...(by === "owner" && S.owner ? { fromAdmin: ownerName() } : {}) })); if (by === "owner") await clearAsk(key); });
+  }
+  async function clearAsk(key) {
+    const kd = S.keyDoc[key];
+    if (kd && kd.askAt) await db.doc(`tasks/${key}`).update({ askAt: null });
+  }
+  const askWork = () => safe(() => db.doc(`tasks/${S.meId}`).set({ ...(S.keyDoc[S.meId] || {}), askAt: Date.now() }), "Permintaan tugas terkirim ke admin");
+  function openNote(key, t) {
+    S.editNote = key + "/" + t.id; render();
+    const el = document.getElementById("rep-" + t.id);
+    if (el) { el.value = t.report || ""; el.focus(); }
+  }
+  function saveNote(key, t) {
+    const el = document.getElementById("rep-" + t.id);
+    const v = (el && el.value || "").trim();
+    S.editNote = null;
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ report: v, reportAt: v ? Date.now() : null }), v ? "Catatan disimpan" : "Catatan dihapus");
+  }
+  function openAddFor(m) {
+    S.showAdd = true; S.addSel = new Set([m.id]); render();
+    setTimeout(() => { const el = document.getElementById("add-title"); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 0);
+  }
+  async function submitAdd() {
+    const title = document.getElementById("add-title").value.trim();
+    const note = document.getElementById("add-note").value.trim();
+    const dateEl = document.getElementById("add-date");
+    const date = (dateEl && dateEl.value) || S.date;
+    const due0 = readTime("add-time"), start0 = readTime("add-start");
+    if (due0 === null || start0 === null) return toast("Jam tidak valid. Pakai format 24 jam, misalnya 08:00.");
+    const due = due0 || null, start = start0 || null;
+    if (start && due && start >= due) return toast("Jam selesai harus setelah jam mulai");
+    if (!S.addSel.size) return toast("Pilih minimal satu orang");
+    if (!title) { document.getElementById("add-title").focus(); return toast("Tulis judul tugasnya dulu"); }
+    if (S.addRoutine && !S.addDays.size) return toast("Pilih hari untuk tugas rutin");
+    const people = S.team.filter(m => S.addSel.has(m.id));
+    if (adminMode()) {
+      const sent = [], failed = [];
+      for (const m of people) {
+        try {
+          if (S.addRoutine) await sendCmd(m, "routine", { r: { id: Math.random().toString(36).slice(2, 9), title, note, hot: S.addHot, needProof: S.addProof, start, due, days: [...S.addDays].sort() } });
+          else await sendCmd(m, "add", { title, note, date, start, due, hot: S.addHot, needProof: S.addProof });
+          sent.push(m.name);
+        } catch (e) { console.warn(e); failed.push(m.name); }
+      }
+      toast(failed.length ? `Terkirim ke ${sent.length} orang. Belum bisa ke: ${failed.join(", ")} (perlu membuka aplikasi dulu).` : `Tugas terkirim ke ${sent.length} orang — langsung masuk tanpa perlu persetujuan`);
+      S.addTime = ""; ["add-title", "add-note"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; }); setTime("add-time", ""); setTime("add-start", "");
+      S.addSel.clear(); S.addHot = false; S.addRoutine = false; S.addProof = true; S.showAdd = false;
+      return render();
+    }
+    await safe(async () => {
+      for (const m of people) {
+        const key = keyOf(m);
+        if (S.addRoutine) {
+          const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+          const r = { id: Math.random().toString(36).slice(2, 9), title, note, hot: S.addHot, needProof: S.addProof, start, due, days: [...S.addDays].sort(), byName: ownerName() };
+          await db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: [...cur, r] });
+          const d = today();
+          if (r.days.includes(parse(d).getDay())) await db.doc(`tasks/${key}/items/r-${r.id}-${d}`).set({ title, note, date: d, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, routine: r.id, by: "owner", fromAdmin: ownerName(), createdAt: Date.now() });
+        } else {
+          await db.collection(`tasks/${key}/items`).add({ title, note, date, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, by: "owner", fromAdmin: ownerName(), createdAt: Date.now() });
+        }
+        if (!S.addRoutine || (S.keyDoc[key] && S.keyDoc[key].askAt)) await clearAsk(key);
+      }
+    }, S.addRoutine ? "Tugas rutin disimpan" : `Tugas dibagikan ke ${people.length} orang`);
+    S.addTime = ""; ["add-title", "add-note"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; }); setTime("add-time", ""); setTime("add-start", "");
+    S.addSel.clear(); S.addHot = false; S.addRoutine = false; S.addProof = true; S.showAdd = false;
+    render();
+  }
+  function removeRoutine(key, rid) {
+    const tag = "rt/" + key + "/" + rid;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    if (adminMode()) return adminDo(() => sendCmd(memberByKey(key), "unroutine", { rid }), "Perintah menghentikan tugas rutin terkirim");
+    const cur = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    safe(() => db.doc(`tasks/${key}`).set({ ...(S.keyDoc[key] || {}), routines: cur.filter(r => r.id !== rid) }), "Tugas rutin dihentikan");
+  }
+  async function moveTasks(from, to) {
+    if (!from || from === to) return;
+    const snap = await db.collection(`tasks/${from}/items`).get();
+    for (const d of snap.docs) {
+      await db.doc(`tasks/${to}/items/${d.id}`).set({ ...d.data() });
+      await db.doc(`tasks/${from}/items/${d.id}`).delete();
+    }
+    const kd = await db.doc(`tasks/${from}`).get();
+    if (kd.exists) { await db.doc(`tasks/${to}`).set({ ...kd.data() }); await db.doc(`tasks/${from}`).delete(); }
+  }
+  function approve(c) {
+    const m = S.team.find(x => x.id === c.memberId);
+    if (!m) return toast("Nama itu sudah tidak ada di daftar tim");
+    const other = S.team.find(x => x.uid === c.uid && x.id !== m.id);
+    if (other) return toast(`Akun ini sudah terhubung ke ${other.name}. Lepas dulu di Kelola tim.`);
+    safe(async () => {
+      await moveTasks(keyOf(m), c.uid);
+      await db.doc("team/" + m.id).update({ uid: c.uid });
+      await db.doc("claims/" + c.uid).delete();
+    }, `${m.name} sudah terhubung`);
+  }
+  const reject = c => safe(() => db.doc("claims/" + c.uid).delete(), "Permintaan ditolak");
+  function unlink(m) {
+    const tag = "un/" + m.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(async () => { await moveTasks(m.uid, "m-" + m.id); await db.doc("team/" + m.id).update({ uid: null }); }, `Akun ${m.name} dilepas`);
+  }
+  function addMember() {
+    const name = document.getElementById("mem-name").value.trim();
+    const role = document.getElementById("mem-role").value.trim();
+    const group = ((document.getElementById("mem-group") || {}).value || "").trim().toUpperCase();
+    if (!name) return toast("Tulis nama anggota");
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) + "-" + Math.random().toString(36).slice(2, 6);
+    const order = Math.max(0, ...S.team.map(m => m.order || 0)) + 1;
+    document.getElementById("mem-name").value = ""; document.getElementById("mem-role").value = "";
+    const gEl = document.getElementById("mem-group"); if (gEl) gEl.value = "";
+    safe(() => db.doc("team/" + id).set({ name, role, order, ...(group ? { group } : {}) }), `${name} ditambahkan`);
+  }
+  function removeMember(m) {
+    const tag = "rm/" + m.id;
+    if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
+    S.arm = null;
+    safe(() => db.doc("team/" + m.id).delete(), `${m.name} dihapus dari tim`);
+  }
+  const claim = m => safe(() => db.doc("claims/" + S.meId).set({ memberId: m.id, at: Date.now() }), "Permintaan terkirim ke pemilik");
+  const unclaim = () => safe(() => db.doc("claims/" + S.meId).delete());
+
+  // ---------- pieces ----------
+  // ---------- reorder (drag & drop, works with mouse and touch) ----------
+  let drag = null, pendingRender = false;
+  function dragStart(e, id) {
+    if (e.button !== undefined && e.button !== 0) return;
+    const handle = e.currentTarget;
+    const row = handle.closest(".mrow");
+    const rows = [...app.querySelectorAll(".mlist .mrow[data-id]")];
+    drag = { id, row, rows, startY: e.clientY, target: null, after: false };
+    row.classList.add("dragging");
+    try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+    handle.addEventListener("pointermove", dragMove);
+    handle.addEventListener("pointerup", dragEnd, { once: true });
+    handle.addEventListener("pointercancel", dragCancel, { once: true });
+    e.preventDefault();
+  }
+  function dragMove(e) {
+    if (!drag) return;
+    drag.row.style.transform = `translateY(${e.clientY - drag.startY}px)`;
+    drag.rows.forEach(r => r.classList.remove("drop-before", "drop-after"));
+    let target = null, after = false;
+    for (const r of drag.rows) {
+      if (r === drag.row) continue;
+      const b = r.getBoundingClientRect();
+      if (e.clientY >= b.top && e.clientY <= b.bottom) { target = r; after = e.clientY > b.top + b.height / 2; break; }
+    }
+    if (!target) {
+      const first = drag.rows[0].getBoundingClientRect(), last = drag.rows[drag.rows.length - 1].getBoundingClientRect();
+      if (e.clientY < first.top) { target = drag.rows[0]; after = false; }
+      else if (e.clientY > last.bottom) { target = drag.rows[drag.rows.length - 1]; after = true; }
+    }
+    if (target && target !== drag.row) target.classList.add(after ? "drop-after" : "drop-before");
+    drag.target = target; drag.after = after;
+    // Scroll the page when dragging near the screen edge.
+    if (e.clientY < 60) window.scrollBy(0, -12); else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+  }
+  function dragCleanup(handleEl) {
+    if (!drag) return;
+    drag.row.style.transform = ""; drag.row.classList.remove("dragging");
+    drag.rows.forEach(r => r.classList.remove("drop-before", "drop-after"));
+    if (handleEl) handleEl.removeEventListener("pointermove", dragMove);
+  }
+  function dragCancel(e) { dragCleanup(e.currentTarget); drag = null; if (pendingRender) { pendingRender = false; render(); } }
+  function dragEnd(e) {
+    const d = drag; dragCleanup(e.currentTarget); drag = null;
+    if (d && d.target && d.target !== d.row) {
+      const ids = S.teamRaw.map(m => m.id).filter(x => x !== d.id);
+      let at = ids.indexOf(d.target.dataset.id);
+      if (d.after) at += 1;
+      ids.splice(at, 0, d.id);
+      applyOrder(ids);
+    } else if (pendingRender) { pendingRender = false; render(); }
+  }
+  function moveBy(id, delta) {
+    const ids = S.teamRaw.map(m => m.id);
+    const i = ids.indexOf(id), j = i + delta;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    applyOrder(ids);
+    setTimeout(() => { const el = app.querySelector(`.mrow[data-id="${CSS.escape(id)}"] .handle`); if (el) el.focus(); }, 0);
+  }
+  function applyOrder(ids) {
+    const changed = [];
+    const byId = Object.fromEntries(S.teamRaw.map(m => [m.id, m]));
+    ids.forEach((id, i) => { const m = byId[id]; if (m && m.order !== i + 1) { changed.push([id, i + 1]); m.order = i + 1; } });
+    S.teamRaw = ids.map(id => byId[id]).filter(Boolean);
+    pendingRender = false; render();
+    if (!changed.length) return;
+    safe(async () => { for (const [id, order] of changed) await db.doc("team/" + id).update({ order }); }, "Urutan tim disimpan");
+  }
+
+  function avatar(m, big) {
+    if (m.photo) return h("img", { class: "avatar" + (big ? " big" : ""), src: m.photo, alt: "" });
+    const hh = hue(m.role || m.name || "");
+    return h("div", { class: "avatar" + (big ? " big" : ""), style: `background: hsl(${hh} 52% 42%)`, "aria-hidden": "true" }, initials(m.name || "?"));
+  }
+  async function squarePhoto(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const side = Math.min(img.naturalWidth, img.naturalHeight), out = 256;
+      const c = document.createElement("canvas"); c.width = c.height = out;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, out, out);
+      return c.toDataURL("image/jpeg", 0.8);
+    } finally { URL.revokeObjectURL(url); }
+  }
+  function openEdit(id, m) {
+    S.editMember = id; S.photoDraft = undefined; render();
+    const n = document.getElementById("pe-name"), r = document.getElementById("pe-role");
+    if (n) { n.value = m.name || ""; n.focus(); }
+    if (r) r.value = m.role || "";
+    const gr = document.getElementById("pe-group"); if (gr) gr.value = m.group || "";
+  }
+  function profileForm(m) {
+    const photo = S.photoDraft === undefined ? m.photo : S.photoDraft;
+    const close = () => { S.editMember = null; S.photoDraft = undefined; render(); };
+    return h("form", { class: "pform", onsubmit: e => { e.preventDefault(); saveProfile(m); } },
+      h("div", { class: "prow" },
+        avatar({ ...m, photo }, true),
+        h("div", { class: "chips" },
+          h("label", { class: "btn small filebtn" }, h("input", { type: "file", accept: "image/*", id: "pe-photo", onchange: async e => {
+            const f = e.target.files[0]; if (!f) return;
+            try { S.photoDraft = await squarePhoto(f); render(); } catch (_) { toast("Foto tidak bisa dibaca. Coba format JPG atau PNG."); }
+          } }), photo ? "Ganti foto" : "Tambah foto"),
+          photo && h("button", { class: "btn small ghost", type: "button", onclick: () => { S.photoDraft = null; render(); } }, "Hapus foto"))),
+      h("div", { class: "row" },
+        h("label", { class: "field" }, h("span", {}, "Nama"), h("input", { class: "input", id: "pe-name", maxlength: "40" })),
+        h("label", { class: "field" }, h("span", {}, "Divisi"), h("input", { class: "input", id: "pe-role", maxlength: "60" })),
+        S.owner && S.editMember !== "me" && unitField("pe-group")),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: close }, "Batal"),
+        h("button", { class: "btn small primary", type: "submit" }, "Simpan profil")));
+  }
+  function saveProfile(m) {
+    const name = (document.getElementById("pe-name").value || "").trim();
+    const role = (document.getElementById("pe-role").value || "").trim();
+    if (!name) return toast("Nama tidak boleh kosong");
+    const photo = (S.photoDraft === undefined ? m.photo : S.photoDraft) || null;
+    const profile = { name, role, photo, at: Date.now() };
+    const grEl0 = document.getElementById("pe-group");
+    const groupVal = grEl0 ? (grEl0.value || "").trim().toUpperCase() : null;
+    S.editMember = null; S.photoDraft = undefined;
+    safe(async () => {
+      if (S.owner) {
+        const group = groupVal != null ? groupVal : (m.group || "");
+        await db.doc("team/" + m.id).update({ name, role, photo, group });
+        if (m.uid) await db.doc("tasks/" + m.uid).set({ ...(S.keyDoc[m.uid] || {}), profile });
+      } else {
+        await db.doc("tasks/" + S.meId).set({ ...(S.keyDoc[S.meId] || {}), profile });
+      }
+    }, "Profil disimpan");
+  }
+  function dateNav() {
+    const isToday = S.date === today();
+    return h("div", { class: "datenav" },
+      h("button", { class: "iconbtn", "aria-label": "Hari sebelumnya", onclick: () => setDate(addDays(S.date, -1)) }, "‹"),
+      h("div", { class: "lbl" }, h("small", {}, isToday ? "Hari ini" : S.date < today() ? "Lewat" : "Mendatang"), fmtShort(S.date)),
+      h("button", { class: "iconbtn", "aria-label": "Hari berikutnya", onclick: () => setDate(addDays(S.date, 1)) }, "›"),
+      !isToday && h("button", { class: "btn small", onclick: () => setDate(today()) }, "Hari ini"));
+  }
+  function bar(c, total) {
+    const p = n => total ? (n / total * 100).toFixed(2) + "%" : "0";
+    return h("div", { class: "stackbar", role: "img", "aria-label": `${c.done} selesai, ${c.doing} dikerjakan, ${c.todo} belum` },
+      h("i", { class: "s-done", style: `width:${p(c.done)}` }), h("i", { class: "s-doing", style: `width:${p(c.doing)}` }));
+  }
+  function proofPanel(key, t) {
+    const tag = key + "/" + t.id, d = S.proofDraft[tag];
+    return h("div", { class: "proofpanel" },
+      h("b", {}, "Bukti tugas selesai"),
+      h("p", { class: "foot" }, "Unggah foto atau screenshot hasil kerja, atau tempel link (Drive, Instagram, TikTok, marketplace). Untuk video, pakai link."),
+      d ? h("div", { class: "pv" }, h("img", { src: d.preview, alt: "Pratinjau bukti" }), h("button", { class: "linkbtn", type: "button", onclick: () => { URL.revokeObjectURL(d.preview); delete S.proofDraft[tag]; render(); } }, "Ganti foto"))
+        : h("label", { class: "drop" }, h("input", { type: "file", accept: "image/*", id: "pf-" + t.id, onchange: e => pickProof(tag, e.target.files[0]) }), h("span", {}, "📷 Pilih foto / screenshot")),
+      h("input", { class: "input", id: "pl-" + t.id, type: "url", inputmode: "url", placeholder: "atau tempel link hasil kerja", maxlength: "500", "aria-label": "Link bukti" }),
+      h("textarea", { class: "input", id: "pn-" + t.id, rows: "2", maxlength: "600", placeholder: "Catatan singkat (opsional)", "aria-label": "Catatan" }),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: () => closeProof(tag) }, "Batal"),
+        !t.needProof && h("button", { class: "btn small", type: "button", disabled: S.busy, onclick: () => submitProof(key, t, true) }, "Selesai tanpa bukti"),
+        h("button", { class: "btn small primary", type: "button", disabled: S.busy, onclick: () => submitProof(key, t, false) }, S.busy ? "Mengunggah…" : "Tandai selesai")));
+  }
+  // Turns links typed in notes into tappable links, shown in a readable short form.
+  const shortUrl = u => { try { const x = new URL(u); const p = (x.pathname + x.search).replace(/\/$/, ""); return x.hostname.replace(/^www\./, "") + (p.length > 28 ? p.slice(0, 26) + "…" : p); } catch (_) { return u; } };
+  function linkify(text) {
+    const out = [], re = /((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]])/gi;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push(text.slice(last, m.index));
+      const href = /^https?:/i.test(m[1]) ? m[1] : "https://" + m[1];
+      out.push(h("a", { href, target: "_blank", rel: "noopener noreferrer", class: "inlink", title: href }, shortUrl(href) + " ↗"));
+      last = m.index + m[1].length;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
+  }
+  // One 24-hour time field ("HH:MM", 00:00–24:00). Typing 0930 becomes 09:30 automatically.
+  function normTime(v) {
+    const d = String(v || "").replace(/\D/g, "");
+    if (!d) return "";
+    const hh = d.length <= 2 ? d : d.slice(0, d.length - 2), mm = d.length <= 2 ? "00" : d.slice(-2);
+    const H = Number(hh), M = Number(mm);
+    if (!(H >= 0 && H <= 24 && M >= 0 && M <= 59) || (H === 24 && M > 0)) return null;
+    return pad(H) + ":" + pad(M);
+  }
+  function timePick(id, label) {
+    return h("label", { class: "tl" }, h("span", {}, label),
+      h("input", { class: "input timein", id, type: "text", inputmode: "numeric", maxlength: "5", placeholder: "jj:mm", autocomplete: "off", "aria-label": label + " (format 24 jam, misalnya 09:30)",
+        oninput: e => { const d = e.target.value.replace(/\D/g, "").slice(0, 4); e.target.value = d.length > 2 ? d.slice(0, 2) + ":" + d.slice(2) : d; },
+        onblur: e => { const n = normTime(e.target.value); if (n === null) { e.target.value = ""; toast("Jam tidak valid. Pakai format 24 jam, misalnya 08:00 atau 17:30."); } else e.target.value = n; } }));
+  }
+  function setTime(id, v) { const el = document.getElementById(id); if (el) el.value = v || ""; }
+  // Reads a time field, returning "" for empty, the normalized time, or null when invalid.
+  function readTime(id) { const el = document.getElementById(id); return el ? normTime(el.value) : ""; }
+  const myDisplayName = () => S.owner ? ownerName() : ((myMember() && myMember().name) || "Saya");
+  function commentTemplates(t) {
+    const dl = deadline(t), now = Date.now();
+    return [
+      dl && now > dl && t.status !== "done" ? `Hai, mengingatkan tugas ini sudah terlambat ${dur(now - dl)} ya 🙏` : "Hai, mengingatkan tugas ini ya 🙏",
+      "Tolong update progresnya ya",
+      "Mantap, terima kasih! 👍",
+    ];
+  }
+  function openComment(key, t) {
+    S.cmtFor = key + "/" + t.id; render();
+    const el = document.getElementById("cm-" + t.id); if (el) el.focus();
+  }
+  function sendComment(key, t) {
+    const el = document.getElementById("cm-" + t.id);
+    const text = (el && el.value || "").trim();
+    if (!text) return toast("Tulis komentarnya dulu");
+    S.cmtFor = null;
+    if (canTag()) {
+      const low = text.toLowerCase(), tagged = tagTargets().filter(a => low.includes("@" + String(a.name || "").toLowerCase()));
+      const about = memberByKey(key);
+      if (tagged.length) sendTag(tagged, about ? [about.id] : [], (about ? about.name + ": " : "") + text, t.title);
+    }
+    if (adminMode() && key !== S.meId) return adminDo(() => sendCmd(memberByKey(key), "comment", { taskId: t.id, text }), "Komentar terkirim");
+    safe(() => addComment(key, t.id, { by: myDisplayName(), text }), "Komentar terkirim");
+  }
+  function commentBox(key, t) {
+    const tag = key + "/" + t.id, list = t.comments || [];
+    const canWrite = S.owner || S.ro || key === S.meId;
+    return [
+      list.length ? h("div", { class: "cmts" }, list.slice(-6).map(c => h("div", { class: "cmt" + (c.auto ? " auto" : "") },
+        h("span", { class: "who" }, (c.auto ? "⏰ " : "💬 ") + c.by + " · " + fmtTime(c.at)), h("p", {}, linkify(c.text))))) : null,
+      S.cmtFor === tag ? h("div", { class: "noteform" },
+          (S.owner || S.ro) && h("div", { class: "chips" }, commentTemplates(t).map(x => h("button", { class: "chip", type: "button", onclick: () => { const e = document.getElementById("cm-" + t.id); if (e) { e.value = x; e.focus(); } } }, x))),
+          canTag() && tagTargets().length ? h("div", { class: "chips" }, h("span", { class: "muted", style: "font-size:.8rem; align-self:center" }, "Tag:"),
+            tagTargets().map(a => h("button", { class: "chip", type: "button", onclick: () => { const e = document.getElementById("cm-" + t.id); if (e) { e.value = (e.value ? e.value.replace(/\s*$/, " ") : "") + "@" + a.name + " "; e.focus(); } } }, "@" + a.name))) : null,
+          h("textarea", { class: "input", id: "cm-" + t.id, rows: "2", maxlength: "500", placeholder: "Tulis komentar… (ketik @nama untuk menandai admin)", "aria-label": "Komentar untuk " + t.title }),
+          h("div", { class: "actions" },
+            h("button", { class: "btn small ghost", type: "button", onclick: () => { S.cmtFor = null; render(); } }, "Batal"),
+            h("button", { class: "btn small primary", type: "button", onclick: () => sendComment(key, t) }, "Kirim komentar")))
+        : canWrite && !S.readOnly && h("button", { class: "linkbtn notebtn", style: "margin-right:12px", onclick: () => openComment(key, t) }, list.length && key === S.meId && !S.owner ? "💬 Balas" : "💬 Komentar"),
+    ];
+  }
+  function openEditTask(key, t) {
+    S.editTask = key + "/" + t.id; S.editHot = !!t.hot; S.editProof = !!t.needProof; render();
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+    set("te-title", t.title); set("te-note", t.note); set("te-date", t.date); set("te-start", t.start); set("te-time", t.due);
+    const el = document.getElementById("te-title"); if (el) el.focus();
+  }
+  function saveEditTask(key, t) {
+    const title = (document.getElementById("te-title").value || "").trim();
+    if (!title) return toast("Judul tugas tidak boleh kosong");
+    const start = readTime("te-start"), due = readTime("te-time");
+    if (start === null || due === null) return toast("Jam tidak valid. Pakai format 24 jam, misalnya 08:00.");
+    if (start && due && start >= due) return toast("Jam selesai harus setelah jam mulai");
+    const fields = { title, note: document.getElementById("te-note").value || "", date: document.getElementById("te-date").value || t.date, start: start || null, due: due || null, hot: !!S.editHot, needProof: !!S.editProof };
+    S.editTask = null;
+    if (adminMode()) return adminDo(() => sendCmd(memberByKey(key), "edit", { taskId: t.id, fields }), "Perubahan terkirim");
+    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ ...cleanEdit(fields), editedBy: ownerName(), editedAt: Date.now() }), "Tugas diperbarui");
+  }
+  function editPanel(key, t) {
+    return h("div", { class: "proofpanel" },
+      h("b", {}, "Ubah detail tugas"),
+      h("label", { class: "field" }, h("span", {}, "Tugas"), h("input", { class: "input", id: "te-title", maxlength: "160" })),
+      h("label", { class: "field" }, h("span", {}, "Catatan"), h("textarea", { class: "input", id: "te-note", rows: "2", maxlength: "600" })),
+      h("div", { class: "row" },
+        h("label", { class: "field" }, h("span", {}, "Tanggal"), h("input", { class: "input", id: "te-date", type: "date" })),
+        timePick("te-start", "Mulai"), timePick("te-time", "Selesai")),
+      h("div", { class: "chips" },
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: S.editHot, onchange: e => { S.editHot = e.target.checked; } }), "Penting"),
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: S.editProof, onchange: e => { S.editProof = e.target.checked; } }), "Wajib bukti")),
+      h("p", { class: "foot" }, "Status, bukti, dan catatan yang sudah diisi tidak ikut berubah."),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: () => { S.editTask = null; render(); } }, "Batal"),
+        h("button", { class: "btn small primary", type: "button", onclick: () => saveEditTask(key, t) }, "Simpan perubahan")));
+  }
+  function taskRow(key, t, { canDelete, isLate }) {
+    const tag = key + "/" + t.id;
+    return h("li", { class: "task", "data-status": t.status },
+      h("button", { class: "status " + t.status, onclick: () => cycle(key, t), disabled: S.readOnly || S.ro, title: S.ro ? STATUS[t.status] : "Ketuk untuk ganti status", "aria-label": `Status: ${STATUS[t.status]}. Ketuk untuk ganti.` }, STATUS[t.status] || "Belum"),
+      h("div", { class: "tt" },
+        h("b", {}, t.title),
+        t.note && h("p", {}, linkify(t.note)),
+        h("div", { class: "meta" },
+          timeTags(t),
+          t.hot && h("span", { class: "tag hot" }, "Penting"),
+          isLate && h("span", { class: "tag late" }, "Dari " + fmtShort(t.date)),
+          t.routine && h("span", { class: "tag rut" }, "Rutin"),
+          t.by === "self" && (t.source ? h("span", { class: "tag rut" }, "Dari " + t.source) : h("span", { class: "tag off" }, "Dibuat sendiri")),
+          t._sent && h("span", { class: "tag on", title: "Sudah dikirim. Langsung masuk ke daftar tugasnya tanpa perlu persetujuan." }, "✓ Terkirim"),
+          t.fromAdmin && h("span", { class: "tag off" }, "Dari " + t.fromAdmin),
+          t.editedBy && h("span", { class: "tag off", title: t.editedAt ? "Diubah " + fmtTime(t.editedAt) : "" }, "Diubah " + t.editedBy),
+          t.returnedAt && t.status !== "done" && h("span", { class: "tag late" }, "Dikembalikan admin"),
+          t.status !== "done" && t.needProof && h("span", { class: "tag off" }, "Wajib bukti"),
+          t.status === "done" && (t.proof ? h("span", { class: "tag on" }, "✓ Ada bukti") : t.needProof ? h("span", { class: "tag late" }, "Tanpa bukti") : null)),
+        t.proof && h("div", { class: "proof" },
+          proofSrc(t.proof) && h("button", { class: "thumb", onclick: () => { S.lightbox = proofSrc(t.proof); render(); }, "aria-label": "Lihat foto bukti" }, h("img", { src: proofSrc(t.proof), alt: "Bukti: " + t.title, loading: "lazy" })),
+          h("div", { class: "pmeta" },
+            h("span", {}, "Bukti · " + fmtTime(t.proof.at)),
+            !proofSrc(t.proof) && t.proof.photo && h("span", {}, "Ada foto bukti (lihat di halaman pemilik)"),
+            t.proof.link && h("a", { href: t.proof.link, target: "_blank", rel: "noopener noreferrer" }, (() => { try { return shortUrl(t.proof.link) + " ↗"; } catch (_) { return "Buka link ↗"; } })()),
+            (S.owner || S.ro) && t.status === "done" && t.by !== "self" && h("button", { class: "linkbtn", style: "color:var(--warn)", onclick: () => sendBack(key, t) }, S.arm === "bk/" + tag ? "Yakin kembalikan?" : "Kembalikan"))),
+        S.proofFor === tag && proofPanel(key, t),
+        S.editTask === tag && editPanel(key, t),
+        commentBox(key, t),
+        (S.owner || S.ro) && t.by !== "self" && S.editTask !== tag && h("button", { class: "linkbtn notebtn", style: "margin-right:12px", onclick: () => openEditTask(key, t) }, "✎ Ubah detail"),
+        t.report && S.editNote !== tag && h("div", { class: "report" }, h("span", {}, "Catatan" + (t.reportAt ? " · " + fmtTime(t.reportAt) : "")), h("p", {}, linkify(t.report))),
+        S.editNote === tag
+          ? h("form", { class: "noteform", onsubmit: e => { e.preventDefault(); saveNote(key, t); } },
+              h("textarea", { class: "input", id: "rep-" + t.id, rows: "2", maxlength: "600", placeholder: "Progres, kendala, atau link hasil kerja", "aria-label": "Catatan untuk " + t.title }),
+              h("div", { class: "actions" },
+                h("button", { class: "btn small ghost", type: "button", onclick: () => { S.editNote = null; render(); } }, "Batal"),
+                h("button", { class: "btn small primary", type: "submit" }, "Simpan catatan")))
+          : !S.readOnly && !S.ro && S.proofFor !== tag && h("button", { class: "linkbtn notebtn", onclick: () => openNote(key, t) }, t.report ? "Ubah catatan" : "+ Catatan")),
+      canDelete ? h("button", { class: "del" + (S.arm === tag ? " arm" : ""), onclick: () => del(key, t), "aria-label": "Hapus tugas" }, S.arm === tag ? "Hapus?" : "✕") : h("span"));
+  }
+
+  function adminTabs() {
+    const t = (id, label) => h("button", { "aria-pressed": String(S.tab === id), onclick: () => { S.tab = id; render(); } }, label);
+    const open = (S.items[S.meId] || []).filter(x => x.date <= today() && x.status !== "done").length;
+    return h("div", { class: "seg", role: "group", "aria-label": "Tampilan" }, t("pantau", "Pantau tim"), t("saya", open ? `Tugas saya (${open})` : "Tugas saya"));
+  }
+  function unitField(id) {
+    return h("label", { class: "field" }, h("span", {}, "Unit (mis. HCS, HCM)"),
+      h("input", { class: "input", id, list: "unit-list", maxlength: "20", placeholder: "Kosongkan kalau tidak ada" }),
+      h("datalist", { id: "unit-list" }, units().map(g => h("option", { value: g }))));
+  }
+  function toggleAdmin(m) {
+    // A new admin starts limited to their own unit when they have one; the owner can widen it.
+    const upd = m.isAdmin ? { isAdmin: false, adminGroups: [] } : { isAdmin: true, adminGroups: m.group ? [m.group] : [] };
+    safe(() => db.doc("team/" + m.id).update(upd), m.isAdmin ? `${m.name} bukan admin lagi` : `${m.name} sekarang admin` + (m.group ? ` untuk unit ${m.group}` : ""));
+  }
+  function setScope(m, g) {
+    const cur = Array.isArray(m.adminGroups) ? m.adminGroups : [];
+    const next = g === "*" ? [] : cur.includes(g) ? cur.filter(x => x !== g) : [...cur, g];
+    safe(() => db.doc("team/" + m.id).update({ adminGroups: next }), next.length ? `${m.name} memantau ${next.join(", ")}` : `${m.name} memantau semua unit`);
+  }
+  function scopeChips(m) {
+    const cur = Array.isArray(m.adminGroups) ? m.adminGroups : [];
+    return h("div", { class: "scope" }, h("span", {}, "Pantau:"),
+      h("button", { class: "chip", "aria-pressed": String(!cur.length), onclick: () => setScope(m, "*") }, "Semua unit"),
+      units().map(g => h("button", { class: "chip", "aria-pressed": String(cur.includes(g)), onclick: () => setScope(m, g) }, g)));
+  }
+  // ---------- request alerts ----------
+  const askSeen = {};
+  function watchAsk(key, data) {
+    if (!isManager()) return;
+    if (!S.owner && key === S.meId) return;
+    const a = (data && data.askAt) || 0;
+    if (askSeen[key] === undefined) { askSeen[key] = a; return; }
+    if (a > askSeen[key]) { askSeen[key] = a; if (Date.now() - a < 15 * 60000) notifyAsk(key); }
+  }
+  function notifyAsk(key) {
+    const m = S.team.find(x => keyOf(x) === key || "mx-" + x.id === key);
+    if (!m) return;
+    S.alerts = [...(S.alerts || []).filter(x => x.id !== m.id), { id: m.id, name: m.name, at: Date.now() }];
+    render();
+    try { if ("Notification" in window && Notification.permission === "granted") new Notification(`${m.name} minta tugas`, { body: "Semua tugasnya sudah selesai." }); } catch (_) {}
+  }
+  // Unfinished 15+ minutes after the end time: one automatic reminder comment per task,
+  // written by the person's own app or the owner's app (whichever is open).
+  const LATE_MS = 15 * 60000;
+  async function autoRemind() {
+    const keys = S.owner ? Object.keys(subs) : (myMember() ? [S.meId] : []);
+    const now = Date.now(), from = addDays(today(), -1);
+    for (const key of keys) {
+      for (const t of (S.items[key] || [])) {
+        const dl = deadline(t);
+        if (!dl || t.status === "done" || t.autoRemindAt || t.date < from || now - dl < LATE_MS) continue;
+        try {
+          const fresh = await db.doc(`tasks/${key}/items/${t.id}`).get();
+          if (!fresh.exists || fresh.data().autoRemindAt || fresh.data().status === "done") continue;
+          await addComment(key, t.id, { id: "auto-" + t.id, by: "Pengingat otomatis", auto: true,
+            text: `Tugas ini belum selesai, sudah lewat ${dur(now - dl)} dari jam selesai ${t.due}. Mohon segera diselesaikan atau beri kabar di komentar.`,
+            extra: { autoRemindAt: now } });
+        } catch (e) { console.warn("remind", e); }
+      }
+    }
+  }
+  // Notices: new comments for the person, late reminders for owner and admins.
+  const seenNote = new Set(), noteBase = new Set();
+  // Comments already shown to this person are remembered on this device, so a reload does not repeat them.
+  const seenStore = (() => { try { return new Set(JSON.parse(localStorage.getItem("seenCmt") || "[]")); } catch (_) { return new Set(); } })();
+  const rememberSeen = id => { seenStore.add(id); try { localStorage.setItem("seenCmt", JSON.stringify([...seenStore].slice(-300))); } catch (_) {} };
+  function pushNote(id, msg, member) {
+    if (seenNote.has(id)) return;
+    seenNote.add(id);
+    S.notes = [...(S.notes || []).filter(n => n.id !== id), { id, msg, member, at: Date.now() }].slice(-6);
+    try { if ("Notification" in window && Notification.permission === "granted") new Notification(msg); } catch (_) {}
+  }
+  function watchNotes(key) {
+    const list = S.items[key] || [], first = !noteBase.has(key);
+    const mine = key === S.meId && !S.owner;
+    const m = S.team.find(x => keyOf(x) === key || "mx-" + x.id === key);
+    for (const t of list) {
+      if (mine) for (const c of (t.comments || [])) {
+        const id = "c:" + t.id + ":" + (c.id || c.at);
+        if (seenStore.has(id) || c.by === myDisplayName() || Date.now() - c.at > 12 * 3600e3) { seenNote.add(id); continue; }
+        pushNote(id, `${c.auto ? "⏰" : "💬"} ${c.by} di "${t.title}": ${c.text}`);
+        rememberSeen(id);
+      }
+      if (!mine && isManager() && t.autoRemindAt && m) {
+        const id = "l:" + key + ":" + t.id;
+        if (first || Date.now() - t.autoRemindAt > 3600e3) { seenNote.add(id); continue; }
+        pushNote(id, `⏰ ${m.name}: "${t.title}" belum selesai, lewat 15+ menit dari jam selesai`, m.id);
+      }
+    }
+    noteBase.add(key);
+  }
+  function noteBar() {
+    const list = S.notes || [];
+    if (!list.length) return null;
+    return h("section", { class: "alert", role: "status" },
+      h("span", { class: "bell", "aria-hidden": "true" }, "🔔"),
+      h("div", { class: "txt" }, list.map(n => h("span", { style: "color:var(--ink)" }, n.msg + " · " + fmtTime(n.at)))),
+      h("button", { class: "btn small ghost", onclick: () => { S.notes = []; render(); } }, "Tutup"));
+  }
+  function alertBar() {
+    const list = (S.alerts || []).filter(a => S.team.some(m => m.id === a.id));
+    if (!list.length) return null;
+    return h("section", { class: "alert", role: "alert" },
+      h("span", { class: "bell", "aria-hidden": "true" }, "🔔"),
+      h("div", { class: "txt" },
+        h("b", {}, list.length === 1 ? `${list[0].name} minta tugas` : `${list.length} orang minta tugas`),
+        h("span", {}, list.map(a => `${a.name} (${fmtTime(a.at)})`).join(", "))),
+      !S.ro && list.length === 1 && h("button", { class: "btn small primary", onclick: () => { const m = S.team.find(x => x.id === list[0].id); S.alerts = []; if (m) openAddFor(m); else render(); } }, "Beri tugas"),
+      h("button", { class: "btn small ghost", onclick: () => { S.alerts = []; render(); } }, "Tutup"));
+  }
+
+  // ---------- owner ----------
+  function ownerView() {
+    let all = [];
+    for (const m of workers()) { const { day, late } = tasksFor(keyFor(m)); all = all.concat(day, late); }
+    const c = tally(all), total = all.length;
+    const pct = total ? Math.round(c.done / total * 100) : 0;
+
+    const header = h("header", { class: "top" }, h("div", { class: "top-in" },
+      S.ro ? h("div", { class: "brand me" }, avatar(myMember()), h("div", {}, h("h1", {}, "Pantau Tim"), h("p", {}, "Admin" + (myAdminGroups().length ? " " + myAdminGroups().join(", ") : "") + " · " + workers().length + " orang"))) : h("div", { class: "brand" }, h("h1", {}, "Tugas Harian Tim Kreatif"), h("p", {}, fmtLong(S.date) + " · " + workers().length + " orang")),
+      S.ro && adminTabs(),
+      dateNav()));
+
+    const summary = h("section", { class: "summary", "aria-label": "Ringkasan" },
+      h("div", {},
+        h("div", { class: "big" }, pct + "%", h("span", {}, total ? `selesai dari ${total} tugas` : "belum ada tugas")),
+        bar(c, total),
+        h("div", { class: "counts" },
+          h("span", {}, h("i", { class: "dot done" }), h("b", {}, c.done), " selesai"),
+          h("span", {}, h("i", { class: "dot doing" }), h("b", {}, c.doing), " dikerjakan"),
+          h("span", {}, h("i", { class: "dot todo" }), h("b", {}, c.todo), " belum"))),
+      h("div", { class: "actions" },
+      h("button", { class: "btn", "aria-pressed": String(!!S.showLinks), onclick: () => { S.showLinks = !S.showLinks; render(); } }, `🔗 Link admin${allLinks().length ? " (" + allLinks().length + ")" : ""}`),
+      h("button", { class: "btn", "aria-pressed": String(S.showRecap), onclick: () => { S.showRecap = !S.showRecap; render(); } }, S.showRecap ? "Tutup rekap" : "Lihat rekap"),
+      h("button", { class: "btn primary", onclick: () => { S.showAdd = !S.showAdd; render(); if (S.showAdd) setTimeout(() => document.getElementById("add-title")?.focus(), 0); } }, S.showAdd ? "Tutup" : "+ Tambah tugas")));
+
+    const claims = S.claims.filter(c => S.team.some(m => m.id === c.memberId));
+    const notice = claims.length ? h("section", { class: "notice", "aria-label": "Permintaan masuk" },
+      h("h3", {}, `${claims.length} orang minta dihubungkan`),
+      h("p", { class: "muted", style: "font-size:.88rem" }, "Pastikan nama dan email akun cocok dengan orangnya sebelum menyetujui."),
+      claims.map(cl => {
+        const m = S.team.find(x => x.id === cl.memberId);
+        return h("div", { class: "claim" },
+          h("div", { class: "who" }, h("b", {}, "Mengaku sebagai " + m.name), h("small", { "data-pid": cl.uid }, "Memuat akun…")),
+          h("button", { class: "btn small ghost", onclick: () => reject(cl) }, "Tolak"),
+          h("button", { class: "btn small primary", onclick: () => approve(cl) }, "Setujui"));
+      })) : null;
+
+    const addPanel = S.showAdd ? h("section", { class: "panel", "aria-label": "Tambah tugas" },
+      h("h2", {}, "Tugas baru"),
+      h("div", { class: "field" }, h("span", {}, "Untuk siapa"),
+        h("div", { class: "chips" },
+          (() => {
+            const ws = workers();
+            const pick = (label, list) => { if (!list.length) return null; const all = list.every(m => S.addSel.has(m.id));
+              return h("button", { class: "chip", "aria-pressed": String(all), onclick: () => { if (all) list.forEach(m => S.addSel.delete(m.id)); else list.forEach(m => S.addSel.add(m.id)); render(); } }, label); };
+            const groups = [...new Set(ws.map(m => m.group || "").filter(Boolean))].sort();
+            return [
+              canAssignAdmins() && ws.some(m => m.isAdmin) ? pick("Semua orang", ws) : null,
+              pick("Semua karyawan", ws.filter(m => !m.isAdmin)),
+              canAssignAdmins() ? pick("Semua admin & lead", ws.filter(m => m.isAdmin)) : null,
+              groups.length > 1 ? groups.map(g => pick("Tim " + g, ws.filter(m => (m.group || "") === g))) : null];
+          })(),
+          workers().map(m => h("button", { class: "chip", "aria-pressed": String(S.addSel.has(m.id)), onclick: () => { S.addSel.has(m.id) ? S.addSel.delete(m.id) : S.addSel.add(m.id); render(); } },
+            (m.isAdmin ? m.name + " (admin)" : m.name) + (!S.owner && !m.uid ? " · belum terhubung" : ""))))),
+      h("label", { class: "field" }, h("span", {}, "Tugas"), h("input", { class: "input", id: "add-title", placeholder: "Contoh: Foto produk pashmina warna baru", maxlength: "160", onkeydown: e => { if (e.key === "Enter") submitAdd(); } })),
+      h("label", { class: "field" }, h("span", {}, "Catatan (opsional)"), h("textarea", { class: "input", id: "add-note", rows: "2", maxlength: "600", placeholder: "Detail, link brief, atau target" })),
+      h("div", { class: "row" },
+        !S.addRoutine && h("label", { class: "field" }, h("span", {}, "Tanggal"), h("input", { class: "input", id: "add-date", type: "date", value: S.date })),
+
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-hot", checked: S.addHot, onchange: e => { S.addHot = e.target.checked; } }), "Penting"),
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-pf", checked: S.addProof, onchange: e => { S.addProof = e.target.checked; } }), "Wajib bukti"),
+        h("label", { class: "check" }, h("input", { type: "checkbox", id: "add-rt", checked: S.addRoutine, onchange: e => { S.addRoutine = e.target.checked; render(); } }), "Ulangi rutin")),
+      h("div", { class: "field" }, h("span", {}, "⏰ Jam kerja (opsional)"),
+        h("div", { class: "row", style: "gap:10px" },
+          timePick("add-start", "Mulai"),
+          timePick("add-time", "Selesai")),
+        h("div", { class: "chips" },
+          [["Pagi", "08:00", "12:00"], ["Siang", "13:00", "17:00"], ["Sore", "15:00", "17:00"], ["Malam", "19:00", "21:00"], ["Tanpa jam", "", ""]].map(([lbl, a, b]) =>
+            h("button", { class: "chip", type: "button", onclick: () => { setTime("add-start", a); setTime("add-time", b); } }, a ? `${lbl} ${a}–${b}` : lbl)))),
+      S.addRoutine && h("div", { class: "field" }, h("span", {}, "Muncul otomatis setiap"),
+        h("div", { class: "chips" }, [1, 2, 3, 4, 5, 6, 0].map(d => h("button", { class: "chip", "aria-pressed": String(S.addDays.has(d)), onclick: () => { S.addDays.has(d) ? S.addDays.delete(d) : S.addDays.add(d); render(); } }, DAYN[d])))),
+      h("div", { class: "actions" },
+        h("button", { class: "btn ghost", onclick: () => { S.showAdd = false; render(); } }, "Batal"),
+        h("button", { class: "btn primary", onclick: submitAdd }, S.addRoutine ? "Simpan tugas rutin" : "Bagikan tugas"))) : null;
+
+    const grid = workers().length ? h("section", { class: "grid", "aria-label": "Tugas per orang" }, workers().map(personCard))
+      : h("div", { class: "panel" }, h("h2", {}, "Daftar tim masih kosong"), h("p", { class: "muted" }, "Tambahkan anggota lewat Kelola tim di bawah."));
+
+    const manage = h("details", { class: "manage", id: "manage", open: S.manageOpen, ontoggle: e => { S.manageOpen = e.target.open; } },
+      h("summary", {}, "Kelola tim"),
+      h("p", { class: "foot", style: "margin:8px 0" }, "Tiap orang membuka aplikasi ini dengan akun claude.ai-nya, memilih namanya, lalu kamu setujui di sini. Setelah itu ia hanya melihat tugasnya sendiri."),
+      h("p", { class: "foot", style: "margin:0 0 6px" }, "Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap."),
+      h("div", { class: "mlist" }, S.team.map(m => [h("div", { class: "mrow", "data-id": m.id },
+        h("button", { class: "handle", type: "button", "aria-label": `Geser ${m.name}. Pakai panah atas atau bawah.`, title: "Tarik untuk memindah",
+          onpointerdown: e => dragStart(e, m.id), onkeydown: e => { if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); moveBy(m.id, e.key === "ArrowUp" ? -1 : 1); } } }, "⠿"),
+        avatar(m),
+        h("div", { class: "who" }, h("b", {}, m.name), h("small", {}, m.role || "—"), m.uid && h("small", { "data-pid": m.uid }, "Memuat akun…")),
+        m.group && h("span", { class: "tag due" }, m.group),
+        m.isAdmin && h("span", { class: "tag rut" }, (m.adminGroups && m.adminGroups.length) ? "Admin " + m.adminGroups.join("/") : "Admin semua unit"),
+        m.uid ? h("span", { class: "tag on" }, "Terhubung") : h("span", { class: "tag off" }, "Belum masuk"),
+        h("button", { class: "btn small", onclick: () => toggleAdmin(m) }, m.isAdmin ? "Cabut admin" : "Jadikan admin"),
+        m.uid && h("button", { class: "btn small" + (S.arm === "un/" + m.id ? " danger" : ""), onclick: () => unlink(m) }, S.arm === "un/" + m.id ? "Yakin lepas?" : "Lepas akun"),
+        h("button", { class: "btn small", onclick: () => S.editMember === m.id ? (S.editMember = null, render()) : openEdit(m.id, m) }, S.editMember === m.id ? "Tutup" : "Ubah"),
+        h("button", { class: "btn small danger", onclick: () => removeMember(m) }, S.arm === "rm/" + m.id ? "Yakin hapus?" : "Hapus"),
+        m.isAdmin && units().length > 0 && scopeChips(m)),
+        S.editMember === m.id && profileForm(m)])),
+      h("div", { class: "row", style: "border-top:1px solid var(--line); padding-top:12px" },
+        h("label", { class: "field" }, h("span", {}, "Nama"), h("input", { class: "input", id: "mem-name", maxlength: "40" })),
+        h("label", { class: "field" }, h("span", {}, "Divisi"), h("input", { class: "input", id: "mem-role", maxlength: "60", onkeydown: e => { if (e.key === "Enter") addMember(); } })),
+        unitField("mem-group"),
+        h("button", { class: "btn", onclick: addMember }, "Tambah anggota")));
+
+    const unitBar = myUnits().length > 1 ? h("div", { class: "chips unitbar", role: "group", "aria-label": "Filter unit" },
+      h("button", { class: "chip", "aria-pressed": String(!S.unit), onclick: () => { S.unit = ""; render(); } }, "Semua unit"),
+      myUnits().map(g => h("button", { class: "chip", "aria-pressed": String(S.unit === g), onclick: () => { S.unit = g; render(); } }, g))) : null;
+    const myOpen = S.ro ? (S.items[S.meId] || []).filter(x => x.date <= today() && x.status !== "done").length : 0;
+    const myTasksNote = myOpen ? h("section", { class: "tip" }, h("b", {}, `📋 Kamu punya ${myOpen} tugas`),
+      h("div", {}, h("button", { class: "btn small primary", onclick: () => { S.tab = "saya"; render(); } }, "Buka Tugas saya"))) : null;
+    if (S.ro) return [header, h("main", { class: "wrap" }, alertBar(), noteBar(), myTasksNote, unitBar, summary, linksPanel(), idleNotice(), addPanel, S.showRecap && recapView(), grid,
+      h("p", { class: "foot" }, S.mirrorErr ? "Perangkat atau browser ini tidak bisa membuka data pantauan. Coba buka di browser lain atau perbarui browser." : "Tugas yang kamu beri, hapus, atau kembalikan dikirim ke aplikasi orangnya dan berlaku saat aplikasinya terbuka. Progres di sini ikut diperbarui setelahnya."))];
+    return [header, h("main", { class: "wrap" }, alertBar(), noteBar(), unitBar, summary, linksPanel(), notice, idleNotice(), addPanel, S.showRecap && recapView(), grid, manage)];
+  }
+
+  function idleNotice() {
+    const idle = workers().filter(m => !m.isAdmin && isIdle(keyFor(m)));
+    if (!idle.length) return null;
+    const asking = idle.filter(m => askedToday(keyFor(m)));
+    return h("section", { class: "warnbox big", "aria-label": "Orang tanpa tugas" },
+      h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+      h("div", { class: "txt" },
+        h("b", {}, `${idle.length} orang tidak punya tugas aktif hari ini` + (asking.length ? `, ${asking.length} sudah minta tugas` : "")),
+        h("div", { class: "idle-list", style: "margin-top:6px" }, idle.map(m => false ? null
+          : h("button", { class: "chip", onclick: () => openAddFor(m), title: "Beri tugas untuk " + m.name },
+          (askedToday(keyFor(m)) ? "✋ " : "") + m.name + " +"))),
+        canTag() && tagTargets().length ? (S.tagOpen === "idle:" + idle.map(m => m.id).join(",")
+          ? tagForm(idle.map(m => m.id))
+          : h("button", { class: "linkbtn", style: "margin-top:6px", onclick: () => { openTag(idle.map(m => m.id)); S.tagOpen = "idle:" + idle.map(m => m.id).join(","); render(); } }, "🏷️ Tag admin soal ini")) : null));
+  }
+
+  function recapView() {
+    const n = S.recapDays, t = today();
+    const days = Array.from({ length: n }, (_, i) => addDays(S.date, i - n + 1));
+    const cellOf = (list, d) => { const l = list.filter(x => x.date === d); return { total: l.length, done: l.filter(x => x.status === "done").length }; };
+    const shade = c => {
+      if (!c.total) return null;
+      const p = c.done / c.total;
+      return `background: color-mix(in srgb, var(--accent) ${Math.round(10 + p * 80)}%, var(--surface)); color: ${p >= .55 ? "var(--accent-ink)" : "var(--ink)"}`;
+    };
+    const cellBtn = (label, c, d) => h("button", {
+      class: "cell" + (c.total ? "" : " none") + (d === S.date ? " sel" : ""), style: shade(c),
+      title: `${label}, ${fmtShort(d)}: ${c.total ? `${c.done} dari ${c.total} selesai` : "tidak ada tugas"}`,
+      "aria-label": `${label}, ${fmtShort(d)}: ${c.total ? `${c.done} dari ${c.total} selesai` : "tidak ada tugas"}`,
+      onclick: () => setDate(d) }, c.total ? `${c.done}/${c.total}` : "–");
+    const totCell = (done, total) => h("td", { class: "tot" }, h("b", {}, total ? Math.round(done / total * 100) + "%" : "–"), h("small", {}, `${done}/${total}`));
+    let gDone = 0, gTot = 0;
+    const colTotals = days.map(() => ({ done: 0, total: 0 }));
+    const rows = workers().map(m => {
+      const key = keyFor(m), list = S.items[key] || [];
+      const cells = days.map((d, i) => { const c = cellOf(list, d); colTotals[i].done += c.done; colTotals[i].total += c.total; return c; });
+      const done = cells.reduce((a, c) => a + c.done, 0), total = cells.reduce((a, c) => a + c.total, 0);
+      gDone += done; gTot += total;
+      const warn = S.date === t && isIdle(key);
+      return h("tr", {},
+        h("th", { class: "who", scope: "row" }, h("b", {}, m.name, warn && h("span", { class: "warnico", title: askedToday(key) ? "Minta tugas" : "Tidak ada tugas aktif", "aria-label": "Tidak ada tugas aktif" }, "!")), h("span", {}, m.role || "")),
+        cells.map((c, i) => h("td", {}, cellBtn(m.name, c, days[i]))),
+        totCell(done, total));
+    });
+    const steps = [0, .25, .5, .75, 1];
+    return h("section", { class: "recap", "aria-label": "Rekap" },
+      h("div", { class: "recap-h" },
+        h("div", {}, h("h2", {}, "Rekap per orang"), h("p", {}, `${fmtShort(days[0])} – ${fmtShort(days[n - 1])} · angka = selesai/total tugas. Ketuk kotak untuk membuka hari itu.`)),
+        h("div", { class: "seg", role: "group", "aria-label": "Rentang rekap" },
+          [7, 14].map(k => h("button", { "aria-pressed": String(S.recapDays === k), onclick: () => { S.recapDays = k; if (addDays(S.date, -k) < S.winFrom) { S.winFrom = addDays(S.date, -k - 7); syncSubs(true); } render(); } }, `${k} hari`)))),
+      h("div", { class: "mxwrap" }, h("table", { class: "mx" },
+        h("thead", {}, h("tr", {}, h("th", { class: "who", scope: "col" }, "Orang"),
+          days.map(d => h("th", { scope: "col", class: d === t ? "today" : null }, DAYN[parse(d).getDay()], h("small", {}, parse(d).getDate()))),
+          h("th", { scope: "col", class: "tot" }, "Total"))),
+        h("tbody", {}, rows),
+        h("tfoot", {}, h("tr", {}, h("th", { class: "who", scope: "row" }, h("b", {}, "Semua")),
+          colTotals.map((c, i) => h("td", {}, cellBtn("Semua", c, days[i]))), totCell(gDone, gTot))))),
+      h("div", { class: "legend" },
+        h("span", {}, "0%", h("span", { class: "ramp", "aria-hidden": "true" }, steps.map(p => h("i", { style: `background: color-mix(in srgb, var(--accent) ${Math.round(10 + p * 80)}%, var(--surface))` }))), "100% selesai"),
+        h("span", {}, h("i", { class: "nobox", "aria-hidden": "true" }), "tidak ada tugas"),
+        h("span", { style: "display:inline-flex;gap:6px;align-items:center" }, h("span", { class: "warnico", "aria-hidden": "true" }, "!"), "tidak ada tugas aktif hari ini")));
+  }
+
+  function personCard(m) {
+    const key = keyFor(m);
+    const { day, late } = tasksFor(key);
+    const all = day.concat(late), c = tally(all);
+    const routines = (S.keyDoc[key] && S.keyDoc[key].routines) || [];
+    const qid = "q-" + m.id;
+    return h("article", { class: "card" },
+      h("div", { class: "card-h" }, avatar(m),
+        h("div", { class: "nm" }, h("h3", {}, m.name, m.isAdmin && h("span", { class: "tag rut", style: "margin-left:6px; vertical-align:2px" }, "Admin")), h("p", {}, [m.role, m.group].filter(Boolean).join(" · "))),
+        m.uid ? h("span", { class: "tag on", title: "Sudah masuk dengan akunnya" }, "Terhubung") : h("span", { class: "tag off", title: "Belum membuka aplikasi" }, "Belum masuk")),
+      h("div", { class: "meter" }, bar(c, all.length), h("span", {}, `${c.done}/${all.length} selesai`)),
+      S.date === today() && !m.isAdmin && isIdle(key) && h("div", { class: "warnbox" },
+        h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+        h("div", { class: "txt" }, h("b", {}, askedToday(key) ? `Minta tugas sejak ${fmtTime(S.keyDoc[key].askAt)}` : "Tidak ada tugas aktif"),
+          askedToday(key) ? `${m.name} sudah menyelesaikan semua tugasnya.` : "Semua tugas selesai atau belum diberi tugas.")),
+      late.length ? [h("div", { class: "sub" }, "Belum selesai sebelumnya"), h("ul", { class: "tasks" }, late.map(t => taskRow(key, t, { canDelete: true, isLate: true })))] : null,
+      day.length ? h("ul", { class: "tasks" }, day.map(t => taskRow(key, t, { canDelete: true })))
+        : (!late.length && h("p", { class: "empty" }, S.itemsLoaded[key] ? "Belum ada tugas di tanggal ini." : "Memuat…")),
+      routines.length ? h("div", { class: "routines" }, h("span", {}, "Rutin:"), routines.map(r => h("span", { class: "rt" },
+        `${r.title}${r.start || r.due ? " " + [r.start, r.due].filter(Boolean).join("–") : ""} · ${(r.days || []).length === 7 ? "tiap hari" : [1, 2, 3, 4, 5, 6, 0].filter(d => (r.days || []).includes(d)).map(d => DAYN[d]).join(" ")}`,
+        h("button", { "aria-label": "Hentikan tugas rutin " + r.title, onclick: () => removeRoutine(key, r.id) }, S.arm === "rt/" + key + "/" + r.id ? "Yakin?" : "×")))) : null,
+      S.ro && (S.pending || {})[m.uid] > 0 && h("p", { class: "foot" }, `📨 ${(S.pending || {})[m.uid]} kiriman sudah terkirim — otomatis masuk ke daftar ${m.name} tanpa perlu persetujuan (tersinkron saat aplikasinya atau aplikasi pemilik terbuka).`),
+      S.ro && ((S.rejected || {})[m.uid] || []).length > 0 && h("div", { class: "warnbox" },
+        h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+        h("div", { class: "txt" }, h("b", {}, `${S.rejected[m.uid].length} perintah ditolak aplikasi ${m.name}`), [...new Set(S.rejected[m.uid].map(r => r.why))].join("; ")),
+        h("button", { class: "btn small", onclick: () => adminDo(async () => { for (const r of S.rejected[m.uid]) await db.doc(`cmd/${m.uid}/items/${r.id}`).delete(); }, "Dihapus") }, "Hapus")),
+      S.ro && !m.uid && h("p", { class: "foot" }, `${m.name} belum terhubung ke aplikasi, jadi belum bisa menerima tugas.`),
+      canTag() && tagSentFor(m.id),
+      canTag() && tagTargets().length ? (S.tagOpen === m.id ? tagForm([m.id])
+        : h("button", { class: "linkbtn", style: "margin:4px 0", onclick: () => openTag([m.id]) }, "🏷️ Tag admin")) : null,
+      h("form", { class: "quick", onsubmit: e => { e.preventDefault(); quickAdd(key, qid, "owner"); } },
+        h("input", { class: "input", id: qid, placeholder: `Tugas untuk ${m.name}…`, maxlength: "160", "aria-label": `Tambah tugas untuk ${m.name}` }),
+        timePick(qid + "-s", "Mulai"),
+        timePick(qid + "-t", "Selesai"),
+        h("button", { class: "btn", type: "submit" }, "Tambah")));
+  }
+
+  // ---------- member ----------
+  function memberView() {
+    const m = myMember();
+    if (!S.teamLoaded || S.myClaim === undefined) return loading();
+    if (!m) return claimView();
+    if (m.isAdmin && S.tab === "pantau") { S.ro = true; try { return ownerView(); } finally { S.ro = false; } }
+    const key = S.meId;
+    const { day, late } = tasksFor(key);
+    const all = day.concat(late), c = tally(all);
+    const header = h("header", { class: "top" }, h("div", { class: "top-in", style: "max-width:680px" },
+      m.isAdmin && adminTabs(),
+      h("div", { class: "brand me" }, avatar(m),
+        h("div", {}, h("h1", {}, "Halo, " + m.name), h("p", {}, m.role || "", " · ", h("button", { class: "linkbtn", onclick: () => S.editMember === "me" ? (S.editMember = null, render()) : openEdit("me", m) }, "Ubah profil")))),
+      dateNav()));
+    const isToday = S.date === today();
+    return [header, h("main", { class: "wrap narrow" },
+      S.editMember === "me" && h("section", { class: "hello" }, h("h2", { style: "font-size:1.1rem" }, "Profil kamu"), profileForm(m)),
+      installTip(),
+      noteBar(),
+      h("section", { class: "hello" },
+        h("p", { class: "muted" }, fmtLong(S.date)),
+        h("div", { class: "big" }, `${c.done} dari ${all.length}`, h("span", {}, " tugas selesai")),
+        bar(c, all.length)),
+      isToday && isIdle(key) && h("section", { class: "warnbox big", role: "status" },
+        h("span", { class: "warnico", "aria-hidden": "true" }, "!"),
+        askedToday(key)
+          ? h("div", { class: "txt" }, h("b", {}, `Permintaan terkirim jam ${fmtTime(S.keyDoc[key].askAt)}`), "Admin sudah diberi tahu. Tugas baru akan muncul di sini otomatis.")
+          : h("div", { class: "txt" }, h("b", {}, "Kamu tidak punya tugas aktif"), all.length ? "Semua tugas hari ini sudah selesai. Minta tugas berikutnya ke admin." : "Belum ada tugas untukmu hari ini. Minta tugas ke admin."),
+        !askedToday(key) && !S.readOnly && h("button", { class: "btn primary", onclick: askWork }, "Minta tugas ke admin")),
+      late.length ? h("section", { class: "list" }, h("h2", {}, "Belum selesai dari hari sebelumnya"),
+        h("ul", { class: "tasks" }, late.map(t => taskRow(key, t, { canDelete: t.by === "self", isLate: true })))) : null,
+      h("section", { class: "list" }, h("h2", {}, isToday ? "Tugas hari ini" : "Tugas " + fmtShort(S.date)),
+        day.length ? h("ul", { class: "tasks" }, day.map(t => taskRow(key, t, { canDelete: t.by === "self" })))
+          : h("p", { class: "empty" }, S.itemsLoaded[key] ? "Belum ada tugas. Tugas dari atasan akan muncul di sini, atau tambahkan sendiri di bawah." : "Memuat…"),
+        !S.readOnly && h("form", { class: "quick", style: "padding:6px", onsubmit: e => { e.preventDefault(); quickAdd(key, "own", "self"); } },
+          h("input", { class: "input", id: "own", placeholder: "Tambah tugasku sendiri…", maxlength: "160", "aria-label": "Tambah tugas sendiri" }),
+          timePick("own-s", "Mulai"),
+          timePick("own-t", "Selesai"),
+          h("label", { class: "tl", style: "flex:1 1 100%" }, h("span", {}, "Sumber tugas (dari siapa)"),
+            h("input", { class: "input", id: "own-src", list: "src-list", maxlength: "60", placeholder: "Contoh: Fahru, klien, inisiatif sendiri" }),
+            h("datalist", { id: "src-list" }, h("option", { value: "Inisiatif sendiri" }), S.team.filter(x => x.uid !== S.meId).map(x => h("option", { value: x.name })))),
+          h("button", { class: "btn", type: "submit" }, "Tambah"))),
+      h("p", { class: "foot" }, "Ketuk status untuk menggantinya: Belum → Dikerjakan → Selesai. Atasanmu melihat progres ini; anggota tim lain tidak bisa melihat tugasmu."))];
+  }
+  function claimView() {
+    const pending = S.myClaim && S.team.find(x => x.id === S.myClaim.memberId);
+    const header = h("header", { class: "top" }, h("div", { class: "top-in", style: "max-width:680px" },
+      h("div", { class: "brand" }, h("h1", {}, "Tugas Harian Tim Kreatif"), h("p", {}, "Masuk pertama kali"))));
+    if (pending) return [header, h("main", { class: "wrap narrow" }, h("section", { class: "hello" },
+      h("h2", { style: "font-size:1.3rem" }, `Menunggu persetujuan sebagai ${pending.name}`),
+      h("p", { class: "muted" }, "Pemilik aplikasi perlu menyetujui akunmu dulu. Halaman ini akan langsung berubah setelah disetujui."),
+      h("div", {}, h("button", { class: "linkbtn", onclick: unclaim }, "Salah pilih nama? Batalkan"))))];
+    return [header, h("main", { class: "wrap narrow" },
+      installTip(),
+      h("section", { class: "hello" }, h("h2", { style: "font-size:1.3rem" }, "Kamu siapa?"),
+        h("p", { class: "muted" }, "Pilih namamu. Setelah disetujui pemilik, kamu hanya akan melihat tugasmu sendiri.")),
+      S.team.length ? h("div", { class: "pick" }, S.team.map(x => h("button", { onclick: () => claim(x), disabled: !!x.uid || S.readOnly },
+        avatar(x), h("span", {}, h("b", {}, x.name), h("small", {}, x.uid ? "Sudah terhubung" : (x.role || ""))))))
+        : h("p", { class: "empty" }, "Daftar tim belum diisi oleh pemilik."),
+      S.readOnly && h("p", { class: "foot" }, "Akunmu hanya punya akses lihat. Minta pemilik mengundangmu sebagai Editor."))];
+  }
+  function tipHidden() { try { return localStorage.getItem("tipHome") === "1"; } catch (_) { return S.tipOff; } }
+  function hideTip() { S.tipOff = true; try { localStorage.setItem("tipHome", "1"); } catch (_) {} render(); }
+  function installTip() {
+    if (S.tipOff || tipHidden()) return null;
+    return h("section", { class: "tip", "aria-label": "Simpan ke layar utama" },
+      h("b", {}, "📌 Simpan aplikasi ini di HP-mu"),
+      h("p", {}, "Supaya besok tinggal ketuk ikon, tidak perlu cari link lagi:"),
+      h("ul", {},
+        h("li", {}, h("strong", {}, "Android (Chrome): "), "ketuk menu ⋮ → ", h("em", {}, "Tambahkan ke layar utama"), " → pilih ", h("em", {}, "Buat pintasan"), " (bukan ", h("em", {}, "Instal"), "). Kalau muncul \"App cannot be installed\", ulangi dan pilih ", h("em", {}, "Buat pintasan"), ", atau pakai Samsung Internet / Firefox: menu → ", h("em", {}, "Tambahkan halaman ke → Layar utama"), "."),
+        h("li", {}, h("strong", {}, "iPhone (Safari): "), "ketuk tombol Bagikan ⬆ → ", h("em", {}, "Tambah ke Layar Utama"), ".")),
+      h("div", {}, h("button", { class: "btn small", onclick: hideTip }, "Mengerti, sembunyikan")));
+  }
+  function loading() { return h("div", { class: "center" }, h("div", {}, h("p", { class: "muted" }, "Memuat tugas…"))); }
+  function noAccess() {
+    return h("div", { class: "center" }, h("div", {},
+      h("h1", { style: "font-size:1.6rem" }, "Tugas Harian Tim Kreatif"),
+      h("p", { class: "muted" }, "Buka halaman ini di claude.ai dalam keadaan masuk ke akunmu untuk melihat tugasmu. Kalau belum diundang, minta link undangan ke pemilik.")));
+  }
+
+  // ---------- render ----------
+  function render() {
+    if (drag) { pendingRender = true; return; }
+    const keep = {};
+    app.querySelectorAll("input[id], textarea[id], select[id]").forEach(el => { if (el.type !== "checkbox") keep[el.id] = el.value; });
+    const a = document.activeElement, aid = a && a.id, sel = a && "selectionStart" in a ? [a.selectionStart, a.selectionEnd] : null;
+    let view;
+    if (S.mode === "loading") view = loading();
+    else if (S.mode === "nodb") view = noAccess();
+    else if (S.mode === "owner") view = S.teamLoaded ? ownerView() : loading();
+    else view = memberView();
+    if (S.mode !== "owner" && S.mode !== "loading" && (S.tags || []).length && myMember() && myMember().isAdmin) view = [tagInbox(), ...[].concat(view)];
+    app.replaceChildren(...[].concat(view), ...(S.toast ? [h("div", { class: "toast", role: "status" }, S.toast)] : []),
+      ...(S.lightbox ? [h("div", { class: "lightbox", role: "dialog", "aria-label": "Foto bukti", onclick: () => { S.lightbox = null; render(); } }, h("img", { src: S.lightbox, alt: "Foto bukti" }), h("button", { class: "iconbtn", "aria-label": "Tutup" }, "✕"))] : []));
+    for (const [id, v] of Object.entries(keep)) { const el = document.getElementById(id); if (el && el.type !== "checkbox" && el.type !== "date") el.value = v; else if (el && el.type === "date" && v) el.value = v; }
+    if (aid) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel && el.setSelectionRange) el.setSelectionRange(sel[0], sel[1]); } catch (_) {} } }
+    fillProfiles();
+  }
+  async function fillProfiles() {
+    if (!user) return;
+    const els = [...app.querySelectorAll("[data-pid]")];
+    if (!els.length) return;
+    const ps = await user.profiles([...new Set(els.map(e => e.dataset.pid))]);
+    for (const el of els) {
+      const p = ps[el.dataset.pid];
+      if (!p || !el.isConnected) continue;
+      const bits = [p.name, p.email].filter(Boolean);
+      el.textContent = bits.length ? bits.join(" · ") : "Akun tanpa nama";
+    }
+  }
+
+  // ---------- boot ----------
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && S.lightbox) { S.lightbox = null; render(); } });
+  render();
+  (async () => {
+    if (!window.claude || !window.claude.use) { S.mode = "nodb"; return render(); }
+    [db, user, assets] = await Promise.all([window.claude.use("db"), window.claude.use("user"), window.claude.use("assets")]);
+    if (!db || !user) { S.mode = "nodb"; return render(); }
+    const me = await user.me();
+    if (!me.id) { S.mode = "nodb"; return render(); }
+    S.meId = me.id; S.owner = !!me.isOwner; S.meName = me.name || "";
+    S.mode = S.owner ? "owner" : "member";
+    subTeam();
+    if (S.owner) subClaims(); else subMyClaim();
+    render();
+    // Roll the day over if the page stays open past midnight.
+    let last = today();
+    setTimeout(autoRemind, 8000);
+    setInterval(() => { autoRemind(); const t = today(); if (t !== last) { if (S.date === last) S.date = t; last = t; for (const k of Object.keys(subs)) ensureRoutines(k); } if (!S.busy) render(); }, 60000);
+  })();
+})();
+</script>

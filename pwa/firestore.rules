@@ -1,0 +1,76 @@
+rules_version = '2';
+
+// Aturan keamanan Tugas Harian Tim Kreatif.
+// GANTI email pemilik di bawah kalau kamu memakai akun Google lain (harus sama dengan OWNER_EMAIL di public/config.js).
+//
+// Peran:
+//  - Pemilik: kendali penuh.
+//  - Admin "Semua unit" (adminGroups kosong): kendali penuh seperti pemilik.
+//  - Admin unit (adminGroups berisi mis. ["HCS"]): hanya melihat & mengelola orang di unit itu.
+//  - Karyawan: hanya melihat & mengerjakan tugasnya sendiri.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function me() { return request.auth.token.email.lower(); }
+    function isOwner() { return signedIn() && me() == 'rtekidvector@gmail.com'; }
+    function memberPath() { return /databases/$(database)/documents/team/$(me()); }
+    function isMember() { return signedIn() && exists(memberPath()); }
+    function myDoc() { return get(memberPath()).data; }
+    function isAdmin() { return isMember() && myDoc().get('isAdmin', false) == true; }
+    function myGroups() { return myDoc().get('adminGroups', []); }
+    function isBoss() { return isOwner() || (isAdmin() && myGroups().size() == 0); }
+    function manages(group) { return isAdmin() && group != '' && group in myGroups(); }
+    function teamOf(email) { return get(/databases/$(database)/documents/team/$(email)).data; }
+    // Unit admins manage ordinary members of their unit, never other admins.
+    function canManage(email) {
+      return isBoss()
+        || (isAdmin() && exists(/databases/$(database)/documents/team/$(email))
+            && teamOf(email).get('isAdmin', false) == false
+            && manages(teamOf(email).get('group', '')));
+    }
+    function canSee(email) { return canManage(email) || (isMember() && me() == email); }
+
+    // Daftar tim. Dokumen diberi nama sesuai email (huruf kecil).
+    match /team/{email} {
+      allow read: if isOwner() || isMember();
+      allow create: if isBoss()
+        || (manages(request.resource.data.get('group', ''))
+            && !request.resource.data.keys().hasAny(['isAdmin', 'adminGroups']));
+      allow delete: if isBoss()
+        || (manages(resource.data.get('group', '')) && resource.data.get('isAdmin', false) == false);
+      allow update: if isBoss()
+        || (manages(resource.data.get('group', '')) && resource.data.get('isAdmin', false) == false
+            && manages(request.resource.data.get('group', ''))
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'adminGroups']))
+        || (isMember() && me() == email
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'role', 'photo', 'seenAt']));
+    }
+
+    // Data per orang: tugas rutin dan permintaan tugas.
+    match /tasks/{email} {
+      allow read: if canSee(email);
+      allow write: if canManage(email);
+      allow create: if isMember() && me() == email && request.resource.data.keys().hasOnly(['askAt']);
+      allow update: if isMember() && me() == email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['askAt']);
+
+      // Tugas harian.
+      match /items/{taskId} {
+        allow read: if canSee(email);
+        allow write: if canManage(email);
+        allow create: if isMember() && me() == email;
+        allow update: if isMember() && me() == email
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'startedAt', 'doneAt', 'returnedAt', 'proof', 'report', 'reportAt']);
+        allow delete: if isMember() && me() == email && resource.data.by == 'self';
+      }
+    }
+
+    // Foto bukti tugas.
+    match /proofs/{email}/items/{taskId} {
+      allow read: if canSee(email);
+      allow write: if canManage(email) || (isMember() && me() == email);
+    }
+  }
+}

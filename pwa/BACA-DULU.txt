@@ -1,0 +1,12 @@
+TUGAS HARIAN TIM KREATIF - versi aplikasi HP (PWA + Firebase)
+
+Mulai dari file: Panduan-Setup-Aplikasi.pdf
+
+Isi folder:
+  public/               File aplikasi (yang diunggah ke internet)
+    config.js           <- WAJIB diisi: konfigurasi Firebase (langkah 2)
+  firestore.rules       Aturan keamanan database (siapa boleh melihat apa)
+  .firebaserc           <- WAJIB diisi: Project ID Firebase (langkah 6)
+  firebase.json         Pengaturan unggah, tidak perlu diubah
+
+Setiap kali mengubah aplikasi: jalankan "firebase deploy" dari folder ini.
