@@ -1,5 +1,5 @@
-import { db, signIn, signOutUser, onUser } from "./fb.js";
-import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
+import { db, signIn, signOutUser as rawSignOut, onUser, idToken, pushSupported, registerPush, unregisterPush } from "./fb.js";
+import { OWNER_EMAIL, DEFAULT_TEAM, WORKER_URL } from "./config.js";
 
 (() => {
   const app = document.getElementById("app");
@@ -195,7 +195,10 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
   function cycle(key, t) {
     const next = NEXT[t.status] || "doing";
     if (!isManager() && next === "done") { S.proofFor = key + "/" + t.id; render(); return; }
-    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ status: next, doneAt: next === "done" ? Date.now() : null, ...(next === "done" ? { returnedAt: null } : {}), ...(next === "doing" && !t.startedAt ? { startedAt: Date.now() } : {}) }));
+    safe(async () => {
+      await db.doc(`tasks/${key}/items/${t.id}`).update({ status: next, doneAt: next === "done" ? Date.now() : null, ...(next === "done" ? { returnedAt: null } : {}), ...(next === "doing" && !t.startedAt ? { startedAt: Date.now() } : {}) });
+      if (next === "done") ping("done", key, t.id);
+    });
   }
   // Proof photos live in their own documents (proofs/<email>/items/<taskId>) and load on demand.
   const proofCache = {};
@@ -263,6 +266,7 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
       if (proof) upd.proof = proof;
       if (note) { upd.report = note; upd.reportAt = Date.now(); }
       await db.doc(`tasks/${key}/items/${t.id}`).update(upd);
+      ping("done", key, t.id);
       closeProof(tag);
     }, withoutProof ? "Tugas selesai" : "Tugas selesai dengan bukti");
     S.busy = false; render();
@@ -271,7 +275,7 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
     const tag = "bk/" + key + "/" + t.id;
     if (S.arm !== tag) { S.arm = tag; render(); setTimeout(() => { if (S.arm === tag) { S.arm = null; render(); } }, 3000); return; }
     S.arm = null;
-    safe(() => db.doc(`tasks/${key}/items/${t.id}`).update({ status: "doing", doneAt: null, returnedAt: Date.now() }), "Tugas dikembalikan. Tulis alasannya di catatan.");
+    safe(async () => { await db.doc(`tasks/${key}/items/${t.id}`).update({ status: "doing", doneAt: null, returnedAt: Date.now() }); ping("back", key, t.id); }, "Tugas dikembalikan. Tulis alasannya di catatan.");
   }
   function del(key, t) {
     const tag = key + "/" + t.id;
@@ -290,13 +294,13 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
     el.value = "";
     const tEl = document.getElementById(inputId + "-t"); const due = (tEl && tEl.value) || null; if (tEl) tEl.value = "";
     const sEl = document.getElementById(inputId + "-s"); const start = (sEl && sEl.value) || null; if (sEl) sEl.value = "";
-    safe(async () => { await db.collection(`tasks/${key}/items`).add(newTask(title, { by, start, due, needProof: by === "owner" })); if (by === "owner") await clearAsk(key); });
+    safe(async () => { const r = await db.collection(`tasks/${key}/items`).add(newTask(title, { by, start, due, needProof: by === "owner" })); if (by === "owner") { await clearAsk(key); ping("new", key, r.id); } });
   }
   async function clearAsk(key) {
     const kd = S.keyDoc[key];
     if (kd && kd.askAt) await db.doc(`tasks/${key}`).update({ askAt: null });
   }
-  const askWork = () => safe(() => db.doc(`tasks/${S.meId}`).set({ askAt: Date.now() }, { merge: true }), "Permintaan tugas terkirim ke admin");
+  const askWork = () => safe(async () => { await db.doc(`tasks/${S.meId}`).set({ askAt: Date.now() }, { merge: true }); ping("ask", S.meId); }, "Permintaan tugas terkirim ke admin");
   function openNote(key, t) {
     S.editNote = key + "/" + t.id; render();
     const el = document.getElementById("rep-" + t.id);
@@ -334,7 +338,8 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
           const d = today();
           if (r.days.includes(parse(d).getDay())) await db.doc(`tasks/${key}/items/r-${r.id}-${d}`).set({ title, note, date: d, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, routine: r.id, by: "owner", createdAt: Date.now() });
         } else {
-          await db.collection(`tasks/${key}/items`).add({ title, note, date, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, by: "owner", createdAt: Date.now() });
+          const r = await db.collection(`tasks/${key}/items`).add({ title, note, date, start, due, status: "todo", hot: S.addHot, needProof: S.addProof, by: "owner", createdAt: Date.now() });
+          ping("new", key, r.id);
         }
         if (!S.addRoutine || (S.keyDoc[key] && S.keyDoc[key].askAt)) await clearAsk(key);
       }
@@ -630,6 +635,14 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
       units().map(g => h("button", { class: "chip", "aria-pressed": String(cur.includes(g)), onclick: () => setScope(m, g) }, g)));
   }
   // ---------- notifications ----------
+  // Tell the push Worker that something happened; it verifies the event against the database before sending.
+  async function ping(type, email, id) {
+    if (!WORKER_URL) return;
+    try {
+      const t = await idToken();
+      if (t) fetch(WORKER_URL + "/notify", { method: "POST", keepalive: true, headers: { authorization: "Bearer " + t, "content-type": "application/json" }, body: JSON.stringify({ type, email, id }) }).catch(() => {});
+    } catch (_) {}
+  }
   const askSeen = {};
   const canNotify = () => "Notification" in window;
   function watchAsk(key, data) {
@@ -652,13 +665,28 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
       await reg.showNotification(title, { body: "Semua tugasnya sudah selesai. Ketuk untuk memberi tugas baru.", icon: "./icons/icon-192.png", badge: "./icons/icon-192.png", tag: "ask-" + key, data: { url: "./" } });
     } catch (e) { try { new Notification(title); } catch (_) {} }
   }
+  // Push: register this device once permission is granted; refresh the token on every sign-in.
+  const pushOK = { v: false };
+  pushSupported().then(v => { pushOK.v = v; render(); });
+  async function enablePush() {
+    try {
+      if (await Notification.requestPermission() !== "granted") return render();
+      await registerPush(S.meId);
+      toast("Notifikasi aktif di perangkat ini");
+    } catch (e) {
+      console.warn(e);
+      toast(e && e.message === "no-vapid" ? "Kunci push belum diisi di config.js" : "Notifikasi gagal diaktifkan. Coba lagi.");
+    }
+    render();
+  }
+  const signOutUser = async () => { if (S.meId && canNotify() && Notification.permission === "granted") await unregisterPush(S.meId); return rawSignOut(); };
   function notifyCard() {
-    if (!canNotify() || Notification.permission !== "default" || S.notifOff) return null;
+    if (!canNotify() || !pushOK.v || Notification.permission !== "default" || S.notifOff) return null;
     return h("section", { class: "tip" },
       h("b", {}, "🔔 Aktifkan notifikasi"),
-      h("p", {}, "Dapatkan pemberitahuan di HP saat ada anggota tim yang minta tugas."),
+      h("p", {}, isManager() ? "Dapatkan pemberitahuan saat tugas selesai atau ada yang minta tugas." : "Dapatkan pemberitahuan saat ada tugas baru, tugas dikembalikan, dan pengingat tenggat."),
       h("div", { class: "chips" },
-        h("button", { class: "btn primary small", onclick: async () => { try { await Notification.requestPermission(); } catch (_) {} render(); } }, "Aktifkan"),
+        h("button", { class: "btn primary small", onclick: enablePush }, "Aktifkan"),
         h("button", { class: "btn small ghost", onclick: () => { S.notifOff = true; render(); } }, "Nanti")));
   }
 
@@ -856,7 +884,7 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
     const isToday = S.date === today();
     return [header, h("main", { class: "wrap narrow" },
       S.editMember === "me" && h("section", { class: "hello" }, h("h2", { style: "font-size:1.1rem" }, "Profil kamu"), profileForm(m)),
-      installCard(),
+      installCard(), notifyCard(),
       h("section", { class: "hello" },
         h("p", { class: "muted" }, fmtLong(S.date)),
         h("div", { class: "big" }, `${c.done} dari ${all.length}`, h("span", {}, " tugas selesai")),
@@ -973,6 +1001,7 @@ import { OWNER_EMAIL, DEFAULT_TEAM } from "./config.js";
     S.owner = S.meId === OWNER_EMAIL.toLowerCase();
     S.mode = S.owner ? "owner" : "member";
     subTeam();
+    if (canNotify() && Notification.permission === "granted") pushSupported().then(ok => ok && registerPush(S.meId)).catch(e => console.warn("push", e));
     render();
     if (!tick) {
       // Roll the day over if the app stays open past midnight, and refresh "late" labels each minute.
