@@ -93,3 +93,11 @@ export interface LinkDTO { id: string; title: string; url: string; createdAt: nu
 export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
 export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null }
 export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }
+export interface TimeEntryDTO { id: string; taskId: string; email: string; startedAt: number; endedAt: number | null }
+export interface RunningTimerDTO { entry: TimeEntryDTO; taskTitle: string }
+export interface TimeReportDTO {
+  from: string; to: string; totalMin: number;
+  perPerson: { email: string; name: string; min: number }[];
+  byProject: { projectId: string | null; min: number }[];
+  daily: { date: string; min: number }[];
+}

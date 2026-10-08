@@ -160,3 +160,12 @@ export const leaves = sqliteTable("leaves", {
   decidedAt: integer("decided_at"),
   createdAt: integer("created_at").notNull(),
 }, t => [index("leaves_email").on(t.email, t.from)]);
+
+/** Work timer: one row per start/stop. A row with no end is a timer that is running now (at most one per person). */
+export const timeEntries = sqliteTable("time_entries", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  startedAt: integer("started_at").notNull(),
+  endedAt: integer("ended_at"),
+}, t => [index("time_task").on(t.taskId), index("time_email").on(t.email, t.startedAt)]);
