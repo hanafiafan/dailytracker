@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { Network, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -18,6 +18,7 @@ const NAV = [
   { to: "/kalender", label: "Kalender", Icon: CalendarDays },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban },
   { to: "/tim", label: "Tim", Icon: Users, manager: true },
+  { to: "/struktur", label: "Struktur", Icon: Network },
   { to: "/laporan", label: "Laporan", Icon: BarChart3 },
   { to: "/riwayat", label: "Riwayat", Icon: History },
 ];
