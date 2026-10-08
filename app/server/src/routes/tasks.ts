@@ -28,3 +28,42 @@ export const taskRoutes = ({ db, bus }: Deps, notify: Notify) => {
       const byTask = Map.groupBy(cs, x => x.taskId);
       return c.json(rows.map(r => toTask(r, (byTask.get(r.id) ?? []).sort((a, b) => a.at - b.at))));
     })
+    .post("/", zValidator("json", taskCreate), c => {
+      const u = c.var.user, b = c.req.valid("json"), now = Date.now(), today = wib().date;
+      const team = loadTeam(db);
+      const emails = [...new Set(b.emails)];
+      for (const e of emails) if (!team.some(m => m.email === e)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
+
+      if (!u.policy.isManager) {
+        // A member may only add a plain task for themself.
+        if (!u.member || emails.length !== 1 || emails[0] !== u.email || b.routineDays) return c.json({ error: "forbidden" }, 403);
+        const id = newId();
+        db.insert(tasks).values({ id, email: u.email, date: b.date ?? today, title: b.title, note: "", start: b.start ?? null, due: b.due ?? null, needProof: false, by: "self", createdAt: now }).run();
+        touch();
+        return c.json({ ids: [id] }, 201);
+      }
+      if (emails.some(e => !u.policy.canManage(e))) return c.json({ error: "forbidden" }, 403);
+
+      const made: (typeof tasks.$inferSelect)[] = [];
+      db.transaction(tx => {
+        for (const email of emails) {
+          const base = { email, title: b.title, note: b.note, start: b.start ?? null, due: b.due ?? null, hot: b.hot, needProof: b.needProof, by: "owner" as const, fromAdmin: u.member?.name ?? u.name, createdAt: now };
+          if (b.routineDays?.length) {
+            const rid = newId(4);
+            tx.insert(routines).values({ id: rid, email, title: b.title, note: b.note, start: base.start, due: base.due, days: [...new Set(b.routineDays)].sort(), hot: b.hot, needProof: b.needProof, byName: base.fromAdmin }).run();
+            if (b.routineDays.includes(weekday(today))) {
+              const row = { ...base, id: `r-${rid}-${today}`, date: today, routineId: rid } as typeof tasks.$inferInsert;
+              tx.insert(tasks).values(row).run();
+            }
+          } else {
+            const row = { ...base, id: newId(), date: b.date ?? today } as typeof tasks.$inferInsert;
+            tx.insert(tasks).values(row).run();
+            made.push(tx.select().from(tasks).where(eq(tasks.id, row.id!)).get()!);
+          }
+          tx.update(members).set({ askAt: null }).where(eq(members.email, email)).run();
+        }
+      });
+      made.forEach(t => void notify.newTask(t));
+      touch(); bus.emit("team");
+      return c.json({ ids: made.map(t => t.id) }, 201);
+    })
