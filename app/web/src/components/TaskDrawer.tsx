@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { CheckCircle2, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
+import { Bookmark, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { loadTemplates, saveTemplates } from "../lib/templates";
 import { PRIORITIES, type ActivityDTO, type TaskDTO } from "@shared/schemas";
 import { useTaskActions } from "../lib/actions";
 import { NEXT, STATUS, fmtShort, fmtTime, host } from "../lib/format";
@@ -32,7 +34,7 @@ export function TaskDrawer({ id }: { id: string }) {
 
 function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[]; owner: { name: string; email: string } }) {
   const { me, team, policy, projects, labels, member } = useViewer();
-  const { closeTask } = useUi();
+  const { closeTask, newTask } = useUi();
   const a = useTaskActions(t);
   const qc = useQueryClient();
   const [proofOpen, setProofOpen] = useState(false);
@@ -147,6 +149,8 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
       <footer className="drawer-f">
         {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (manager ? a.setStatus.mutate("done") : setProofOpen(true))}>Tandai selesai</button>}
         {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+        {(manager || me.member) && <button className="btn" onClick={() => { newTask({ emails: [t.email], title: t.title.slice(0, 108) + " (salinan)", note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }); closeTask(); }}><Copy size={14} />Duplikat</button>}
+        <button className="btn" onClick={() => { saveTemplates([{ title: t.title, note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }, ...loadTemplates().filter(x => x.title !== t.title)]); toast.success("Disimpan sebagai templat"); }}><Bookmark size={14} />Simpan templat</button>
         {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
       </footer>
       {lightbox && photo && <div className="lightbox" role="dialog" onClick={() => setLightbox(false)}><img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup"><X size={18} /></button></div>}

@@ -1,3 +1,4 @@
+import { loadTemplates, saveTemplates } from "../lib/templates";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -12,15 +13,17 @@ const PRESETS: [string, string, string][] = [["Pagi", "08:00", "12:00"], ["Siang
 const toggle = <T,>(s: Set<T>, v: T) => { const n = new Set(s); if (n.has(v)) n.delete(v); else n.add(v); return n; };
 
 /** Create a task (or a repeating routine) with schedule, priority, project, labels, and a checklist. */
-export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPrefill; date: string; onClose: () => void }) {
+export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill: NewTaskPrefill; date: string; onClose: () => void; onTemplate: (p: NewTaskPrefill) => void }) {
+  const [, setTpl] = useState(0);
+  const templates = loadTemplates();
   const { me, team, policy, projects, labels } = useViewer();
   const manager = policy.isManager;
   const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
   const [sel, setSel] = useState(new Set(manager ? prefill.emails ?? [] : [me.email]));
-  const [priority, setPriority] = useState<Priority>("normal");
+  const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
   const [proof, setProof] = useState(true), [routine, setRoutine] = useState(false);
   const [days, setDays] = useState(new Set([1, 2, 3, 4, 5, 6]));
-  const [lab, setLab] = useState(new Set<string>());
+  const [lab, setLab] = useState(new Set<string>(prefill.labelIds ?? []));
   const [start, setStart] = useState(prefill.start ?? ""), [due, setDue] = useState(prefill.due ?? "");
 
   const save = useAction((f: FormData) => ok(api.tasks.$post({ json: {
@@ -52,9 +55,14 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
               </div>
             </section>
           )}
+          {templates.length > 0 && (
+            <section className="dsec"><h3>Templat</h3>
+              <div className="chips">{templates.map((t, i) => <span key={i} className="chip" style={{ paddingRight: 4 }}><button type="button" className="linkbtn" style={{ textDecoration: "none" }} onClick={() => onTemplate({ ...t, emails: [...sel] })}>{t.title}</button><button type="button" className="iconbtn" style={{ width: 22, height: 22 }} aria-label={`Hapus templat ${t.title}`} onClick={() => { saveTemplates(templates.filter((_, j) => j !== i)); setTpl(n => n + 1); }}><X size={12} /></button></span>)}</div>
+            </section>
+          )}
           <section className="dsec"><h3>Detail</h3>
-            <label className="field"><span>Judul</span><input className="input" name="title" autoFocus placeholder="Contoh: Foto produk pashmina warna baru" maxLength={120} /></label>
-            {manager && <label className="field"><span>Deskripsi <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span><textarea className="input" name="note" rows={2} maxLength={600} placeholder="Detail, link brief, atau target" /></label>}
+            <label className="field"><span>Judul</span><input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder="Contoh: Foto produk pashmina warna baru" maxLength={120} /></label>
+            {manager && <label className="field"><span>Deskripsi <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span><textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, link brief, atau target" /></label>}
             <div className="dgrid">
               <div className="field"><span>Prioritas</span><div className="seg" role="group" aria-label="Prioritas" style={{ justifySelf: "start" }}>{PRIORITIES.map(p => <button type="button" key={p} aria-pressed={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</button>)}</div></div>
               <label className="field"><span>Proyek</span><select className="input" name="project" defaultValue={prefill.projectId ?? ""}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
@@ -77,7 +85,7 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
           </section>
           {!routine && (
             <section className="dsec"><h3>Checklist &amp; bukti</h3>
-              <label className="field"><span>Langkah <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu per baris)</em></span><textarea className="input" name="subtasks" rows={3} placeholder={"Ambil foto\nEdit warna\nUpload ke Drive"} /></label>
+              <label className="field"><span>Langkah <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu per baris)</em></span><textarea className="input" name="subtasks" rows={3} defaultValue={(prefill.steps ?? []).join("\n")} placeholder={"Ambil foto\nEdit warna\nUpload ke Drive"} /></label>
               {manager && <label className="check"><input type="checkbox" checked={proof} onChange={e => setProof(e.target.checked)} />Karyawan wajib melampirkan bukti</label>}
             </section>
           )}

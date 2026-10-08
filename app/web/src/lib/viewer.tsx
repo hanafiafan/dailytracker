@@ -1,3 +1,4 @@
+import type { Priority } from "@shared/schemas";
 import { createContext, useContext } from "react";
 import type { LabelDTO, MeDTO, MemberDTO, ProjectDTO } from "@shared/schemas";
 import type { Policy } from "@shared/policy";
@@ -23,7 +24,7 @@ export interface Ui {
   newTask: (prefill?: NewTaskPrefill) => void;
   openSearch: () => void;
 }
-export interface NewTaskPrefill { emails?: string[]; date?: string; start?: string; due?: string; projectId?: string }
+export interface NewTaskPrefill { emails?: string[]; date?: string; start?: string; due?: string; projectId?: string; title?: string; note?: string; priority?: Priority; labelIds?: string[]; steps?: string[] }
 export const UiContext = createContext<Ui | null>(null);
 export const useUi = () => {
   const v = useContext(UiContext);
