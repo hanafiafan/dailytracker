@@ -920,3 +920,36 @@ import { DEFAULT_TEAM } from "./config.js";
           h("input", { class: "input", id: "se-" + i, type: "email", placeholder: "nama@gmail.com", autocomplete: "off", "aria-label": "Email " + p.name }))),
         h("div", { class: "actions" }, h("button", { class: "btn primary", disabled: S.busy, onclick: saveSetup }, S.busy ? "Menyimpan…" : "Simpan tim"))));
   }
+  // ---------- install (PWA) ----------
+  let installEvt = null;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; render(); });
+  window.addEventListener("appinstalled", () => { installEvt = null; toast("Aplikasi terpasang"); });
+  const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  function tipHidden() { try { return localStorage.getItem("tipInstall") === "1"; } catch (_) { return S.tipOff; } }
+  function hideTip() { S.tipOff = true; try { localStorage.setItem("tipInstall", "1"); } catch (_) {} render(); }
+  function installCard() {
+    if (isStandalone() || S.tipOff || tipHidden()) return null;
+    if (installEvt) return h("section", { class: "tip" },
+      h("b", {}, "Pasang aplikasi di HP-mu"),
+      h("p", {}, "Supaya bisa dibuka dari ikon di layar utama, tanpa mencari link lagi."),
+      h("div", { class: "chips" },
+        h("button", { class: "btn primary small", onclick: async () => { const ev = installEvt; installEvt = null; ev.prompt(); try { await ev.userChoice; } catch (_) {} render(); } }, "Pasang aplikasi"),
+        h("button", { class: "btn small ghost", onclick: hideTip }, "Nanti saja")));
+    return h("section", { class: "tip" },
+      h("b", {}, "Pasang aplikasi di HP-mu"),
+      isIOS()
+        ? h("p", {}, "Di Safari, ketuk tombol Bagikan ⬆ lalu pilih ", h("em", {}, "Tambah ke Layar Utama"), ".")
+        : h("p", {}, "Di Chrome, ketuk menu ⋮ lalu pilih ", h("em", {}, "Instal aplikasi"), " atau ", h("em", {}, "Tambahkan ke layar utama"), "."),
+      h("div", {}, h("button", { class: "btn small", onclick: hideTip }, "Mengerti, sembunyikan")));
+  }
+  function loading() { return h("div", { class: "center" }, h("div", {}, h("p", { class: "muted" }, "Memuat tugas…"))); }
+  function loginView() {
+    return h("div", { class: "center login" }, h("div", {},
+      h("img", { src: "./icons/icon-192.png", alt: "", width: "72", height: "72", style: "border-radius:18px; margin:0 auto" }),
+      h("h1", { style: "font-size:1.7rem" }, "Tugas Harian Tim Kreatif"),
+      h("p", { class: "muted" }, "Masuk dengan akun Google yang emailnya sudah didaftarkan pemilik."),
+      h("div", { id: "gbtn", style: "min-height:44px; display:flex; justify-content:center" }),
+      installCard()));
+  }
+
