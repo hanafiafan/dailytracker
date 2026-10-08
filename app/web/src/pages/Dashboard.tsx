@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowUpRight, Coffee, Hand, History } from "lucide-react";
+import { Hand } from "lucide-react";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
 import { InstallCard, NotifyCard } from "../components/Cards";
@@ -18,33 +18,10 @@ import { useUi, useViewer } from "../lib/viewer";
 import type { MemberDTO, TaskDTO } from "@shared/schemas";
 import { atMs } from "@shared/time";
 import { QuickAddSelf } from "../components/QuickAddSelf";
-import { WeekStrip } from "../components/WeekStrip";
+import { Bento } from "../components/Bento";
 import { fmtTime } from "../lib/format";
 
 const now = () => Date.now();
-
-function Tiles({ tasks, date, people = [] }: { tasks: TaskDTO[]; date: string; people?: MemberDTO[] }) {
-  const [, go] = useLocation();
-  const c = tally(tasks), total = tasks.length, pct = total ? Math.round(c.done / total * 100) : 0;
-  const overdue = tasks.filter(t => t.status !== "done" && t.due && now() > atMs(t.date, t.due)).length;
-  return (
-    <div className="tiles">
-      <div className="tile main">
-        <button className="go" onClick={() => go("/papan")} aria-label="Buka papan"><ArrowUpRight size={20} /></button>
-        <span className="k">{date === today() ? "Progres hari ini" : "Progres " + fmtShort(date)}</span>
-        <div>
-          <div className="v">{pct}<small>%</small></div>
-          <div className="k" style={{ margin: "6px 0 10px" }}>{total ? `${c.done} dari ${total} tugas selesai` : "belum ada tugas"}</div>
-          <div className="bar"><i style={{ width: `${pct}%` }} /></div>
-        </div>
-        {people.length > 0 && <div className="avatars heroav" title="Sedang punya tugas aktif">{people.slice(0, 5).map(m => <Avatar key={m.email} m={m} />)}{people.length > 5 && <span className="avatar more">+{people.length - 5}</span>}</div>}
-      </div>
-      <div className="tile" data-c="yellow"><span className="k">Selesai</span><div className="v">{c.done}</div></div>
-      <div className="tile" data-c="sky"><span className="k">Dikerjakan</span><div className="v">{c.doing}</div></div>
-      <div className="tile" data-c={overdue ? "lilac" : "gray"}><span className="k">{overdue ? "Terlambat" : "Belum dikerjakan"}</span><div className="v">{overdue || c.todo}</div></div>
-    </div>
-  );
-}
 
 function Feed({ limit = 8 }: { limit?: number }) {
   const q = useFeed(true), { openTask } = useUi(), { member, me } = useViewer();
@@ -58,7 +35,7 @@ function Feed({ limit = 8 }: { limit?: number }) {
             {m ? <Avatar m={m} /> : <span className="avatar sm" style={{ background: "var(--dark)", width: 30, height: 30 }}>{a.actorName[0]}</span>}
             <div><div className="clamp2"><b>{a.actorEmail === me.email ? "Kamu" : a.actorName}</b> {a.text}</div>{a.taskTitle && <button className="clamp1" title={a.taskTitle} onClick={() => a.taskId && openTask(a.taskId)}>{a.taskTitle}</button>}<small>{ago(a.at)}</small></div>
           </li>); })}
-        {!items.length && <li><Empty icon={<History size={22} />} title="Belum ada aktivitas" /></li>}
+        {!items.length && <li><Empty art="activity" title="Belum ada aktivitas" /></li>}
       </ul>
     </section>
   );
@@ -73,14 +50,14 @@ function Upcoming({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
         {list.map(t => { const late = now() > atMs(t.date, t.due!); return (
           <li key={t.id}><span className={"tag " + (late ? "hot" : "due")} style={{ height: "fit-content" }}>{t.due}</span>
             <div><button onClick={() => openTask(t.id)}>{t.title}</button><small>{member(t.email)?.name}{late ? " · terlambat" : ""}</small></div></li>); })}
-        {!list.length && <li><Empty icon={<Coffee size={22} />} title="Tidak ada tenggat" /></li>}
+        {!list.length && <li><Empty art="calendar" title="Tidak ada tenggat" /></li>}
       </ul>
     </section>
   );
 }
 
 function ManagerDashboard() {
-  const { team, policy, me } = useViewer();
+  const { team, policy, me, member } = useViewer();
   const { date, setDate, newTask } = useUi();
   const [tab, setTab] = useState("orang");
   const [unit, setUnit] = useState("");
@@ -99,15 +76,14 @@ function ManagerDashboard() {
   const idle = loaded && date === today() ? workers.filter(m => isIdle(byPerson.get(m.email) ?? [])) : [];
   const asking = idle.filter(m => isToday(m.askAt));
   return (
-    <Page title="Dasbor" sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
+    <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
       tabs={[{ id: "orang", label: "Orang" }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
       <InstallCard /><NotifyCard manager />
-      <Tiles tasks={shown} date={date} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />
-      <WeekStrip date={date} tasks={tasks.filter(t => workers.some(w => w.email === t.email))} onPick={setDate} />
+      <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />
       <Links />
       {idle.length > 0 && (
         <section className="warnbox" aria-label="Orang tanpa tugas">
@@ -158,11 +134,10 @@ function MemberDashboard() {
   const upcoming = sortTasks(mine.filter(t => t.date > date && t.status !== "done"));
   const finished = mine.filter(t => t.status === "done").sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)).slice(0, 30);
   return (
-    <Page title="Tugas saya" sub={`${m.name} · ${m.role} · ${fmtLong(date)}`} dateNav
+    <Page title={<>Halo, <em>{m.name.split(" ")[0]}</em></>} sub={`${m.name} · ${m.role} · ${fmtLong(date)}`} dateNav
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
       <InstallCard /><NotifyCard manager={false} />
-      <Tiles tasks={all} date={date} />
-      <WeekStrip date={date} tasks={mine} onPick={setDate} />
+      <Bento all={mine} day={all} date={date} people={[]} />
       {todayView && loaded && isIdle(mine) && (
         <section className="warnbox" role="status">
           <span className="warnico" aria-hidden="true">!</span>

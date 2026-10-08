@@ -6,7 +6,7 @@ import { makePolicy } from "@shared/policy";
 import type { MeDTO } from "@shared/schemas";
 import { Login } from "./components/Login";
 import { NewTaskDialog } from "./components/NewTaskDialog";
-import { Sidebar } from "./components/Page";
+import { TopNav } from "./components/Page";
 import { SearchDialog } from "./components/SearchDialog";
 import { TaskDrawer } from "./components/TaskDrawer";
 import { Center, Loading } from "./components/ui";
@@ -14,6 +14,8 @@ import { today } from "./lib/format";
 import { registerPush, pushSupported } from "./lib/push";
 import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
 import { UiContext, ViewerContext, type NewTaskPrefill, type Ui, type Viewer } from "./lib/viewer";
+import { ProjectsPage } from "./pages/ProjectsPage";
+import { HistoryPage } from "./pages/HistoryPage";
 import { TasksPage } from "./pages/TasksPage";
 import { Board } from "./pages/Board";
 import { CalendarPage } from "./pages/CalendarPage";
@@ -73,7 +75,7 @@ function Signed({ me }: { me: MeDTO }) {
     <ViewerContext value={viewer}>
       <UiContext value={ui}>
         <div className="shell">
-          <Sidebar />
+          <TopNav />
           <main className="frame">
             <Switch>
               <Route path="/"><Dashboard /></Route>
@@ -81,6 +83,8 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/daftar"><TasksPage /></Route>
               <Route path="/kalender"><CalendarPage /></Route>
               <Route path="/tim">{viewer.policy.isManager ? <TeamPage /> : <Redirect to="/" />}</Route>
+              <Route path="/proyek"><ProjectsPage /></Route>
+              <Route path="/riwayat"><HistoryPage /></Route>
               <Route path="/laporan"><ReportsPage /></Route>
               <Route path="/pengaturan"><SettingsPage /></Route>
               <Route><Redirect to="/" /></Route>
