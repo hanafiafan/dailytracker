@@ -4,13 +4,13 @@ import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
 /** Avatar fill colours: the brand palette. */
-const AVATAR = ["#475569", "#52525B", "#4B5563", "#57606A", "#3F4A5A", "#5B6472"];
+const AVATAR = ["#C7C6BB", "#BBBAAE", "#D2D1C6", "#B2B1A5", "#C0BFB3", "#CDCCC1"];
 
 export function Avatar({ m, big, src }: { m: Pick<MemberDTO, "email" | "name" | "role" | "hasPhoto" | "photoV">; big?: boolean; src?: string | null }) {
   const cls = "avatar" + (big ? " big" : "");
   const url = src !== undefined ? src : m.hasPhoto ? `/api/team/${encodeURIComponent(m.email)}/photo?v=${m.photoV}` : null;
   if (url) return <img className={cls} src={url} alt="" />;
-  return <div className={cls} style={{ background: AVATAR[hue(m.email || m.name || "") % AVATAR.length] }} aria-hidden="true">{initials(m.name || "?")}</div>;
+  return <div className={cls} style={{ background: AVATAR[hue(m.email || m.name || "") % AVATAR.length], color: "var(--ink)" }} aria-hidden="true">{initials(m.name || "?")}</div>;
 }
 
 /** Two-tap button: the first tap arms it (and shows `armed`), the second runs `onConfirm`. Disarms after 3 s. */
