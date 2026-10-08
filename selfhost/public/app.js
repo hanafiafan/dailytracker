@@ -970,3 +970,30 @@ import { DEFAULT_TEAM } from "./config.js";
     for (const [id, v] of Object.entries(keep)) { const el = document.getElementById(id); if (el && el.type !== "checkbox" && el.type !== "date") el.value = v; else if (el && el.type === "date" && v) el.value = v; }
     if (aid) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel && el.setSelectionRange) el.setSelectionRange(sel[0], sel[1]); } catch (_) {} } }
   }
+  // ---------- boot ----------
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && S.lightbox) { S.lightbox = null; render(); } });
+  render();
+  let tick = null;
+  function resetState() {
+    for (const k of Object.keys(subs)) { subs[k].items(); subs[k].doc(); delete subs[k]; }
+    if (teamUnsub) { teamUnsub(); teamUnsub = null; }
+    Object.assign(S, { teamRaw: [], teamLoaded: false, items: {}, keyDoc: {}, itemsLoaded: {}, docLoaded: {}, editMember: null, showAdd: false });
+    seenDone = false; ensured.clear();
+  }
+  onUser(u => {
+    resetState();
+    if (!u || !u.email) { S.mode = "login"; S.meId = null; return render(); }
+    S.meId = u.email.toLowerCase();
+    S.owner = !!u.owner;
+    S.mode = S.owner ? "owner" : "member";
+    subTeam();
+    if (canNotify() && Notification.permission === "granted") pushSupported().then(ok => ok && registerPush()).catch(e => console.warn("push", e));
+    render();
+    if (!tick) {
+      // Roll the day over if the app stays open past midnight, and refresh "late" labels each minute.
+      let last = today();
+      tick = setInterval(() => { const t = today(); if (t !== last) { if (S.date === last) S.date = t; last = t; for (const k of Object.keys(subs)) ensureRoutines(k); } if (!S.busy) render(); }, 60000);
+    }
+  });
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(e => console.warn("sw", e)));
+})();
