@@ -37,31 +37,31 @@ function Overview({ d }: { d: ProjectReportDTO }) {
   const maxP = Math.max(1, ...prio.map(x => x.n));
   return (
     <div className="bento" data-c={p.color}>
-      <section className="bc s4" style={{ gridColumn: "span 4" }}>
+      <section className="bc s4">
         <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h3>Penyelesaian</h3></div>
         <div className="mid-n">{s.done}<small> dari {s.total} tugas</small></div>
         <div className="split" style={{ height: 14 }} aria-hidden="true"><i style={{ flex: s.done || 0.0001, background: "var(--d, var(--blue))" }} /><i style={{ flex: s.open || 0.0001, background: "var(--glass)" }} /></div>
         <div className="legend"><span style={{ ["--k" as string]: "var(--d, var(--blue))" }}>Selesai {s.done}</span><span style={{ ["--k" as string]: "var(--sunk)" }}>Terbuka {s.open}</span></div>
       </section>
-      <section className="bc s4" style={{ gridColumn: "span 4" }}>
+      <section className="bc s4">
         <div className="bc-h"><span className="bc-ico"><CalendarRange size={18} /></span><h3>Ketepatan waktu</h3></div>
         <div className="mid-n">{done.length ? pct(s.onTime, s.done) + "%" : "–"}</div>
         <p className="muted" style={{ fontSize: ".82rem" }}>{s.onTime} tepat waktu · {s.late} terlambat dari {s.done} selesai</p>
         <div className="legend"><span style={{ ["--k" as string]: "var(--ok)" }}>Bukti {pct(s.withProof, s.done)}%</span><span style={{ ["--k" as string]: "var(--warn)" }}>Revisi {s.revisions}×</span></div>
       </section>
-      <section className="bc s4" style={{ gridColumn: "span 4" }}>
+      <section className="bc s4">
         <div className="bc-h"><span className="bc-ico lime"><Timer size={18} /></span><h3>Waktu tercatat</h3></div>
         <div className="mid-n">{s.minutes ? hm(s.minutes) : "–"}</div>
         <p className="muted" style={{ fontSize: ".82rem" }}>{s.minutes ? `rata-rata ${hm(Math.round(s.minutes / Math.max(1, s.done)))} per tugas selesai` : "Belum ada timer yang dijalankan"}</p>
       </section>
 
-      <section className="bc s6" style={{ gridColumn: "span 6" }}>
+      <section className="bc s6">
         <div className="bc-h"><span className="bc-ico"><Users size={18} /></span><h3>Progres per orang</h3><span className="muted">{people.length}</span></div>
         <div className="plist">{people.map(x => { const m = member(x.email); return (
           <div key={x.email} className="tbar who" style={{ gridTemplateColumns: "170px minmax(0,1fr) 54px" }}><span className="nm">{m && <Avatar m={m} />}<span className="clamp1"><PersonLink email={x.email}>{x.name}</PersonLink></span></span><div><i style={{ width: `${pct(x.done, x.total)}%` }} /></div><b>{x.done}/{x.total}</b></div>); })}</div>
         {!people.length && <Empty art="people" title="Belum ada tugas" />}
       </section>
-      <section className="bc s6" style={{ gridColumn: "span 6" }}>
+      <section className="bc s6">
         <div className="bc-h"><span className="bc-ico red"><ListChecks size={18} /></span><h3>Berikutnya</h3><span className="muted">{s.open} terbuka</span></div>
         <ul className="alist">{next.map(t => (
           <li key={t.id} className="arow" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
@@ -73,7 +73,7 @@ function Overview({ d }: { d: ProjectReportDTO }) {
         <div className="split" style={{ height: 8 }} aria-hidden="true">{prio.map(x => <i key={x.k} style={{ flex: x.n / maxP || 0.0001, background: x.k === "urgent" ? "var(--bad)" : x.k === "high" ? "var(--warn)" : x.k === "normal" ? "var(--blue)" : "var(--sunk)" }} />)}</div>
       </section>
       {(p.summary || p.links.length > 0) && (
-        <section className="bc s12" style={{ gridColumn: "1 / -1" }}>
+        <section className="bc s12">
           <div className="bc-h"><span className="bc-ico green"><FolderKanban size={18} /></span><h3>Ringkasan hasil</h3></div>
           {p.summary && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65 }}>{p.summary}</p>}
           {p.links.length > 0 && <div className="chips">{p.links.map(l => <a key={l} className="chip" href={l} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} />{host(l)}</a>)}</div>}

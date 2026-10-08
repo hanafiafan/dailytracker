@@ -45,7 +45,7 @@ export function ReportsPage() {
           <div className="two" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
             <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "var(--volt)" }} />selesai</span><span><i style={{ background: "var(--blue)", opacity: .55 }} />belum</span></div></div><DayBars data={d.daily} /></section>
             <section className="surface"><div className="surface-h"><h2>Prioritas</h2></div>
-              <div style={{ display: "grid", justifyItems: "center", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", justifyItems: "center", gap: 12 }}>
                 <Donut center={String(d.totals.total)} slices={(Object.keys(d.byPriority) as Priority[]).map(p => ({ label: PRIORITY_LABEL[p], value: d.byPriority[p], color: PRIO_COLOR[p] }))} />
                 <div className="legend">{(Object.keys(d.byPriority) as Priority[]).map(p => <span key={p}><i style={{ background: PRIO_COLOR[p] }} />{PRIORITY_LABEL[p]} {d.byPriority[p]}</span>)}</div>
               </div>
