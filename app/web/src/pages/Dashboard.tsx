@@ -18,6 +18,8 @@ import { useUi, useViewer } from "../lib/viewer";
 import type { MemberDTO, TaskDTO } from "@shared/schemas";
 import { atMs } from "@shared/time";
 import { QuickAddSelf } from "../components/QuickAddSelf";
+import { Attention, attention } from "../components/Attention";
+import { Achievements } from "../components/Achievements";
 import { Bento } from "../components/Bento";
 import { fmtTime } from "../lib/format";
 
@@ -74,10 +76,11 @@ function ManagerDashboard() {
   const workers = team.filter(m => !m.isAdmin && policy.canManage(m.email) && (!unit || m.group === unit));
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
   const idle = loaded && date === today() ? workers.filter(m => isIdle(byPerson.get(m.email) ?? [])) : [];
+  const a = attention(tasks, policy.canManage), attn = a.late.length + a.review.length + a.stuck.length;
   const asking = idle.filter(m => isToday(m.askAt));
   return (
     <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
-      tabs={[{ id: "orang", label: "Orang" }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
+      tabs={[{ id: "orang", label: "Orang" }, { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
@@ -112,6 +115,7 @@ function ManagerDashboard() {
           <div className="two2"><Upcoming tasks={tasks} date={date} /><Feed /></div>
         </>
       )}
+      {tab === "perhatian" && <Attention tasks={tasks} />}
       {tab === "rekap" && <Recap people={workers} tasks={tasks} date={date} days={recapDays} onDays={setRecapDays} onPick={d => { setDate(d); setTab("orang"); }} loaded={loaded} />}
       {tab === "aktivitas" && <Feed limit={25} />}
     </Page>
@@ -138,6 +142,7 @@ function MemberDashboard() {
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
       <InstallCard /><NotifyCard manager={false} />
       <Bento all={mine} day={all} date={date} people={[]} />
+      <Achievements tasks={mine} date={date} />
       {todayView && loaded && isIdle(mine) && (
         <section className="warnbox" role="status">
           <span className="warnico" aria-hidden="true">!</span>
