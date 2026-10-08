@@ -118,3 +118,12 @@ app.post("/api/push/subscribe", auth, (req, res) => {
 });
 app.post("/api/push/unsubscribe", auth, (req, res) => { store.push.drop(String(req.body.endpoint || "")); res.json({}); });
 
+// ---------- static app ----------
+const pub = fileURLToPath(new URL("../../public", import.meta.url));
+app.use(express.static(pub, { setHeaders: (res, p) => { if (/\.(js|html|webmanifest)$/.test(p)) res.set("cache-control", "no-cache"); } }));
+app.use("/api", (_req, res) => res.status(404).json({ error: "not found" }));
+
+startScheduler(store, push);
+const port = +env.PORT || 3000;
+const host = env.HOST || "127.0.0.1"; // in the container: 0.0.0.0, reachable only through the proxy network
+app.listen(port, host, () => console.log(`Tugas Harian listening on ${host}:${port}`));
