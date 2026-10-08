@@ -68,3 +68,15 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
   );
 }
 
+function ScopeChips({ m }: { m: MemberDTO }) {
+  const { team } = useViewer();
+  const set = useAction((next: string[]) => ok(api.team[":email"].$patch({ param: { email: m.email }, json: { adminGroups: next } })), { done: "Cakupan admin disimpan" });
+  const toggle = (g: string) => set.mutate(m.adminGroups.includes(g) ? m.adminGroups.filter(x => x !== g) : [...m.adminGroups, g]);
+  return (
+    <div className="scope"><span>Kelola:</span>
+      <button className="chip" aria-pressed={!m.adminGroups.length} onClick={() => set.mutate([])}>Semua unit</button>
+      {units(team).map(g => <button key={g} className="chip" aria-pressed={m.adminGroups.includes(g)} onClick={() => toggle(g)}>{g}</button>)}
+    </div>
+  );
+}
+
