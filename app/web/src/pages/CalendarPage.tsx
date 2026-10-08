@@ -15,24 +15,29 @@ const H0 = 6, H1 = 22, ROW = 56;
 const mins = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-interface Ev { t: TaskDTO; s: number; e: number; lane: number; lanes: number }
+const MAX_LANES = 2;
+interface Ev { t: TaskDTO; s: number; e: number; lane: number; lanes: number; cluster: number }
+interface Overflow { top: number; items: Ev[] }
 /** Places a day's timed tasks side by side when they overlap. */
-function layout(tasks: TaskDTO[]): Ev[] {
+function layout(tasks: TaskDTO[]): { shown: Ev[]; overflow: Overflow[] } {
   const evs = tasks.map(t => {
     const s = t.start ? mins(t.start) : mins(t.due!) - 45;
     const e = t.start && t.due ? mins(t.due) : t.start ? s + 60 : mins(t.due!);
-    return { t, s: Math.max(H0 * 60, s), e: Math.max(Math.max(H0 * 60, s) + 30, e), lane: 0, lanes: 1 };
+    return { t, s: Math.max(H0 * 60, s), e: Math.max(Math.max(H0 * 60, s) + 30, e), lane: 0, lanes: 1, cluster: 0 };
   }).sort((a, b) => a.s - b.s || b.e - a.e);
-  let cluster: Ev[] = [], end = 0;
-  const flush = () => { const n = Math.max(1, ...cluster.map(c => c.lane + 1)); cluster.forEach(c => (c.lanes = n)); cluster = []; };
+  let cluster: Ev[] = [], end = 0, id = 0;
+  const flush = () => { const n = Math.max(1, ...cluster.map(c => c.lane + 1)); cluster.forEach(c => (c.lanes = Math.min(n, MAX_LANES))); cluster = []; id++; };
   for (const ev of evs) {
     if (cluster.length && ev.s >= end) flush();
     const used = new Set(cluster.filter(c => c.e > ev.s).map(c => c.lane));
     while (used.has(ev.lane)) ev.lane++;
-    cluster.push(ev); end = Math.max(end, ev.e);
+    ev.cluster = id; cluster.push(ev); end = Math.max(end, ev.e);
   }
   flush();
-  return evs;
+  // Anything beyond the lane limit is tucked into a "+N" chip so the grid stays readable.
+  const hidden = evs.filter(e => e.lane >= MAX_LANES), overflow = new Map<number, Overflow>();
+  for (const h of hidden) { const o = overflow.get(h.cluster) ?? { top: Math.min(...evs.filter(e => e.cluster === h.cluster).map(e => (e.s - H0 * 60) / 60 * ROW)), items: [] }; o.items.push(h); overflow.set(h.cluster, o); }
+  return { shown: evs.filter(e => e.lane < MAX_LANES), overflow: [...overflow.values()] };
 }
 
 function Event({ ev, canDrag }: { ev: Ev; canDrag: boolean }) {
@@ -47,6 +52,18 @@ function Event({ ev, canDrag }: { ev: Ev; canDrag: boolean }) {
       onClick={() => openTask(ev.t.id)} title={`${ev.t.title} · ${hm(ev.s)}–${hm(ev.e)}`} {...attributes} {...listeners}>
       <b>{ev.t.title}</b><small>{hm(ev.s)}–{hm(ev.e)} · {member(ev.t.email)?.name}</small>
     </button>
+  );
+}
+
+function MoreChip({ o }: { o: Overflow }) {
+  const [open, setOpen] = useState(false);
+  const { openTask } = useUi();
+  const { member } = useViewer();
+  return (
+    <div className="morechip" style={{ top: o.top + 2 }}>
+      <button onClick={() => setOpen(v => !v)} aria-expanded={open} aria-label={`${o.items.length} tugas lainnya`}>+{o.items.length}</button>
+      {open && <ul className="evpop">{o.items.map(ev => <li key={ev.t.id}><button onClick={() => { setOpen(false); openTask(ev.t.id); }}><b className="clamp1">{ev.t.title}</b><small>{hm(ev.s)}–{hm(ev.e)} · {member(ev.t.email)?.name}</small></button></li>)}</ul>}
+    </div>
   );
 }
 
@@ -147,11 +164,12 @@ export function CalendarPage() {
             <div className="week-body" ref={body}>
               <div className="hours">{Array.from({ length: H1 - H0 }, (_, i) => <div key={i}>{String(H0 + i).padStart(2, "0")}:00</div>)}</div>
               {days.map(d => {
-                const evs = layout(tasks.filter(t => t.date === d && (t.start || t.due)));
+                const { shown: evs, overflow } = layout(tasks.filter(t => t.date === d && (t.start || t.due)));
                 return (
                   <div key={d} className={"daycol" + (d === t0 ? " today" : "")}>
                     {Array.from({ length: H1 - H0 }, (_, i) => <Slot key={i} id={`slot:${d}:${H0 + i}`} onNew={() => newTask({ date: d, start: hm((H0 + i) * 60), due: hm((H0 + i + 1) * 60) })} />)}
                     {evs.map(ev => <Event key={ev.t.id} ev={ev} canDrag={canEdit(ev.t)} />)}
+                    {overflow.map((o, i) => <MoreChip key={i} o={o} />)}
                     {d === t0 && nowMin >= H0 * 60 && nowMin < H1 * 60 && <div className="nowline" style={{ top: (nowMin - H0 * 60) / 60 * ROW }} />}
                   </div>
                 );
