@@ -16,6 +16,7 @@ export function WeekStrip({ date, tasks, onPick }: { date: string; tasks: TaskDT
             aria-label={`${DAYN[(i + 1) % 7]} ${Number(d.slice(8))}: ${l.length ? `${done} dari ${l.length} selesai` : "tidak ada tugas"}`}>
             <small>{DAYN[(i + 1) % 7]}</small>
             <b>{Number(d.slice(8))}</b>
+            {l.length - done > 0 && <i className="cnt">{l.length - done}</i>}
             <span className="wbar"><i style={{ height: `${Math.max(l.length ? 12 : 0, p * 100)}%` }} /></span>
             <em>{l.length ? `${done}/${l.length}` : "–"}</em>
           </button>
