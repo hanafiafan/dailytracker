@@ -48,3 +48,18 @@ app.post("/api/auth/google", async (req, res) => {
 app.post("/api/auth/logout", (req, res) => { store.session.end(cookie(req, COOKIE)); setCookie(req, res, "", 0); res.json({}); });
 app.get("/api/me", auth, (req, res) => res.json({ email: req.me, owner: req.rules.owner }));
 
+// ---------- live updates (SSE): the client re-reads whatever changed ----------
+const clients = new Set();
+function emit(path) {
+  const msg = `data: ${JSON.stringify({ path })}\n\n`;
+  for (const c of clients) if (rules(c.email).can("get", path)) c.res.write(msg);
+}
+app.get("/api/events", auth, (req, res) => {
+  res.set({ "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive", "x-accel-buffering": "no" }).flushHeaders();
+  res.write("retry: 3000\n\n");
+  const c = { email: req.me, res };
+  clients.add(c);
+  const ka = setInterval(() => res.write(": ka\n\n"), 25000);
+  req.on("close", () => { clearInterval(ka); clients.delete(c); });
+});
+
