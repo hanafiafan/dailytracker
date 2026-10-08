@@ -42,7 +42,7 @@ export function Sidebar() {
       </nav>
       <div className="spacer" />
       <button className="me hide-sm" onClick={() => go("/pengaturan")} aria-label="Profil saya">
-        {m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)" }}>{me.name[0]}</span>}
+        {m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)", color: "var(--dark-ink)" }}>{me.name[0]}</span>}
         <span><b className="clamp1">{m?.name ?? me.name}</b><small>{m?.role || (me.owner ? "Pemilik" : me.email)}</small></span>
       </button>
       <nav className="nav hide-sm"><button onClick={out}><LogOut size={19} />Keluar</button></nav>
@@ -101,7 +101,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
           {dateNav && (
             <div className="tools" role="group" aria-label="Pilih hari">
               <button className="tool" aria-label="Hari sebelumnya" onClick={() => setDate(addDays(date, -1))}><ChevronLeft size={18} /></button>
-              <button className="tool" style={{ width: "auto", padding: "0 10px", borderRadius: 999, fontWeight: 700, fontSize: ".85rem" }} onClick={() => setDate(t)} title="Kembali ke hari ini">{date === t ? "Hari ini" : fmtShort(date)}</button>
+              <button className="tool" style={{ padding: "0 12px", fontWeight: 600, fontSize: ".85rem", minWidth: 96 }} onClick={() => setDate(t)} title="Kembali ke hari ini">{date === t ? "Hari ini" : fmtShort(date)}</button>
               <button className="tool" aria-label="Hari berikutnya" onClick={() => setDate(addDays(date, 1))}><ChevronRight size={18} /></button>
             </div>
           )}
@@ -109,7 +109,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
             <button className="tool" onClick={openSearch} aria-label="Cari (Ctrl+K)" title="Cari (Ctrl+K)"><Search size={18} /></button>
             <button className="tool" onClick={() => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")} aria-label="Ganti tema">{theme === "dark" || (theme === "system" && document.documentElement.dataset.theme === "dark") ? <Sun size={18} /> : <Moon size={18} />}</button>
             <Bell_ />
-            <button className="tool" onClick={() => go("/pengaturan")} aria-label="Profil saya" style={{ padding: 0 }}>{m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)" }}>{me.name[0]}</span>}</button>
+            <button className="tool" onClick={() => go("/pengaturan")} aria-label="Profil saya" style={{ padding: 0 }}>{m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)", color: "var(--dark-ink)" }}>{me.name[0]}</span>}</button>
           </div>
           <button className="btn primary hide-mobile" onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>
         </div>
