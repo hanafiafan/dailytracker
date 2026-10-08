@@ -105,7 +105,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
   );
 }
 
-export function ManageTeam({ list }: { list: MemberDTO[] }) {
+export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }) {
   const { policy } = useViewer();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
@@ -122,7 +122,7 @@ export function ManageTeam({ list }: { list: MemberDTO[] }) {
     reorder.mutate(next);
   };
   return (
-    <details className="manage" id="manage">
+    <details className="manage" id="manage" open={open}>
       <summary>Kelola tim</summary>
       <p className="foot" style={{ margin: "8px 0" }}>{policy.isBoss
         ? 'Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin "Semua unit" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu.'
