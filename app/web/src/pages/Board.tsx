@@ -13,7 +13,7 @@ import { patchTaskLocally, useAction, useTasks, windowFrom, keys } from "../lib/
 import { PRIORITY_LABEL, PRIORITY_RANK, subtaskProgress, weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 
-const COL_TINT: Record<Status, string> = { todo: "gray", doing: "lilac", done: "mint" };
+const COL_TINT: Record<Status, string> = { todo: "sky", doing: "lilac", done: "mint" };
 
 function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
   const { member, project, label } = useViewer();

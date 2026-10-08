@@ -9,7 +9,7 @@ import { useAnalytics } from "../lib/queries";
 import { PRIORITY_LABEL } from "../lib/tasks";
 import { useViewer } from "../lib/viewer";
 
-const PRIO_COLOR: Record<Priority, string> = { urgent: "#E0392C", high: "#E9A23B", normal: "var(--c-lilac)", low: "var(--c-gray)" };
+const PRIO_COLOR: Record<Priority, string> = { urgent: "#E0392C", high: "#E9A23B", normal: "var(--c-lilac)", low: "var(--c-sky)" };
 const dur = (min: number | null) => min === null ? "–" : min < 60 ? `${min} mnt` : `${Math.floor(min / 60)} j ${min % 60} m`;
 
 export function ReportsPage() {
@@ -30,16 +30,16 @@ export function ReportsPage() {
       </>}>
       {!d ? <p className="muted">Memuat…</p> : <>
         <div className="surface"><div className="statrow">
-          <div className="stat"><span className="v">{d.totals.total}</span><span className="k">Total tugas</span></div>
-          <div className="stat"><span className="v">{d.totals.done}</span><span className="k">Selesai ({pct(d.totals.total ? d.totals.done / d.totals.total : null)})</span></div>
-          <div className="stat"><span className="v">{pct(d.totals.onTimeRate)}</span><span className="k">Tepat waktu</span></div>
-          <div className="stat"><span className="v">{d.totals.overdue}</span><span className="k">Terlambat (belum selesai)</span></div>
-          <div className="stat"><span className="v">{dur(d.totals.avgCompletionMin)}</span><span className="k">Rata-rata pengerjaan</span></div>
+          <div className="stat" data-c="sky"><span className="v">{d.totals.total}</span><span className="k">Total tugas</span></div>
+          <div className="stat" data-c="mint"><span className="v">{d.totals.done}</span><span className="k">Selesai ({pct(d.totals.total ? d.totals.done / d.totals.total : null)})</span></div>
+          <div className="stat" data-c="lilac"><span className="v">{pct(d.totals.onTimeRate)}</span><span className="k">Tepat waktu</span></div>
+          <div className="stat" data-c="peach"><span className="v">{d.totals.overdue}</span><span className="k">Terlambat (belum selesai)</span></div>
+          <div className="stat" data-c="pink"><span className="v">{dur(d.totals.avgCompletionMin)}</span><span className="k">Rata-rata pengerjaan</span></div>
         </div></div>
 
         {tab === "ringkas" && (
           <div className="two" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
-            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "var(--lime)" }} />selesai</span><span><i style={{ background: "var(--c-gray)" }} />belum</span></div></div><DayBars data={d.daily} /></section>
+            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "var(--lime)" }} />selesai</span><span><i style={{ background: "var(--c-lilac)" }} />belum</span></div></div><DayBars data={d.daily} /></section>
             <section className="surface"><div className="surface-h"><h2>Prioritas</h2></div>
               <div style={{ display: "grid", justifyItems: "center", gap: 12 }}>
                 <Donut center={String(d.totals.total)} slices={(Object.keys(d.byPriority) as Priority[]).map(p => ({ label: PRIORITY_LABEL[p], value: d.byPriority[p], color: PRIO_COLOR[p] }))} />
