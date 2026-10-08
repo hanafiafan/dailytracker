@@ -39,7 +39,7 @@ function Tiles({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
           <div className="bar"><i style={{ width: `${pct}%` }} /></div>
         </div>
       </div>
-      <div className="tile" data-c="black"><span className="k">Selesai</span><CheckCircle2 className="ti" size={22} /><div className="v">{c.done}</div></div>
+      <div className="tile" data-c="sky"><span className="k">Selesai</span><CheckCircle2 className="ti" size={22} /><div className="v">{c.done}</div></div>
       <div className="tile" data-c="lilac"><span className="k">Dikerjakan</span><Hourglass className="ti" size={22} /><div className="v">{c.doing}</div></div>
       <div className="tile" data-c={overdue ? "peach" : "gray"}><span className="k">{overdue ? "Terlambat" : "Belum dikerjakan"}</span><Clock3 className="ti" size={22} /><div className="v">{overdue || c.todo}</div></div>
     </div>
