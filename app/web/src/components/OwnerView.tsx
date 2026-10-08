@@ -39,3 +39,52 @@ export function OwnerView({ date, onDate }: { date: string; onDate: (d: string) 
   const asking = idle.filter(m => isToday(m.askAt));
   const routinesOf = (m: MemberDTO) => (rq.data ?? []).filter(r => r.email === m.email);
 
+  return (
+    <>
+      <Header>
+        <div className="brand"><h1>Tugas Harian Tim Kreatif</h1><p>{fmtLong(date)} · {workers.length} orang{policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}</p></div>
+        <DateNav date={date} onDate={onDate} />
+      </Header>
+      <main className="wrap">
+        <InstallCard /><NotifyCard manager />
+        {myUnits.length > 1 && (
+          <div className="chips unitbar" role="group" aria-label="Filter unit">
+            <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
+            {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
+          </div>
+        )}
+        <section className="summary" aria-label="Ringkasan">
+          <div>
+            <div className="big">{pct}%<span>{total ? `selesai dari ${total} tugas` : "belum ada tugas"}</span></div>
+            <Bar c={c} total={total} />
+            <div className="counts">
+              <span><i className="dot done" /><b>{c.done}</b> selesai</span><span><i className="dot doing" /><b>{c.doing}</b> dikerjakan</span><span><i className="dot todo" /><b>{c.todo}</b> belum</span>
+            </div>
+          </div>
+          <div className="actions">
+            <button className="btn" aria-pressed={showRecap} onClick={() => setShowRecap(s => !s)}>{showRecap ? "Tutup rekap" : "Lihat rekap"}</button>
+            <button className="btn primary" onClick={() => setShowAdd(s => s ? null : [])}>{showAdd ? "Tutup" : "+ Tambah tugas"}</button>
+          </div>
+        </section>
+        <Links />
+        {idle.length > 0 && (
+          <section className="warnbox big" aria-label="Orang tanpa tugas">
+            <span className="warnico" aria-hidden="true">!</span>
+            <div className="txt">
+              <b>{idle.length} orang tidak punya tugas aktif hari ini{asking.length ? `, ${asking.length} sudah minta tugas` : ""}</b>
+              <div className="idle-list" style={{ marginTop: 6 }}>
+                {idle.map(m => <button key={m.email} className="chip" title={"Beri tugas untuk " + m.name} onClick={() => setShowAdd([m.email])}>{isToday(m.askAt) ? "✋ " : ""}{m.name} +</button>)}
+              </div>
+            </div>
+          </section>
+        )}
+        {showAdd && <AddTaskPanel key={showAdd.join()} people={workers} date={date} initial={showAdd} onClose={() => setShowAdd(null)} />}
+        {showRecap && <Recap people={workers} tasks={tasks} date={date} days={recapDays} onDays={setRecapDays} onPick={onDate} loaded={loaded} />}
+        {workers.length
+          ? <section className="grid" aria-label="Tugas per orang">{workers.map(m => <PersonCard key={m.email} m={m} tasks={byPerson.get(m.email) ?? []} routines={routinesOf(m)} date={date} loaded={loaded} />)}</section>
+          : <div className="panel"><h2>Daftar tim masih kosong</h2><p className="muted">Tambahkan anggota lewat Kelola tim di bawah.</p></div>}
+        <ManageTeam list={manageable} />
+      </main>
+    </>
+  );
+}
