@@ -1768,6 +1768,7 @@ table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric:
     const manage = h("details", { class: "manage", id: "manage", open: S.manageOpen, ontoggle: e => { S.manageOpen = e.target.open; } },
       h("summary", {}, "Kelola tim"),
       h("p", { class: "foot", style: "margin:8px 0" }, "Tiap orang membuka aplikasi ini dengan akun claude.ai-nya, memilih namanya, lalu kamu setujui di sini. Setelah itu ia hanya melihat tugasnya sendiri."),
+      h("p", { style: "margin:0 0 10px" }, h("button", { class: "btn small", disabled: S.busy, onclick: exportAll }, S.busy ? "Mengekspor…" : "⬇ Ekspor semua data (JSON)")),
       h("p", { class: "foot", style: "margin:0 0 6px" }, "Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap."),
       h("div", { class: "mlist" }, S.team.map(m => [h("div", { class: "mrow", "data-id": m.id },
         h("button", { class: "handle", type: "button", "aria-label": `Geser ${m.name}. Pakai panah atas atau bawah.`, title: "Tarik untuk memindah",
@@ -2009,6 +2010,38 @@ table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric:
       const bits = [p.name, p.email].filter(Boolean);
       el.textContent = bits.length ? bits.join(" · ") : "Akun tanpa nama";
     }
+  }
+
+  // ---------- export (to move the data to the self-hosted version) ----------
+  async function exportAll() {
+    S.busy = true; render();
+    try {
+      const out = { exportedAt: Date.now(), team: [], claims: [], tasks: {}, routines: {}, proofs: {} };
+      const uids = S.claims.map(c => c.uid);
+      let prof = {}; try { prof = uids.length ? await user.profiles(uids) : {}; } catch (_) {}
+      out.claims = S.claims.map(c => ({ uid: c.uid, memberId: c.memberId, email: (prof[c.uid] || {}).email || null, name: (prof[c.uid] || {}).name || null }));
+      out.team = S.team.map(m => ({ ...m, key: keyOf(m) }));
+      for (const m of S.team) {
+        const key = keyOf(m);
+        const items = (await db.collection(`tasks/${key}/items`).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+        const kd = await db.doc(`tasks/${key}`).get();
+        out.tasks[key] = items;
+        out.routines[key] = kd.exists ? kd.data() : {};
+        for (const t of items) {
+          const src = t.proof && (t.proof.asset ? "/_blob/" + t.proof.asset : t.proof.data);
+          if (!src) continue;
+          try {
+            const blob = await (await fetch(src)).blob();
+            out.proofs[`${key}/${t.id}`] = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+          } catch (e) { console.warn("proof", t.id, e); }
+        }
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(out)], { type: "application/json" }));
+      a.download = "tugas-harian-export.json"; a.click();
+      toast(`Ekspor selesai: ${out.team.length} orang, ${Object.values(out.tasks).flat().length} tugas, ${Object.keys(out.proofs).length} foto`);
+    } catch (e) { console.warn(e); toast("Ekspor gagal. Coba lagi."); }
+    S.busy = false; render();
   }
 
   // ---------- boot ----------
