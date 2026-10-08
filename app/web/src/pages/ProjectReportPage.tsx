@@ -23,9 +23,9 @@ export function ProjectReportPage() {
   const { project: p, stats: s, tasks } = d, done = tasks.filter(t => t.status === "done"), open = tasks.filter(t => t.status !== "done");
   const closer = p.closedBy ? member(p.closedBy)?.name ?? (p.closedBy === owner?.email ? owner.name : p.closedBy) : null;
   return (
-    <Page title={p.name} sub={p.closedAt ? `Selesai ${day(p.closedAt)}${closer ? " · ditutup oleh " + closer : ""}` : "Proyek masih berjalan"}
+    <Page title={p.name} sub={p.closedAt ? `Selesai ${day(p.closedAt)}${closer ? " · ditutup oleh " + closer : ""}` : p.description || "Proyek masih berjalan"}
       actions={<><Link className="btn small ghost" href="/proyek"><ArrowLeft size={14} />Semua proyek</Link><button className="btn small" onClick={() => window.print()}><Printer size={14} />Cetak</button></>}
-      tabs={[{ id: "r", label: p.closedAt ? "Laporan akhir" : "Laporan sementara" }]} tab="r">
+      tabs={[{ id: "r", label: p.closedAt ? "Laporan akhir" : "Detail proyek" }]} tab="r">
       {(p.summary || p.links.length > 0) && (
         <section className="bc" data-c={p.color}>
           <div className="bc-h"><h3>Ringkasan hasil</h3></div>

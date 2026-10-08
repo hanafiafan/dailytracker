@@ -24,6 +24,7 @@ function Ring({ pct }: { pct: number }) {
 const DAYS = 28;
 /** Each project as a bar from its first to its last task day (inside a four-week window); the dark part is the share done. */
 function Gantt({ tasks }: { tasks: TaskDTO[] }) {
+  const [, go] = useLocation();
   const { projects } = useViewer();
   const { date } = useUi();
   const start = addDays(weekStart(date), -7), end = addDays(start, DAYS - 1);
@@ -43,7 +44,7 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
       <div className="heatwrap"><div className="gantt" style={{ ["--n" as string]: DAYS }}>
         <div />{days.map((d, i) => <div key={d} className={"gd" + (d === today() ? " today" : "") + (i % 7 === 0 ? " wk" : "")}>{i % 7 === 0 || d === today() ? <b>{Number(d.slice(8))}</b> : Number(d.slice(8))}</div>)}
         {rows.map(({ p, a, b, pct, l }) => [
-          <div key={p.id} className="gp" data-c={p.color}><span className="clamp1">{p.name}</span><small className="muted">{l.length} tugas</small></div>,
+          <div key={p.id} className="gp" data-c={p.color}><a className="plink clamp1" href={"/proyek/" + p.id} onClick={e => { e.preventDefault(); go("/proyek/" + p.id); }}>{p.name}</a><small className="muted">{l.length} tugas</small></div>,
           <div key={p.id + "t"} className="gtrack" style={{ gridColumn: "2 / -1" }}>
             {todayIdx >= 0 && <i className="gtoday" style={{ left: `${(todayIdx + .5) / DAYS * 100}%` }} />}
             <div className="gbar" data-c={p.color} style={{ left: `${a / DAYS * 100}%`, width: `${(b - a + 1) / DAYS * 100}%` }} title={`${p.name}: ${pct}% selesai`}><i style={{ width: `${pct}%` }} /><span>{pct}%</span></div>
@@ -76,16 +77,16 @@ export function ProjectsPage() {
       {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length ? (
         <div className="pcards">
           {rows.map(({ p, total, done, late, open, pct, who }) => (
-            <article key={p.id} className={"pcard" + (p.closedAt ? " closed" : "")} data-c={p.color}>
-              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h3 className="clamp1">{p.name}{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h3><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
+            <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
+              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h3 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h3><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
               <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
                 <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
               </div>
               <div className="chips">
-                <button className="btn small" onClick={() => go("/proyek/" + p.id)}>{p.closedAt ? "Laporan akhir" : "Laporan"}</button>
-                {policy.isManager && (p.closedAt ? <button className="btn small ghost" onClick={() => reopen.mutate(p.id)}>Buka kembali</button> : <button className="btn small primary" onClick={() => setClosing(p.id)}>Tutup proyek</button>)}
+                <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
+                {policy.isManager && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
               </div>
             </article>))}
         </div>
