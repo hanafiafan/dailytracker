@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
+import type { ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
-  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const,
+  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const, timer: ["timer"] as const,
 };
 
 /** null = not signed in. */
@@ -34,6 +34,9 @@ export const useRoutines = (enabled: boolean) => useQuery({ queryKey: keys.routi
 export const useLinks = (enabled: boolean) => useQuery({ queryKey: keys.links, enabled, queryFn: () => ok(api.links.$get()) as unknown as Promise<LinkDTO[]> });
 
 export const useLeaves = (enabled: boolean) => useQuery({ queryKey: keys.leaves, enabled, queryFn: () => ok(api.leaves.$get()) as unknown as Promise<LeaveDTO[]> });
+export const useRunning = (enabled: boolean) => useQuery({ queryKey: keys.timer, enabled, queryFn: () => ok(api.time.running.$get()) as unknown as Promise<RunningTimerDTO | null> });
+export const useTaskTime = (id: string) => useQuery({ queryKey: [...keys.timer, "task", id], queryFn: () => ok(api.time.task[":taskId"].$get({ param: { taskId: id } })) as unknown as Promise<{ entries: TimeEntryDTO[]; totalMin: number }> });
+export const useTimeReport = (from: string, to: string) => useQuery({ queryKey: [...keys.timer, "report", from, to], queryFn: () => ok(api.time.report.$get({ query: { from, to } })) as unknown as Promise<TimeReportDTO> });
 export const useMeta = (enabled: boolean) => useQuery({ queryKey: keys.meta, enabled, queryFn: () => ok(api.meta.$get()) as unknown as Promise<MetaDTO> });
 export const useInbox = (enabled: boolean) => useQuery({
   queryKey: keys.inbox, enabled,
@@ -58,7 +61,7 @@ export function useLive(qc: QueryClient, active: boolean) {
     const es = new EventSource("/api/events");
     es.addEventListener("change", e => {
       const topic = (e as MessageEvent<string>).data;
-      if (topic === "tasks") for (const k of [keys.tasks, keys.routines, keys.activity, keys.analytics]) void qc.invalidateQueries({ queryKey: k });
+      if (topic === "tasks") for (const k of [keys.tasks, keys.routines, keys.activity, keys.analytics, keys.timer]) void qc.invalidateQueries({ queryKey: k });
       else if (topic === "meta") void qc.invalidateQueries({ queryKey: keys.meta });
       else if (topic === "inbox") void qc.invalidateQueries({ queryKey: keys.inbox });
       else if (topic === "team") void qc.invalidateQueries({ queryKey: keys.team });

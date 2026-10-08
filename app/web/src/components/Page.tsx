@@ -10,6 +10,7 @@ import { pushSupported, unregisterPush } from "../lib/push";
 import { keys, useInbox, useLeaves } from "../lib/queries";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
+import { RunningPill } from "./TimeTracker";
 
 const NAV = [
   { to: "/", label: "Dasbor", Icon: LayoutDashboard },
@@ -55,6 +56,7 @@ export function TopNav() {
         ))}
       </nav>
       <div className="navtools">
+        <RunningPill />
         <button className="tool" onClick={openSearch} aria-label="Cari (Ctrl+K)" title="Cari (Ctrl+K)"><Search size={17} /></button>
         <Bell_ />
         <div className="usermenu" ref={ref}>

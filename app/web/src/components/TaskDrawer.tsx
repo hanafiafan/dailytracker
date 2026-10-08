@@ -10,6 +10,7 @@ import { patchTaskLocally, useMeta, useTask, useTaskActivity } from "../lib/quer
 import { PRIORITY_LABEL } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Comments } from "./Comments";
+import { TaskTimer } from "./TimeTracker";
 import { ProofPanel } from "./ProofPanel";
 import { TimeTags } from "./TaskTags";
 import { Avatar, ConfirmButton } from "./ui";
@@ -104,6 +105,8 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           <span className="lbl">Deskripsi</span>
           {canEdit ? <textarea className="input" defaultValue={t.note} rows={3} maxLength={600} placeholder="Detail, link brief, atau target" onBlur={onBlur("note")} /> : <p>{t.note || <span className="muted">Tidak ada deskripsi.</span>}</p>}
         </section>
+
+        <TaskTimer t={t} canWork={work} />
 
         <section>
           <span className="lbl">Checklist{t.subtasks.length > 0 && ` · ${done}/${t.subtasks.length}`}</span>
