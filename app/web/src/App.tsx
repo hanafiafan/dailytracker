@@ -31,8 +31,9 @@ import { keys } from "./lib/queries";
 
 function Signed({ me }: { me: MeDTO }) {
   const qc = useQueryClient();
-  useLive(qc, true);
-  const teamQ = useTeam(true), metaQ = useMeta(true);
+  const registered = me.owner || !!me.member; // anyone else may sign in with Google but has no access: say so instead of failing to load
+  useLive(qc, registered);
+  const teamQ = useTeam(registered), metaQ = useMeta(registered);
   const [date, setDate] = useState(today());
   const [params, setParams] = useSearchParams();
   const [, nav] = useLocation();
@@ -84,9 +85,9 @@ function Signed({ me }: { me: MeDTO }) {
     };
   }, [me, teamQ.data, metaQ.data]);
 
+  if (!registered) return <NotRegistered email={me.email} />;
   if (teamQ.isError || metaQ.isError) return <Center><p className="muted">Gagal memuat data. Periksa koneksi lalu muat ulang.</p></Center>;
   if (!viewer) return <Loading />;
-  if (!viewer.policy.isManager && !me.member) return <NotRegistered email={me.email} />;
   return (
     <ViewerContext value={viewer}>
       <UiContext value={ui}>
