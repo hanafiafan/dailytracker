@@ -187,6 +187,18 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       void notify.returned(t);
       return c.json({ ok: true });
     })
+    // A manager's reminder to the assignee. At most one per task per hour, so it can't be used to spam.
+    .post("/:id/nudge", c => {
+      const u = c.var.user, t = find(c.req.param("id"));
+      if (!t) return c.json({ error: "not found" }, 404);
+      if (!u.policy.canManage(t.email) || t.email === u.email || t.status === "done") return c.json({ error: "forbidden" }, 403);
+      const last = db.select({ at: activity.at }).from(activity).where(and(eq(activity.taskId, t.id), eq(activity.kind, "nudged"))).orderBy(desc(activity.at)).get();
+      if (last && Date.now() - last.at < 3_600_000) return c.json({ error: "Sudah diingatkan kurang dari satu jam lalu." }, 429);
+      log(u, t.id, "nudged", "mengingatkan tugas ini");
+      touch();
+      void notify.nudged(t, who(u));
+      return c.json({ ok: true });
+    })
     .put("/:id/report", zValidator("json", taskReport), c => {
       const u = c.var.user, t = find(c.req.param("id")), { report } = c.req.valid("json");
       if (!t) return c.json({ error: "not found" }, 404);
