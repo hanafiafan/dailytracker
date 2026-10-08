@@ -26,9 +26,9 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
     <li className="task" data-status={t.status}>
       <button className={"status " + t.status} onClick={cycle} title="Ketuk untuk ganti status" aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button>
       <div className="tt">
-        <b role="link" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}>{t.title}</b>
-        {t.note && <p>{t.note}</p>}
-        <TaskMeta t={t} isLate={isLate} compact />
+        <b className="clamp2" title={t.title} role="link" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}>{t.title}</b>
+        {t.note && <p className="clamp2">{t.note}</p>}
+        <TaskMeta t={t} isLate={isLate} compact max={3} />
         {t.proofAt && (
           <div className="proof">
             {photo && <button className="thumb" onClick={() => setLightbox(true)} aria-label="Lihat foto bukti"><img src={photo} alt={"Bukti: " + t.title} loading="lazy" /></button>}
