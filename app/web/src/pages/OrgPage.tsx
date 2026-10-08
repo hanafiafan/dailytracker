@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import type { MemberDTO } from "@shared/schemas";
 import { Avatar } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
-import { useMeta, useTasks } from "../lib/queries";
+import { awayOn } from "../lib/leaves";
+import { useLeaves, useMeta, useTasks } from "../lib/queries";
 import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
 
@@ -43,11 +44,13 @@ function useOrg() {
 }
 
 function Node({ p, open }: { p: Person; open?: number }) {
+  const away = !!p.m && !!awayOn(useLeaves(true).data ?? [], p.m.email, today());
   return (
     <div className={"onode " + p.level}>
       {p.m ? <Avatar m={p.m} /> : <span className="avatar">{p.name[0]}</span>}
       <div style={{ minWidth: 0 }}><b className="clamp1" title={p.name}>{p.name}</b><small className="clamp1" title={p.role}>{p.role || LEVEL[p.level]}</small></div>
-      {open !== undefined && <span className="ocnt" title="Tugas belum selesai">{open}</span>}
+      {away && <span className="ocnt" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>Cuti</span>}
+      {!away && open !== undefined && <span className="ocnt" title="Tugas belum selesai">{open}</span>}
     </div>
   );
 }

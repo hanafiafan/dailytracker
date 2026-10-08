@@ -16,6 +16,7 @@ import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
 import { UiContext, ViewerContext, type NewTaskPrefill, type Ui, type Viewer } from "./lib/viewer";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { LeavePage } from "./pages/LeavePage";
 import { TasksPage } from "./pages/TasksPage";
 import { Board } from "./pages/Board";
 import { CalendarPage } from "./pages/CalendarPage";
@@ -51,7 +52,7 @@ function Signed({ me }: { me: MeDTO }) {
   useEffect(() => { if (pushSupported() && Notification.permission === "granted") registerPush().catch(e => console.warn("push", e)); }, [me.email]);
   useEffect(() => {
     let g = 0; // time of the last "g": the next key picks a page
-    const pages: Record<string, string> = { d: "/", p: "/papan", l: "/daftar", k: "/kalender", y: "/proyek", t: "/tim", r: "/laporan", h: "/riwayat" };
+    const pages: Record<string, string> = { d: "/", p: "/papan", l: "/daftar", k: "/kalender", y: "/proyek", t: "/tim", r: "/laporan", h: "/riwayat", i: "/izin" };
     const on = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); return; }
       const el = e.target as HTMLElement;
@@ -99,6 +100,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/proyek"><ProjectsPage /></Route>
               <Route path="/riwayat"><HistoryPage /></Route>
               <Route path="/struktur"><Redirect to="/tim" /></Route>
+              <Route path="/izin"><LeavePage /></Route>
               <Route path="/laporan"><ReportsPage /></Route>
               <Route path="/pengaturan"><SettingsPage /></Route>
               <Route><Redirect to="/" /></Route>

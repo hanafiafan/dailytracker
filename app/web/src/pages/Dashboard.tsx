@@ -12,7 +12,8 @@ import { TaskRow } from "../components/TaskRow";
 import { Avatar, Empty, tally } from "../components/ui";
 import { api, ok } from "../lib/api";
 import { fmtLong, fmtShort, isToday, today } from "../lib/format";
-import { useAction, useFeed, useRoutines, useTasks, windowFrom } from "../lib/queries";
+import { awayOn } from "../lib/leaves";
+import { useAction, useFeed, useLeaves, useRoutines, useTasks, windowFrom } from "../lib/queries";
 import { isIdle, sortTasks, splitDay } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import type { MemberDTO, TaskDTO } from "@shared/schemas";
@@ -75,7 +76,8 @@ function ManagerDashboard() {
   const myUnits = policy.isBoss ? units : policy.groups;
   const workers = team.filter(m => !m.isAdmin && policy.canManage(m.email) && (!unit || m.group === unit));
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
-  const idle = loaded && date === today() ? workers.filter(m => isIdle(byPerson.get(m.email) ?? [])) : [];
+  const leaves = useLeaves(true).data ?? [];
+  const idle = loaded && date === today() ? workers.filter(m => !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
   const a = attention(tasks, policy.canManage), attn = a.late.length + a.review.length + a.stuck.length;
   const asking = idle.filter(m => isToday(m.askAt));
   return (
