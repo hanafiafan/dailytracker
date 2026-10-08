@@ -144,3 +144,14 @@ describe("api", () => {
     expect(s?.to).not.toContain("a@x.id");
   });
 
+  it("deadline reminder fires once, 30 minutes before", async () => {
+    const date = wib().date;
+    t.db.insert(tasks).values({ id: "t1", email: "a@x.id", date, title: "Deadline", due: "10:00", createdAt: 1 }).run();
+    const before = Date.parse(`${date}T09:40:00+07:00`);
+    await runReminders(t.db, t.push, before);
+    await runReminders(t.db, t.push, before + 60000);
+    expect(t.sent.filter(s => s.title === "Tenggat sebentar lagi")).toHaveLength(1);
+    await runReminders(t.db, t.push, Date.parse(`${date}T10:05:00+07:00`));
+    expect(t.sent.filter(s => s.title === "Tugas terlambat")).toHaveLength(1);
+  });
+});
