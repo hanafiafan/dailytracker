@@ -1,7 +1,7 @@
 import type { MemberDTO, TaskDTO } from "@shared/schemas";
 import { addDays, parseYmd } from "@shared/time";
 import { DAYN, fmtShort, isToday, today } from "../lib/format";
-import { isIdle } from "./PersonCard";
+import { isIdle } from "../lib/tasks";
 
 type Cell = { total: number; done: number };
 const shade = (c: Cell) => {

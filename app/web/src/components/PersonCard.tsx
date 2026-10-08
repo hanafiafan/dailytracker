@@ -1,24 +1,10 @@
 import type { MemberDTO, RoutineDTO, TaskDTO } from "@shared/schemas";
 import { api, ok } from "../lib/api";
-import { DAYN, fmtShort, fmtTime, isToday, today } from "../lib/format";
+import { DAYN, fmtTime, isToday, today } from "../lib/format";
 import { useAction } from "../lib/queries";
+import { splitDay, isIdle } from "../lib/tasks";
 import { Avatar, Bar, ConfirmButton, tally } from "./ui";
 import { TaskRow } from "./TaskRow";
-
-const sortTasks = (arr: TaskDTO[]) => arr.slice().sort((a, b) => {
-  const st = { todo: 0, doing: 0, done: 1 };
-  const da = a.start || a.due || "99:99", db = b.start || b.due || "99:99";
-  return st[a.status] - st[b.status] || (da < db ? -1 : da > db ? 1 : 0) || Number(b.hot) - Number(a.hot) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || a.createdAt - b.createdAt;
-});
-/** The day's tasks plus (when viewing today) unfinished ones from earlier days. */
-export function splitDay(all: TaskDTO[], date: string) {
-  return {
-    day: sortTasks(all.filter(t => t.date === date)),
-    late: date === today() ? sortTasks(all.filter(t => t.date < date && t.status !== "done")) : [],
-  };
-}
-/** Idle = nothing unfinished for today (including leftovers from earlier days). */
-export const isIdle = (all: TaskDTO[] | undefined) => !!all && !all.some(t => t.date <= today() && t.status !== "done");
 
 export function QuickAdd({ email, name }: { email: string; name: string }) {
   const add = useAction((f: FormData) => ok(api.tasks.$post({ json: {
@@ -76,4 +62,3 @@ export function PersonCard({ m, tasks, routines, date, loaded }: { m: MemberDTO;
     </article>
   );
 }
-export { fmtShort };
