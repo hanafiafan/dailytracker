@@ -13,7 +13,7 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
     function me() { return request.auth.token.email.lower(); }
-    function isOwner() { return signedIn() && me() == 'rtekidvector@gmail.com'; }
+    function isOwner() { return signedIn() && me() == 'hellensdev@gmail.com'; }
     function memberPath() { return /databases/$(database)/documents/team/$(me()); }
     function isMember() { return signedIn() && exists(memberPath()); }
     function myDoc() { return get(memberPath()).data; }
@@ -59,12 +59,19 @@ service cloud.firestore {
       match /items/{taskId} {
         allow read: if canSee(email);
         allow write: if canManage(email);
-        allow create: if isMember() && me() == email;
+        allow create: if isMember() && me() == email
+          && (request.resource.data.get('by', '') == 'self'
+              || (request.resource.data.get('by', '') == 'owner' && request.resource.data.keys().hasAny(['routine'])));  // rutinitas dibuat otomatis oleh app karyawan
         allow update: if isMember() && me() == email
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['status', 'startedAt', 'doneAt', 'returnedAt', 'proof', 'report', 'reportAt']);
         allow delete: if isMember() && me() == email && resource.data.by == 'self';
       }
+    }
+
+    // Perangkat untuk notifikasi push (token FCM). Pemilik tidak ada di daftar tim, jadi cukup cocokkan email.
+    match /tokens/{email}/devices/{token} {
+      allow read, write: if signedIn() && me() == email;
     }
 
     // Foto bukti tugas.
