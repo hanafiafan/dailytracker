@@ -34,23 +34,18 @@ export function QuickAdd({ email, name }: { email: string; name: string }) {
   );
 }
 
-export function PersonCard({ m, tasks, routines, date, loaded }: { m: MemberDTO; tasks: TaskDTO[]; routines: RoutineDTO[]; date: string; loaded: boolean }) {
+/** Warning, tasks (first few, "see more"), routines and quick add for one person. Shared by the card and the table row. */
+export function PersonTasks({ m, tasks, routines, date, loaded }: { m: MemberDTO; tasks: TaskDTO[]; routines: RoutineDTO[]; date: string; loaded: boolean }) {
   const { day, late } = splitDay(tasks, date);
   const [more, setMore] = useState(false);
-  const all = day.concat(late), c = tally(all);
+  const all = day.concat(late);
   const stop = useAction((id: string) => ok(api.routines[":id"].$delete({ param: { id } })), { done: "Tugas rutin dihentikan", refresh: [["tasks"], ["routines"]] });
   const asked = isToday(m.askAt);
   const shownLate = more ? late : late.slice(0, SHOW), room = Math.max(0, SHOW - late.length);
   const shownDay = more ? day : day.slice(0, room);
   const hidden = all.length - shownLate.length - shownDay.length;
   return (
-    <article className="card">
-      <div className="card-h">
-        <Avatar m={m} />
-        <div className="nm"><h3>{m.name}</h3><p>{[m.role, m.group].filter(Boolean).join(" · ")}</p></div>
-        <span className={"presence " + (m.seenAt ? "on" : "off")} title={m.seenAt ? "Sudah pernah membuka aplikasi" : "Belum membuka aplikasi"} />
-        <Ring done={c.done} total={all.length} />
-      </div>
+    <>
       {date === today() && loaded && isIdle(tasks) && (
         <div className="warnbox">
           <span className="warnico" aria-hidden="true">!</span>
@@ -72,6 +67,21 @@ export function PersonCard({ m, tasks, routines, date, loaded }: { m: MemberDTO;
         </div>
       )}
       <QuickAdd email={m.email} name={m.name} />
+    </>
+  );
+}
+
+export function PersonCard({ m, tasks, routines, date, loaded }: { m: MemberDTO; tasks: TaskDTO[]; routines: RoutineDTO[]; date: string; loaded: boolean }) {
+  const { day, late } = splitDay(tasks, date), all = day.concat(late), c = tally(all);
+  return (
+    <article className="card">
+      <div className="card-h">
+        <Avatar m={m} />
+        <div className="nm"><h3>{m.name}</h3><p>{[m.role, m.group].filter(Boolean).join(" · ")}</p></div>
+        <span className={"presence " + (m.seenAt ? "on" : "off")} title={m.seenAt ? "Sudah pernah membuka aplikasi" : "Belum membuka aplikasi"} />
+        <Ring done={c.done} total={all.length} />
+      </div>
+      <PersonTasks m={m} tasks={tasks} routines={routines} date={date} loaded={loaded} />
     </article>
   );
 }

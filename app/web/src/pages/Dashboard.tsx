@@ -6,6 +6,7 @@ import { Page } from "../components/Page";
 import { InstallCard, NotifyCard } from "../components/Cards";
 import { Links } from "../components/Links";
 import { PersonCard } from "../components/PersonCard";
+import { PeopleTable } from "../components/PeopleTable";
 import { Recap } from "../components/Recap";
 import { TaskRow } from "../components/TaskRow";
 import { Avatar, Empty, tally } from "../components/ui";
@@ -83,6 +84,8 @@ function ManagerDashboard() {
   const { date, setDate, newTask } = useUi();
   const [tab, setTab] = useState("orang");
   const [unit, setUnit] = useState("");
+  const [view, setView] = useState<"tabel" | "kartu">(() => { try { return localStorage.getItem("th-people-view") === "kartu" ? "kartu" : "tabel"; } catch { return "tabel"; } });
+  const pickView = (v: "tabel" | "kartu") => { setView(v); try { localStorage.setItem("th-people-view", v); } catch { /* private mode */ } };
   const [recapDays, setRecapDays] = useState<7 | 14>(7);
   const tq = useTasks(windowFrom(addDays(date, -recapDays), today()), true);
   const rq = useRoutines(true);
@@ -117,14 +120,22 @@ function ManagerDashboard() {
         </section>
       )}
       {tab === "orang" && (
-        <div className="two">
+        <>
           {workers.length
-            ? <section className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 330px), 1fr))" }} aria-label="Tugas per orang">
-                {workers.map(m => <PersonCard key={m.email} m={m} tasks={byPerson.get(m.email) ?? []} routines={(rq.data ?? []).filter(r => r.email === m.email)} date={date} loaded={loaded} />)}
-              </section>
+            ? <div style={{ display: "grid", gap: 12, minWidth: 0 }}>
+                <div className="seg" role="group" aria-label="Tampilan orang" style={{ justifySelf: "end" }}>
+                  <button aria-pressed={view === "tabel"} onClick={() => pickView("tabel")}>Tabel</button>
+                  <button aria-pressed={view === "kartu"} onClick={() => pickView("kartu")}>Kartu</button>
+                </div>
+                {view === "tabel"
+                  ? <PeopleTable people={workers} byPerson={byPerson} routines={rq.data ?? []} date={date} loaded={loaded} />
+                  : <section className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 330px), 1fr))" }} aria-label="Tugas per orang">
+                      {workers.map(m => <PersonCard key={m.email} m={m} tasks={byPerson.get(m.email) ?? []} routines={(rq.data ?? []).filter(r => r.email === m.email)} date={date} loaded={loaded} />)}
+                    </section>}
+              </div>
             : <div className="surface"><h2>Daftar tim masih kosong</h2><p className="muted">Tambahkan anggota di halaman Tim.</p></div>}
-          <div style={{ display: "grid", gap: 18 }}><Upcoming tasks={tasks} date={date} /><Feed /></div>
-        </div>
+          <div className="two2"><Upcoming tasks={tasks} date={date} /><Feed /></div>
+        </>
       )}
       {tab === "rekap" && <Recap people={workers} tasks={tasks} date={date} days={recapDays} onDays={setRecapDays} onPick={d => { setDate(d); setTab("orang"); }} loaded={loaded} />}
       {tab === "aktivitas" && <Feed limit={25} />}
