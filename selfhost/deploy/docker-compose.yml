@@ -1,0 +1,31 @@
+# Untuk VPS yang sudah memakai Coolify/Traefik di port 80/443: jalan sebagai container di jaringan "coolify";
+# Traefik otomatis membuat HTTPS dari label di bawah. Ganti domain sesuai kebutuhan.
+# Pakai:  cd /opt/tugas-harian && sudo docker compose -f deploy/docker-compose.yml --env-file /etc/tugas-harian.env up -d --build
+services:
+  tugas-harian:
+    build: { context: .., dockerfile: Dockerfile }
+    container_name: tugas-harian
+    restart: unless-stopped
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      OWNER_EMAIL: ${OWNER_EMAIL}
+      PUBLIC_URL: ${PUBLIC_URL}
+      DATA_DIR: /data
+      HOST: 0.0.0.0
+      PORT: "3000"
+    volumes:
+      - /var/lib/tugas-harian:/data
+    networks: [coolify]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tugas.rule=Host(`handaily.hellens.dev`)
+      - traefik.http.routers.tugas.entrypoints=https
+      - traefik.http.routers.tugas.tls=true
+      - traefik.http.routers.tugas.tls.certresolver=letsencrypt
+      - traefik.http.routers.tugas-http.rule=Host(`handaily.hellens.dev`)
+      - traefik.http.routers.tugas-http.entrypoints=http
+      - traefik.http.routers.tugas-http.middlewares=tugas-https
+      - traefik.http.middlewares.tugas-https.redirectscheme.scheme=https
+      - traefik.http.services.tugas.loadbalancer.server.port=3000
+networks:
+  coolify: { external: true }
