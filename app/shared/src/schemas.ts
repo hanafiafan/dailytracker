@@ -18,3 +18,20 @@ export const memberPatch = z.object({
 export const memberMove = z.object({ email });
 export const memberOrder = z.object({ emails: z.array(z.string()).max(200) });
 
+export const taskCreate = z.object({
+  emails: z.array(email).min(1).max(100),
+  title: z.string().trim().min(1).max(160),
+  note: z.string().trim().max(600).default(""),
+  date: date.optional(),
+  start: hm.nullish(), due: hm.nullish(),
+  hot: z.boolean().default(false),
+  needProof: z.boolean().default(true),
+  // Routine: appears automatically on the chosen weekdays (0 = Sunday).
+  routineDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+}).refine(t => !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
+export const taskStatus = z.object({ status: z.enum(STATUSES) });
+export const taskReport = z.object({ report: z.string().trim().max(600) });
+export const commentCreate = z.object({ text: z.string().trim().min(1).max(600) });
+export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), url: z.string().trim().url().max(500) });
+export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
+
