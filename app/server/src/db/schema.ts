@@ -58,3 +58,23 @@ export const comments = sqliteTable("comments", {
   at: integer("at").notNull(),
 }, t => [index("comments_task").on(t.taskId)]);
 
+export const routines = sqliteTable("routines", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().references(() => members.email, { onDelete: "cascade", onUpdate: "cascade" }),
+  title: text("title").notNull(),
+  note: text("note").notNull().default(""),
+  start: text("start"),
+  due: text("due"),
+  days: text("days", { mode: "json" }).$type<number[]>().notNull(),
+  hot: bool("hot").notNull().default(false),
+  needProof: bool("need_proof").notNull().default(true),
+  byName: text("by_name"),
+});
+
+export const links = sqliteTable("links", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
