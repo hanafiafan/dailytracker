@@ -146,3 +146,34 @@ describe("nudge", () => {
     expect((await t.call("hcs@x.id", "POST", `/tasks/${id}/nudge`)).status).toBe(429);
   });
 });
+
+describe("leave requests", () => {
+  const day = (n: number) => new Date(Date.now() + 7 * 3600e3 + n * 86400e3).toISOString().slice(0, 10);
+  it("a member asks, only their managers decide, overlaps and bad ranges are refused", async () => {
+    const t = setup();
+    const body = { kind: "cuti", from: day(2), to: day(4), reason: "Acara keluarga" };
+    expect((await t.call(OWNER, "POST", "/leaves", body)).status).toBe(403); // owner is not a team member
+    expect((await t.call("a@x.id", "POST", "/leaves", { ...body, to: day(1) })).status).toBe(400);
+    expect((await t.call("a@x.id", "POST", "/leaves", { ...body, to: day(90) })).status).toBe(400);
+    const made = await t.call("a@x.id", "POST", "/leaves", body);
+    expect(made.status).toBe(201);
+    const { id } = await json(made);
+    expect(t.sent.some(s => s.title.includes("mengajukan cuti"))).toBe(true);
+    expect((await t.call("a@x.id", "POST", "/leaves", { ...body, from: day(3), to: day(5) })).status).toBe(409);
+    // visibility: the person, their unit admin and the owner; not another unit
+    expect((await json(await t.call("a@x.id", "GET", "/leaves"))).length).toBe(1);
+    expect((await json(await t.call("hcs@x.id", "GET", "/leaves"))).length).toBe(1);
+    expect((await json(await t.call("b@x.id", "GET", "/leaves"))).length).toBe(0);
+    // decisions: not the requester, not another unit's person, once only
+    expect((await t.call("a@x.id", "PATCH", `/leaves/${id}/decision`, { status: "approved" })).status).toBe(403);
+    expect((await t.call("b@x.id", "PATCH", `/leaves/${id}/decision`, { status: "approved" })).status).toBe(403);
+    expect((await t.call("hcs@x.id", "PATCH", `/leaves/${id}/decision`, { status: "approved" })).status).toBe(200);
+    expect(t.sent.some(s => s.to.includes("a@x.id") && s.title.includes("disetujui"))).toBe(true);
+    expect((await t.call("hcs@x.id", "PATCH", `/leaves/${id}/decision`, { status: "rejected" })).status).toBe(409);
+    expect((await json(await t.call("a@x.id", "GET", "/leaves")))[0].status).toBe("approved");
+    // a rejected request frees the dates again; a pending one can be withdrawn by its owner
+    const again = await json(await t.call("a@x.id", "POST", "/leaves", { ...body, from: day(10), to: day(10) }));
+    expect((await t.call("b@x.id", "DELETE", `/leaves/${again.id}`)).status).toBe(403);
+    expect((await t.call("a@x.id", "DELETE", `/leaves/${again.id}`)).status).toBe(200);
+  });
+});
