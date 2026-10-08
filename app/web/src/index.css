@@ -227,3 +227,58 @@ table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric:
 .legend .nobox { display: inline-block; width: 18px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); vertical-align: middle; margin-right: 6px }
 .warnico { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); color: var(--surface); font-size: .7rem; font-weight: 800; flex: none }
 
+/* Warnings & notes */
+.warnbox { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--warn-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); border-radius: 10px; padding: 10px 12px; font-size: .88rem }
+.warnbox .txt { flex: 1 1 200px; min-width: 0 }
+.warnbox .txt b { color: var(--warn); display: block }
+.warnbox.big { padding: 14px 16px; border-radius: 14px }
+.idle-list { display: flex; flex-wrap: wrap; gap: 6px }
+.report { margin-top: 6px; background: var(--sunk); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 6px 10px }
+.report span { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent) }
+.report p { color: var(--ink) !important; font-size: .86rem }
+.notebtn { margin-top: 4px; font-size: .78rem }
+.noteform { display: grid; gap: 6px; margin-top: 6px }
+
+.proof { display: flex; gap: 10px; align-items: center; margin-top: 6px }
+.thumb { padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: 56px; height: 56px; flex: none; background: var(--sunk) }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+.pmeta { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; min-width: 0 }
+.pmeta span { color: var(--muted) }
+.pmeta a { color: var(--accent); font-weight: 600; overflow-wrap: anywhere }
+.proofpanel { margin-top: 8px; display: grid; gap: 8px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 12px }
+.drop { position: relative; display: grid; place-items: center; border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 10px; padding: 16px; cursor: pointer; font-weight: 600; color: var(--accent); background: var(--surface) }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0 }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px }
+.pv { display: flex; gap: 10px; align-items: end }
+.pv img { max-height: 140px; border-radius: 8px; border: 1px solid var(--line) }
+.lightbox { position: fixed; inset: 0; z-index: 30; background: rgb(0 0 0 / .82); display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)) }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px }
+.lightbox .iconbtn { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px }
+
+.tip { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; font-size: .88rem }
+.tip b { font-family: var(--font-display); font-size: 1rem }
+.tip ul { margin: 0; padding-left: 18px; display: grid; gap: 4px }
+
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .9rem; max-width: calc(100% - 32px); z-index: 20 }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: up .2s ease-out } @keyframes up { from { transform: translate(-50%, 8px); opacity: 0 } } }
+
+/* PWA additions */
+.tl { display: inline-flex; flex-direction: column; gap: 2px; font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+.quick { flex-wrap: wrap; align-items: end }
+.quick > .input:not(.timein) { flex: 1 1 100% }
+.quick .tl { flex: 1 1 6rem }
+.quick .tl .input.timein { width: 100% }
+.quick > .btn { flex: 0 0 auto }
+.scope { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78rem; color: var(--muted); padding-left: 34px }
+.unitbar { padding: 2px 0 }
+select.input { appearance: auto }
+.userchip { display: flex; gap: 8px; align-items: center; font-size: .78rem; color: var(--muted); min-width: 0; max-width: 100% }
+.userchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 14rem }
+.setup-row { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line) }
+.setup-row .who { flex: 1 1 140px; min-width: 0; display: grid }
+.setup-row .who small { color: var(--muted); font-size: .78rem }
+.setup-row .input { flex: 1 1 220px; min-width: 0 }
+.btn.big { padding: 12px 22px; font-size: 1rem }
+.login > div { gap: 14px }
+.login .tip { text-align: left }
+
