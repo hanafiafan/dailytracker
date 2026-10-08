@@ -49,6 +49,10 @@ export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160)
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
 export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.enum(COLORS).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
 export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.enum(COLORS).default("gray") });
+export const LEAVE_KINDS = ["cuti", "izin", "sakit"] as const;
+export type LeaveKind = (typeof LEAVE_KINDS)[number];
+export const leaveCreate = z.object({ kind: z.enum(LEAVE_KINDS), from: date, to: date, reason: z.string().trim().max(200).default("") });
+export const leaveDecision = z.object({ status: z.enum(["approved", "rejected"]) });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
 export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
@@ -88,3 +92,4 @@ export interface RoutineDTO { id: string; email: string; title: string; note: st
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
 export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
 export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null }
+export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }

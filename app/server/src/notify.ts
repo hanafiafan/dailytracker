@@ -22,6 +22,10 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
       deliver([t.email], "returned", t.id, "Tugas dikembalikan", `${t.title}. Cek catatan dari admin.`, "back-" + t.id),
     nudged: (t: TaskRow, by: string) =>
       deliver([t.email], "nudge", t.id, `${by} mengingatkan tugasmu`, t.title, "nudge-" + t.id),
+    leaveRequested: (email: string, name: string, kind: string, from: string, to: string) =>
+      deliver(push.managersOf(email), "leave", null, `${name} mengajukan ${kind}`, from === to ? from : `${from} s/d ${to}`, "leave-" + email + from),
+    leaveDecided: (email: string, approved: boolean, kind: string, from: string, to: string) =>
+      deliver([email], "leave", null, approved ? "Pengajuan disetujui" : "Pengajuan ditolak", `${kind} ${from === to ? from : `${from} s/d ${to}`}`, "leave-d-" + email + from),
     done: (t: TaskRow, by: string) =>
       deliver(push.managersOf(t.email).filter(e => e !== by), "done", t.id, `${nameOf(t.email)} menyelesaikan tugas`, t.title, "done-" + t.id),
     ask: (email: string) =>

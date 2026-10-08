@@ -2,7 +2,8 @@
 import { and, eq } from "drizzle-orm";
 import { atMs, weekday, wib } from "@shared/time";
 import type { Db } from "./db/index.js";
-import { meta, members, pushSubs, routines, tasks } from "./db/schema.js";
+import { leaves, meta, members, pushSubs, routines, tasks } from "./db/schema.js";
+import { makePolicy } from "@shared/policy";
 import type { Bus } from "./events.js";
 import type { Push } from "./push.js";
 
@@ -46,6 +47,20 @@ export async function runReminders(db: Db, push: Push, now = Date.now()) {
     if (m.isAdmin || !subscribed.has(m.email)) continue;
     const open = today.filter(t => t.email === m.email && t.status !== "done").length;
     if (open) await push.send([m.email], "Selamat pagi", `Kamu punya ${open} tugas hari ini.`, "morning-" + date);
+  }
+
+  // Managers get one line: what is late, what waits for a decision, who is away.
+  const team = db.select({ email: members.email, group: members.group, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
+  const allLeaves = db.select().from(leaves).all();
+  const late = db.select().from(tasks).all().filter(t => t.status !== "done" && t.date < date);
+  for (const to of new Set([push.ownerEmail, ...team.filter(m => m.isAdmin).map(m => m.email)])) {
+    if (!subscribed.has(to)) continue;
+    const p = makePolicy(to, to === push.ownerEmail, team);
+    const nLate = late.filter(t => p.canManage(t.email)).length;
+    const waiting = allLeaves.filter(l => l.status === "pending" && l.email !== to && p.canManage(l.email)).length;
+    const away = allLeaves.filter(l => l.status === "approved" && l.from <= date && l.to >= date && p.canManage(l.email)).length;
+    const parts = [nLate && `${nLate} tugas terlambat`, waiting && `${waiting} pengajuan menunggu`, away && `${away} orang tidak masuk`].filter(Boolean);
+    if (parts.length) await push.send([to], "Ringkasan pagi", parts.join(", "), "digest-" + date);
   }
 }
 

@@ -3,7 +3,7 @@
 import { join } from "node:path";
 import { addDays, wib } from "@shared/time";
 import { openDb } from "../db/index.js";
-import { activity, comments, labels, links, members, notifications, projects, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
+import { activity, comments, labels, leaves, links, members, notifications, projects, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
 import { newId } from "../context.js";
 
 const db = openDb(join(process.env.DATA_DIR ?? "./data", "app.db"));
@@ -82,6 +82,11 @@ c(0, "dimas", "@Sinta tolong prioritaskan 6 SKU best seller dulu ya.", 90); c(0,
 c(4, "dimas", "Intro terlalu panjang, potong jadi 3 detik.", 45); c(4, "citra", "Oke, saya revisi sebentar lagi.", 30);
 db.insert(routines).values({ id: newId(4), email: "eko@demo.id", title: "Cek insight Instagram", note: "", start: "09:00", due: "09:30", days: [1, 2, 3, 4, 5], needProof: false, byName: "Rani" }).run();
 db.insert(links).values({ id: newId(), title: "Tracker Omzet", url: "https://docs.google.com/spreadsheets/demo", createdAt: now }).run();
+db.insert(leaves).values([
+  { id: newId(), email: "eko@demo.id", kind: "cuti", from: addDays(today, 3), to: addDays(today, 5), reason: "Acara keluarga", status: "approved", decidedBy: "owner@demo.id", decidedAt: now - 3600_000, createdAt: now - 86400_000 },
+  { id: newId(), email: "fajar@demo.id", kind: "izin", from: addDays(today, 1), to: addDays(today, 1), reason: "Urus dokumen", status: "pending", createdAt: now - 7200_000 },
+  { id: newId(), email: "gita@demo.id", kind: "sakit", from: addDays(today, -1), to: addDays(today, 0), reason: "", status: "approved", decidedBy: "owner@demo.id", decidedAt: now - 86400_000, createdAt: now - 90000_000 },
+]).run();
 for (const e of [owner, "rani@demo.id", "dimas@demo.id"]) {
   db.insert(notifications).values([
     { id: newId(), email: e, kind: "done", taskId: ids[2]!, text: "Bayu menyelesaikan tugas: Shooting video reels unboxing", at: now - 25 * min },

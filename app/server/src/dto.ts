@@ -1,5 +1,5 @@
-import type { ActivityDTO, CommentDTO, LabelDTO, MemberDTO, NotificationDTO, ProjectDTO, RoutineDTO, SubtaskDTO, TaskDTO } from "@shared/schemas";
-import type { activity, comments, labels, members, notifications, projects, routines, tasks } from "./db/schema.js";
+import type { ActivityDTO, CommentDTO, LabelDTO, LeaveDTO, MemberDTO, NotificationDTO, ProjectDTO, RoutineDTO, SubtaskDTO, TaskDTO } from "@shared/schemas";
+import type { activity, comments, labels, leaves, members, notifications, projects, routines, tasks } from "./db/schema.js";
 
 type MemberRow = typeof members.$inferSelect;
 type TaskRow = typeof tasks.$inferSelect;
@@ -29,6 +29,7 @@ export const toRoutine = (r: RoutineRow): RoutineDTO => ({
 });
 export const toProject = (p: typeof projects.$inferSelect): ProjectDTO => ({ id: p.id, name: p.name, color: p.color as ProjectDTO["color"], description: p.description, archived: p.archived, createdAt: p.createdAt });
 export const toLabel = (l: typeof labels.$inferSelect): LabelDTO => ({ id: l.id, name: l.name, color: l.color as LabelDTO["color"] });
+export const toLeave = (l: typeof leaves.$inferSelect): LeaveDTO => ({ id: l.id, email: l.email, kind: l.kind, from: l.from, to: l.to, reason: l.reason, status: l.status, decidedBy: l.decidedBy, decidedAt: l.decidedAt, createdAt: l.createdAt });
 export const toNotification = (n: typeof notifications.$inferSelect): NotificationDTO => ({ id: n.id, kind: n.kind, taskId: n.taskId, text: n.text, at: n.at, read: n.readAt !== null });
 export const toActivity = (a: typeof activity.$inferSelect, taskTitle: string | null = null): ActivityDTO => ({
   id: a.id, taskId: a.taskId, taskTitle, actorEmail: a.actorEmail, actorName: a.actorName, kind: a.kind, text: a.text, at: a.at,

@@ -146,3 +146,17 @@ export const notifications = sqliteTable("notifications", {
   at: integer("at").notNull(),
   readAt: integer("read_at"),
 }, t => [index("notifications_email").on(t.email, t.at)]);
+
+/** Leave / absence requests: a member asks, a manager approves or rejects. Dates are inclusive WIB calendar days. */
+export const leaves = sqliteTable("leaves", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().references(() => members.email, { onDelete: "cascade", onUpdate: "cascade" }),
+  kind: text("kind", { enum: ["cuti", "izin", "sakit"] }).notNull(),
+  from: text("from_date").notNull(),
+  to: text("to_date").notNull(),
+  reason: text("reason").notNull().default(""),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+  decidedBy: text("decided_by"),
+  decidedAt: integer("decided_at"),
+  createdAt: integer("created_at").notNull(),
+}, t => [index("leaves_email").on(t.email, t.from)]);

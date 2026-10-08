@@ -11,6 +11,7 @@ import { endSession, requireUser, startSession } from "./auth.js";
 import { createNotify } from "./notify.js";
 import { memberColumns, type AppEnv, type Deps } from "./context.js";
 import { inboxRoutes } from "./routes/inbox.js";
+import { leaveRoutes } from "./routes/leaves.js";
 import { linkRoutes } from "./routes/links.js";
 import { metaRoutes } from "./routes/meta.js";
 import { reportRoutes } from "./routes/reports.js";
@@ -65,6 +66,7 @@ export function createApp(deps: Deps) {
     .use("/team/*", auth).route("/team", teamRoutes(deps))
     .use("/tasks/*", auth).route("/tasks", taskRoutes(deps, notify))
     .use("/routines/*", auth).route("/routines", routineRoutes(deps))
+    .use("/leaves/*", auth).route("/leaves", leaveRoutes(deps, notify))
     .use("/links/*", auth).route("/links", linkRoutes(deps))
     .use("/meta/*", auth).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth).route("/inbox", inboxRoutes(deps))
