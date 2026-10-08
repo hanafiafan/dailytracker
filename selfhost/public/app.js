@@ -631,3 +631,51 @@ import { DEFAULT_TEAM } from "./config.js";
       h("button", { class: "chip", "aria-pressed": String(!cur.length), onclick: () => setScope(m, "*") }, "Semua unit"),
       units().map(g => h("button", { class: "chip", "aria-pressed": String(cur.includes(g)), onclick: () => setScope(m, g) }, g)));
   }
+  // ---------- notifications ----------
+  const askSeen = {};
+  const canNotify = () => "Notification" in window;
+  function watchAsk(key, data) {
+    if (!isManager() || key === S.meId) return;
+    const a = (data && data.askAt) || 0;
+    if (askSeen[key] === undefined) { askSeen[key] = a; return; }
+    if (a > askSeen[key]) {
+      askSeen[key] = a;
+      if (Date.now() - a < 15 * 60000) notifyAsk(key);
+    }
+  }
+  async function notifyAsk(key) {
+    const m = S.team.find(x => keyOf(x) === key);
+    if (!m) return;
+    const title = `${m.name} minta tugas`;
+    toast(`✋ ${title}`);
+    if (!canNotify() || Notification.permission !== "granted") return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, { body: "Semua tugasnya sudah selesai. Ketuk untuk memberi tugas baru.", icon: "./icons/icon-192.png", badge: "./icons/icon-192.png", tag: "ask-" + key, data: { url: "./" } });
+    } catch (e) { try { new Notification(title); } catch (_) {} }
+  }
+  // Push: register this device once permission is granted; refresh the token on every sign-in.
+  const pushOK = { v: false };
+  pushSupported().then(v => { pushOK.v = v; render(); });
+  async function enablePush() {
+    try {
+      if (await Notification.requestPermission() !== "granted") return render();
+      await registerPush();
+      toast("Notifikasi aktif di perangkat ini");
+    } catch (e) {
+      console.warn(e);
+      toast("Notifikasi gagal diaktifkan. Coba lagi.");
+    }
+    render();
+  }
+  const signOutUser = async () => { if (S.meId && canNotify() && Notification.permission === "granted") await unregisterPush(); return rawSignOut(); };
+  function notifyCard() {
+    if (!canNotify() || !pushOK.v || Notification.permission !== "default" || S.notifOff) return null;
+    return h("section", { class: "tip" },
+      h("b", {}, "🔔 Aktifkan notifikasi"),
+      h("p", {}, isManager() ? "Dapatkan pemberitahuan saat tugas selesai atau ada yang minta tugas." : "Dapatkan pemberitahuan saat ada tugas baru, tugas dikembalikan, dan pengingat tenggat."),
+      h("div", { class: "chips" },
+        h("button", { class: "btn primary small", onclick: enablePush }, "Aktifkan"),
+        h("button", { class: "btn small ghost", onclick: () => { S.notifOff = true; render(); } }, "Nanti")));
+  }
+
