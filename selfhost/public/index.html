@@ -259,3 +259,30 @@ table.mx { border-collapse: separate; border-spacing: 3px; font-variant-numeric:
 .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .9rem; max-width: calc(100% - 32px); z-index: 20 }
 @media (prefers-reduced-motion: no-preference) { .toast { animation: up .2s ease-out } @keyframes up { from { transform: translate(-50%, 8px); opacity: 0 } } }
 
+/* PWA additions */
+.tl { display: inline-flex; flex-direction: column; gap: 2px; font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+.quick { flex-wrap: wrap; align-items: end }
+.quick > .input:not(.timein) { flex: 1 1 100% }
+.quick .tl { flex: 1 1 6rem }
+.quick .tl .input.timein { width: 100% }
+.quick > .btn { flex: 0 0 auto }
+.scope { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78rem; color: var(--muted); padding-left: 34px }
+.unitbar { padding: 2px 0 }
+select.input { appearance: auto }
+.userchip { display: flex; gap: 8px; align-items: center; font-size: .78rem; color: var(--muted); min-width: 0; max-width: 100% }
+.userchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 14rem }
+.setup-row { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line) }
+.setup-row .who { flex: 1 1 140px; min-width: 0; display: grid }
+.setup-row .who small { color: var(--muted); font-size: .78rem }
+.setup-row .input { flex: 1 1 220px; min-width: 0 }
+.btn.big { padding: 12px 22px; font-size: 1rem }
+.login > div { gap: 14px }
+.login .tip { text-align: left }
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><div><p class="muted">Memuat…</p></div></div></div>
+<noscript>Aplikasi ini membutuhkan JavaScript.</noscript>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
