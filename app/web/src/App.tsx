@@ -14,6 +14,7 @@ import { today } from "./lib/format";
 import { registerPush, pushSupported } from "./lib/push";
 import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
 import { UiContext, ViewerContext, type NewTaskPrefill, type Ui, type Viewer } from "./lib/viewer";
+import { TasksPage } from "./pages/TasksPage";
 import { Board } from "./pages/Board";
 import { CalendarPage } from "./pages/CalendarPage";
 import { Dashboard } from "./pages/Dashboard";
@@ -77,6 +78,7 @@ function Signed({ me }: { me: MeDTO }) {
             <Switch>
               <Route path="/"><Dashboard /></Route>
               <Route path="/papan"><Board /></Route>
+              <Route path="/daftar"><TasksPage /></Route>
               <Route path="/kalender"><CalendarPage /></Route>
               <Route path="/tim">{viewer.policy.isManager ? <TeamPage /> : <Redirect to="/" />}</Route>
               <Route path="/laporan"><ReportsPage /></Route>
