@@ -51,3 +51,33 @@ const query = async (env, from, where) => {
   return (r || []).filter(x => x.document).map(x => wrapDoc(x.document));
 };
 
+// ---------- recipients + sending ----------
+// device tokens grouped by email; read once per invocation (the free plan allows only ~50 outgoing requests per run)
+async function deviceMap(env) {
+  const m = new Map();
+  for (const d of await query(env, "devices")) { const e = d.path.split("/")[1]; (m.get(e) || m.set(e, []).get(e)).push(d.id); }
+  return m;
+}
+async function managersOf(env, team, email) {
+  const group = (team.find(t => t.id === email) || { data: {} }).data.group || "";
+  const out = [env.OWNER_EMAIL.toLowerCase()];
+  for (const t of team) {
+    if (!t.data.isAdmin || t.id === email) continue;
+    const g = Array.isArray(t.data.adminGroups) ? t.data.adminGroups : [];
+    if (!g.length || g.includes(group)) out.push(t.id);
+  }
+  return out;
+}
+async function push(env, devices, emails, title, body, tag) {
+  for (const email of new Set(emails)) {
+    for (const token of devices.get(email) || []) {
+      const r = await fetch(`https://fcm.googleapis.com/v1/projects/${env.PROJECT_ID}/messages:send`, {
+        method: "POST", headers: { authorization: "Bearer " + await accessToken(env), "content-type": "application/json" },
+        body: JSON.stringify({ message: { token, data: { title, body, tag: tag || "", url: env.APP_URL }, webpush: { headers: { Urgency: "high", TTL: "86400" } } } }),
+      });
+      if (r.status === 404 || r.status === 400) await delDoc(env, `tokens/${email}/devices/${token}`); // token no longer valid
+    }
+  }
+}
+const nameOf = (team, email) => (team.find(t => t.id === email) || { data: {} }).data.name || email;
+
