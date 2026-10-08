@@ -18,3 +18,4 @@ dailytask-migrasi.zip
 dailytask-migrasi/
 *.bak-*
 pwa/worker/.wrangler/
+database/
