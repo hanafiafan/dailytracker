@@ -70,3 +70,24 @@ function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) {
   );
 }
 
+function Comments({ t }: { t: TaskDTO }) {
+  const { me, policy } = useViewer();
+  const [text, setText] = useState("");
+  const add = useAction(async () => { await ok(api.tasks[":id"].comments.$post({ param: { id: t.id }, json: { text } })); setText(""); });
+  const del = useAction((cid: string) => ok(api.tasks[":id"].comments[":cid"].$delete({ param: { id: t.id, cid } })));
+  return (
+    <div className="cmt">
+      {t.comments.map(c => (
+        <div className="c" key={c.id}>
+          <b>{c.by}</b>: {c.text}<small>{fmtTime(c.at)}</small>
+          {(c.byEmail === me.email || policy.canManage(t.email)) && <button aria-label="Hapus komentar" onClick={() => del.mutate(c.id)}>✕</button>}
+        </div>
+      ))}
+      <form onSubmit={e => { e.preventDefault(); if (text.trim()) add.mutate(); }}>
+        <input className="input" value={text} onChange={e => setText(e.target.value)} placeholder="Tulis komentar…" maxLength={600} aria-label={"Komentar untuk " + t.title} />
+        <button className="btn small" type="submit" disabled={add.isPending || !text.trim()}>Kirim</button>
+      </form>
+    </div>
+  );
+}
+
