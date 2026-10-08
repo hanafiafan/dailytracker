@@ -404,3 +404,230 @@ import { DEFAULT_TEAM } from "./config.js";
     safe(() => db.doc("team/" + m.id).delete(), `${m.name} dihapus dari tim`);
   }
   // ---------- pieces ----------
+  // ---------- reorder (drag & drop, works with mouse and touch) ----------
+  let drag = null, pendingRender = false;
+  function dragStart(e, id) {
+    if (e.button !== undefined && e.button !== 0) return;
+    const handle = e.currentTarget;
+    const row = handle.closest(".mrow");
+    const rows = [...app.querySelectorAll(".mlist .mrow[data-id]")];
+    drag = { id, row, rows, startY: e.clientY, target: null, after: false };
+    row.classList.add("dragging");
+    try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+    handle.addEventListener("pointermove", dragMove);
+    handle.addEventListener("pointerup", dragEnd, { once: true });
+    handle.addEventListener("pointercancel", dragCancel, { once: true });
+    e.preventDefault();
+  }
+  function dragMove(e) {
+    if (!drag) return;
+    drag.row.style.transform = `translateY(${e.clientY - drag.startY}px)`;
+    drag.rows.forEach(r => r.classList.remove("drop-before", "drop-after"));
+    let target = null, after = false;
+    for (const r of drag.rows) {
+      if (r === drag.row) continue;
+      const b = r.getBoundingClientRect();
+      if (e.clientY >= b.top && e.clientY <= b.bottom) { target = r; after = e.clientY > b.top + b.height / 2; break; }
+    }
+    if (!target) {
+      const first = drag.rows[0].getBoundingClientRect(), last = drag.rows[drag.rows.length - 1].getBoundingClientRect();
+      if (e.clientY < first.top) { target = drag.rows[0]; after = false; }
+      else if (e.clientY > last.bottom) { target = drag.rows[drag.rows.length - 1]; after = true; }
+    }
+    if (target && target !== drag.row) target.classList.add(after ? "drop-after" : "drop-before");
+    drag.target = target; drag.after = after;
+    // Scroll the page when dragging near the screen edge.
+    if (e.clientY < 60) window.scrollBy(0, -12); else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+  }
+  function dragCleanup(handleEl) {
+    if (!drag) return;
+    drag.row.style.transform = ""; drag.row.classList.remove("dragging");
+    drag.rows.forEach(r => r.classList.remove("drop-before", "drop-after"));
+    if (handleEl) handleEl.removeEventListener("pointermove", dragMove);
+  }
+  function dragCancel(e) { dragCleanup(e.currentTarget); drag = null; if (pendingRender) { pendingRender = false; render(); } }
+  function dragEnd(e) {
+    const d = drag; dragCleanup(e.currentTarget); drag = null;
+    if (d && d.target && d.target !== d.row) {
+      const ids = S.teamRaw.map(m => m.id).filter(x => x !== d.id);
+      let at = ids.indexOf(d.target.dataset.id);
+      if (d.after) at += 1;
+      ids.splice(at, 0, d.id);
+      applyOrder(ids);
+    } else if (pendingRender) { pendingRender = false; render(); }
+  }
+  function moveBy(id, delta) {
+    const ids = S.teamRaw.map(m => m.id);
+    const i = ids.indexOf(id), j = i + delta;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    applyOrder(ids);
+    setTimeout(() => { const el = app.querySelector(`.mrow[data-id="${CSS.escape(id)}"] .handle`); if (el) el.focus(); }, 0);
+  }
+  function applyOrder(ids) {
+    const changed = [];
+    const byId = Object.fromEntries(S.teamRaw.map(m => [m.id, m]));
+    ids.forEach((id, i) => { const m = byId[id]; if (m && m.order !== i + 1) { changed.push([id, i + 1]); m.order = i + 1; } });
+    S.teamRaw = ids.map(id => byId[id]).filter(Boolean);
+    pendingRender = false; render();
+    if (!changed.length) return;
+    safe(async () => { for (const [id, order] of changed) await db.doc("team/" + id).update({ order }); }, "Urutan tim disimpan");
+  }
+
+  function avatar(m, big) {
+    if (m.photo) return h("img", { class: "avatar" + (big ? " big" : ""), src: m.photo, alt: "" });
+    const hh = hue(m.role || m.name || "");
+    return h("div", { class: "avatar" + (big ? " big" : ""), style: `background: hsl(${hh} 52% 42%)`, "aria-hidden": "true" }, initials(m.name || "?"));
+  }
+  async function squarePhoto(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const side = Math.min(img.naturalWidth, img.naturalHeight), out = 256;
+      const c = document.createElement("canvas"); c.width = c.height = out;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, out, out);
+      return c.toDataURL("image/jpeg", 0.8);
+    } finally { URL.revokeObjectURL(url); }
+  }
+  function openEdit(id, m) {
+    S.editMember = id; S.photoDraft = undefined; render();
+    const n = document.getElementById("pe-name"), r = document.getElementById("pe-role"), em = document.getElementById("pe-email"), gr = document.getElementById("pe-group");
+    if (gr) gr.value = m.group || "";
+    if (n) { n.value = m.name || ""; n.focus(); }
+    if (r) r.value = m.role || "";
+    if (em) em.value = m.id || "";
+  }
+  function profileForm(m) {
+    const photo = S.photoDraft === undefined ? m.photo : S.photoDraft;
+    const close = () => { S.editMember = null; S.photoDraft = undefined; render(); };
+    return h("form", { class: "pform", onsubmit: e => { e.preventDefault(); saveProfile(m); } },
+      h("div", { class: "prow" },
+        avatar({ ...m, photo }, true),
+        h("div", { class: "chips" },
+          h("label", { class: "btn small filebtn" }, h("input", { type: "file", accept: "image/*", id: "pe-photo", onchange: async e => {
+            const f = e.target.files[0]; if (!f) return;
+            try { S.photoDraft = await squarePhoto(f); render(); } catch (_) { toast("Foto tidak bisa dibaca. Coba format JPG atau PNG."); }
+          } }), photo ? "Ganti foto" : "Tambah foto"),
+          photo && h("button", { class: "btn small ghost", type: "button", onclick: () => { S.photoDraft = null; render(); } }, "Hapus foto"))),
+      h("div", { class: "row" },
+        h("label", { class: "field" }, h("span", {}, "Nama"), h("input", { class: "input", id: "pe-name", maxlength: "40" })),
+        h("label", { class: "field" }, h("span", {}, "Divisi"), h("input", { class: "input", id: "pe-role", maxlength: "60" })),
+        isManager() && m.id !== S.meId && h("label", { class: "field" }, h("span", {}, "Email Google"), h("input", { class: "input", id: "pe-email", type: "email", maxlength: "120" })),
+        isManager() && m.id !== S.meId && unitField("pe-group")),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: close }, "Batal"),
+        h("button", { class: "btn small primary", type: "submit" }, "Simpan profil")));
+  }
+  function saveProfile(m) {
+    const name = (document.getElementById("pe-name").value || "").trim();
+    const role = (document.getElementById("pe-role").value || "").trim();
+    if (!name) return toast("Nama tidak boleh kosong");
+    const photo = (S.photoDraft === undefined ? m.photo : S.photoDraft) || null;
+    const emEl = document.getElementById("pe-email"), grEl = document.getElementById("pe-group");
+    const email = emEl ? cleanEmail(emEl.value) : m.id;
+    const group = grEl ? (grEl.value || "").trim().toUpperCase() : (m.group || "");
+    if (grEl && !isBoss() && !myAdminGroups().includes(group)) return toast("Pilih unit yang kamu kelola");
+    if (!validEmail(email)) return toast("Email belum benar");
+    if (email !== m.id && S.team.some(x => x.id === email)) return toast("Email itu sudah dipakai anggota lain");
+    S.editMember = null; S.photoDraft = undefined;
+    safe(async () => {
+      if (email !== m.id) {
+        const { id, ...rest } = m;
+        if (!isBoss()) { delete rest.isAdmin; delete rest.adminGroups; }
+        await db.doc("team/" + email).set({ ...rest, name, role, photo, group, seenAt: null });
+        await moveTasks(m.id, email);
+        await db.doc("team/" + m.id).delete();
+      } else {
+        await db.doc("team/" + m.id).update(grEl ? { name, role, photo, group } : { name, role, photo });
+      }
+    }, "Profil disimpan");
+  }
+  function dateNav() {
+    const isToday = S.date === today();
+    return h("div", { class: "datenav" },
+      h("button", { class: "iconbtn", "aria-label": "Hari sebelumnya", onclick: () => setDate(addDays(S.date, -1)) }, "‹"),
+      h("div", { class: "lbl" }, h("small", {}, isToday ? "Hari ini" : S.date < today() ? "Lewat" : "Mendatang"), fmtShort(S.date)),
+      h("button", { class: "iconbtn", "aria-label": "Hari berikutnya", onclick: () => setDate(addDays(S.date, 1)) }, "›"),
+      !isToday && h("button", { class: "btn small", onclick: () => setDate(today()) }, "Hari ini"));
+  }
+  function bar(c, total) {
+    const p = n => total ? (n / total * 100).toFixed(2) + "%" : "0";
+    return h("div", { class: "stackbar", role: "img", "aria-label": `${c.done} selesai, ${c.doing} dikerjakan, ${c.todo} belum` },
+      h("i", { class: "s-done", style: `width:${p(c.done)}` }), h("i", { class: "s-doing", style: `width:${p(c.doing)}` }));
+  }
+  function proofPanel(key, t) {
+    const tag = key + "/" + t.id, d = S.proofDraft[tag];
+    return h("div", { class: "proofpanel" },
+      h("b", {}, "Bukti tugas selesai"),
+      h("p", { class: "foot" }, "Unggah foto atau screenshot hasil kerja, atau tempel link (Drive, Instagram, TikTok, marketplace). Untuk video, pakai link."),
+      d ? h("div", { class: "pv" }, h("img", { src: d.preview, alt: "Pratinjau bukti" }), h("button", { class: "linkbtn", type: "button", onclick: () => { URL.revokeObjectURL(d.preview); delete S.proofDraft[tag]; render(); } }, "Ganti foto"))
+        : h("label", { class: "drop" }, h("input", { type: "file", accept: "image/*", id: "pf-" + t.id, onchange: e => pickProof(tag, e.target.files[0]) }), h("span", {}, "📷 Pilih foto / screenshot")),
+      h("input", { class: "input", id: "pl-" + t.id, type: "url", inputmode: "url", placeholder: "atau tempel link hasil kerja", maxlength: "500", "aria-label": "Link bukti" }),
+      h("textarea", { class: "input", id: "pn-" + t.id, rows: "2", maxlength: "600", placeholder: "Catatan singkat (opsional)", "aria-label": "Catatan" }),
+      h("div", { class: "actions" },
+        h("button", { class: "btn small ghost", type: "button", onclick: () => closeProof(tag) }, "Batal"),
+        !t.needProof && h("button", { class: "btn small", type: "button", disabled: S.busy, onclick: () => submitProof(key, t, true) }, "Selesai tanpa bukti"),
+        h("button", { class: "btn small primary", type: "button", disabled: S.busy, onclick: () => submitProof(key, t, false) }, S.busy ? "Mengunggah…" : "Tandai selesai")));
+  }
+  function taskRow(key, t, { canDelete, isLate }) {
+    const tag = key + "/" + t.id;
+    return h("li", { class: "task", "data-status": t.status },
+      h("button", { class: "status " + t.status, onclick: () => cycle(key, t), disabled: S.readOnly || S.ro, title: S.ro ? STATUS[t.status] : "Ketuk untuk ganti status", "aria-label": `Status: ${STATUS[t.status]}. Ketuk untuk ganti.` }, STATUS[t.status] || "Belum"),
+      h("div", { class: "tt" },
+        h("b", {}, t.title),
+        t.note && h("p", {}, t.note),
+        h("div", { class: "meta" },
+          timeTags(t),
+          t.hot && h("span", { class: "tag hot" }, "Penting"),
+          isLate && h("span", { class: "tag late" }, "Dari " + fmtShort(t.date)),
+          t.routine && h("span", { class: "tag rut" }, "Rutin"),
+          t.by === "self" && h("span", { class: "tag off" }, "Dibuat sendiri"),
+          t.returnedAt && t.status !== "done" && h("span", { class: "tag late" }, "Dikembalikan admin"),
+          t.status !== "done" && t.needProof && h("span", { class: "tag off" }, "Wajib bukti"),
+          t.status === "done" && (t.proof ? h("span", { class: "tag on" }, "✓ Ada bukti") : t.needProof ? h("span", { class: "tag late" }, "Tanpa bukti") : null)),
+        t.proof && h("div", { class: "proof" },
+          proofSrc(t.proof, key, t.id) && h("button", { class: "thumb", onclick: () => { S.lightbox = proofSrc(t.proof, key, t.id); render(); }, "aria-label": "Lihat foto bukti" }, h("img", { src: proofSrc(t.proof, key, t.id), alt: "Bukti: " + t.title, loading: "lazy" })),
+          h("div", { class: "pmeta" },
+            h("span", {}, "Bukti · " + fmtTime(t.proof.at)),
+            t.proof.photo && !proofSrc(t.proof, key, t.id) && h("span", {}, proofCache[key + "/" + t.id] === false ? "Foto tidak ditemukan" : "Memuat foto…"),
+            t.proof.link && h("a", { href: t.proof.link, target: "_blank", rel: "noopener noreferrer" }, (() => { try { return new URL(t.proof.link).hostname.replace(/^www\./, "") + " ↗"; } catch (_) { return "Buka link ↗"; } })()),
+            isManager() && t.status === "done" && t.by !== "self" && h("button", { class: "linkbtn", style: "color:var(--warn)", onclick: () => sendBack(key, t) }, S.arm === "bk/" + tag ? "Yakin kembalikan?" : "Kembalikan"))),
+        S.proofFor === tag && proofPanel(key, t),
+        t.report && S.editNote !== tag && h("div", { class: "report" }, h("span", {}, "Catatan" + (t.reportAt ? " · " + fmtTime(t.reportAt) : "")), h("p", {}, t.report)),
+        S.editNote === tag
+          ? h("form", { class: "noteform", onsubmit: e => { e.preventDefault(); saveNote(key, t); } },
+              h("textarea", { class: "input", id: "rep-" + t.id, rows: "2", maxlength: "600", placeholder: "Progres, kendala, atau link hasil kerja", "aria-label": "Catatan untuk " + t.title }),
+              h("div", { class: "actions" },
+                h("button", { class: "btn small ghost", type: "button", onclick: () => { S.editNote = null; render(); } }, "Batal"),
+                h("button", { class: "btn small primary", type: "submit" }, "Simpan catatan")))
+          : !S.readOnly && !S.ro && S.proofFor !== tag && h("button", { class: "linkbtn notebtn", onclick: () => openNote(key, t) }, t.report ? "Ubah catatan" : "+ Catatan")),
+      canDelete ? h("button", { class: "del" + (S.arm === tag ? " arm" : ""), onclick: () => del(key, t), "aria-label": "Hapus tugas" }, S.arm === tag ? "Hapus?" : "✕") : h("span"));
+  }
+
+  function adminTabs() {
+    const t = (id, label) => h("button", { "aria-pressed": String(S.tab === id), onclick: () => { S.tab = id; render(); } }, label);
+    return h("div", { class: "seg", role: "group", "aria-label": "Tampilan" }, t("pantau", "Pantau tim"), t("saya", "Tugas saya"));
+  }
+  function unitField(id) {
+    if (!isBoss()) return h("label", { class: "field" }, h("span", {}, "Unit"),
+      h("select", { class: "input", id }, myAdminGroups().map(g => h("option", { value: g }, g))));
+    return h("label", { class: "field" }, h("span", {}, "Unit (mis. HCS, HCM)"),
+      h("input", { class: "input", id, list: "unit-list", maxlength: "20", placeholder: "Kosongkan kalau tidak ada", style: "text-transform:uppercase" }),
+      h("datalist", { id: "unit-list" }, units().map(g => h("option", { value: g }))));
+  }
+  function toggleAdmin(m) {
+    // A new admin starts limited to their own unit when they have one; the boss can widen it.
+    const upd = m.isAdmin ? { isAdmin: false, adminGroups: [] } : { isAdmin: true, adminGroups: m.group ? [m.group] : [] };
+    safe(() => db.doc("team/" + m.id).update(upd), m.isAdmin ? `${m.name} bukan admin lagi` : `${m.name} sekarang admin` + (m.group ? ` untuk unit ${m.group}` : ""));
+  }
+  function setScope(m, g) {
+    const cur = Array.isArray(m.adminGroups) ? m.adminGroups : [];
+    const next = g === "*" ? [] : cur.includes(g) ? cur.filter(x => x !== g) : [...cur, g];
+    safe(() => db.doc("team/" + m.id).update({ adminGroups: next }), next.length ? `${m.name} mengelola ${next.join(", ")}` : `${m.name} mengelola semua unit`);
+  }
+  function scopeChips(m) {
+    const cur = Array.isArray(m.adminGroups) ? m.adminGroups : [];
+    return h("div", { class: "scope" }, h("span", {}, "Kelola:"),
+      h("button", { class: "chip", "aria-pressed": String(!cur.length), onclick: () => setScope(m, "*") }, "Semua unit"),
+      units().map(g => h("button", { class: "chip", "aria-pressed": String(cur.includes(g)), onclick: () => setScope(m, g) }, g)));
+  }
