@@ -9,7 +9,7 @@ import { useAnalytics } from "../lib/queries";
 import { PRIORITY_LABEL } from "../lib/tasks";
 import { useViewer } from "../lib/viewer";
 
-const PRIO_COLOR: Record<Priority, string> = { urgent: "#E0392C", high: "#E9A23B", normal: "var(--c-lilac)", low: "var(--c-sky)" };
+const PRIO_COLOR: Record<Priority, string> = { urgent: "#FF6716", high: "#FFB487", normal: "#7182CB", low: "#CECECE" };
 const dur = (min: number | null) => min === null ? "–" : min < 60 ? `${min} mnt` : `${Math.floor(min / 60)} j ${min % 60} m`;
 
 export function ReportsPage() {
@@ -39,7 +39,7 @@ export function ReportsPage() {
 
         {tab === "ringkas" && (
           <div className="two" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
-            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "var(--lime)" }} />selesai</span><span><i style={{ background: "var(--c-lilac)" }} />belum</span></div></div><DayBars data={d.daily} /></section>
+            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "#8CC200" }} />selesai</span><span><i style={{ background: "#CDD3EE" }} />belum</span></div></div><DayBars data={d.daily} /></section>
             <section className="surface"><div className="surface-h"><h2>Prioritas</h2></div>
               <div style={{ display: "grid", justifyItems: "center", gap: 12 }}>
                 <Donut center={String(d.totals.total)} slices={(Object.keys(d.byPriority) as Priority[]).map(p => ({ label: PRIORITY_LABEL[p], value: d.byPriority[p], color: PRIO_COLOR[p] }))} />
