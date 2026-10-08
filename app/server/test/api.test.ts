@@ -74,3 +74,34 @@ describe("api", () => {
     expect(row).toMatchObject({ by: "self", needProof: false });
   });
 
+  it("proof is required to finish an assigned task and the server sets the timestamps", async () => {
+    const { ids } = await (await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T" })).json();
+    expect((await t.call("a@x.id", "PATCH", `/tasks/${ids[0]}/status`, { status: "done" })).status).toBe(400);
+    const empty = new FormData();
+    expect((await t.call("a@x.id", "POST", `/tasks/${ids[0]}/complete`, empty)).status).toBe(400);
+    const fd = new FormData();
+    fd.set("photo", new File([JPEG], "p.jpg", { type: "image/jpeg" })); fd.set("note", "beres");
+    expect((await t.call("a@x.id", "POST", `/tasks/${ids[0]}/complete`, fd)).status).toBe(200);
+    const [row] = t.db.select().from(tasks).all();
+    expect(row).toMatchObject({ status: "done", hasPhoto: true, report: "beres" });
+    expect(row!.doneAt).toBeGreaterThan(Date.now() - 5000);
+    expect((await t.call("a@x.id", "GET", `/tasks/${ids[0]}/proof`)).status).toBe(200);
+    expect((await t.call("b@x.id", "GET", `/tasks/${ids[0]}/proof`)).status).toBe(404);
+    expect(t.sent.some(s => s.title.includes("menyelesaikan"))).toBe(true);
+  });
+
+  it("rejects non-JPEG uploads", async () => {
+    const { ids } = await (await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T" })).json();
+    const fd = new FormData(); fd.set("photo", new File([new Uint8Array([1, 2, 3, 4, 5])], "x.png"));
+    expect((await t.call("a@x.id", "POST", `/tasks/${ids[0]}/complete`, fd)).status).toBe(400);
+  });
+
+  it("manager returns a finished task", async () => {
+    const { ids } = await (await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T", needProof: false })).json();
+    const fd = new FormData(); fd.set("skipProof", "1");
+    await t.call("a@x.id", "POST", `/tasks/${ids[0]}/complete`, fd);
+    expect((await t.call("a@x.id", "POST", `/tasks/${ids[0]}/return`)).status).toBe(403);
+    expect((await t.call("hcs@x.id", "POST", `/tasks/${ids[0]}/return`)).status).toBe(200);
+    expect(t.db.select().from(tasks).get()).toMatchObject({ status: "doing", doneAt: null });
+  });
+
