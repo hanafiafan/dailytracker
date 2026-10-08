@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PersonLink } from "../components/ui";
 import { Download, Printer } from "lucide-react";
 import type { Priority } from "@shared/schemas";
 import { addDays } from "@shared/time";
@@ -42,7 +43,7 @@ export function ReportsPage() {
 
         {tab === "ringkas" && (
           <div className="two" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
-            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "#93C21A" }} />selesai</span><span><i style={{ background: "#2547E8", opacity: .55 }} />belum</span></div></div><DayBars data={d.daily} /></section>
+            <section className="surface"><div className="surface-h"><h2>Tugas per hari</h2><div className="legend"><span><i style={{ background: "var(--volt)" }} />selesai</span><span><i style={{ background: "var(--blue)", opacity: .55 }} />belum</span></div></div><DayBars data={d.daily} /></section>
             <section className="surface"><div className="surface-h"><h2>Prioritas</h2></div>
               <div style={{ display: "grid", justifyItems: "center", gap: 12 }}>
                 <Donut center={String(d.totals.total)} slices={(Object.keys(d.byPriority) as Priority[]).map(p => ({ label: PRIORITY_LABEL[p], value: d.byPriority[p], color: PRIO_COLOR[p] }))} />
@@ -55,7 +56,7 @@ export function ReportsPage() {
           <section className="surface"><div className="surface-h"><h2>Produktivitas per orang</h2></div>
             <div style={{ overflowX: "auto" }}><table className="tbl"><thead><tr><th>Nama</th><th className="r">Tugas</th><th className="r">Selesai</th><th className="r">Tepat waktu</th><th className="r">Telat</th><th className="r">Terlambat</th><th style={{ width: "26%", paddingLeft: 24 }}>Progres</th></tr></thead>
               <tbody>{d.perPerson.map(p => (
-                <tr key={p.email}><td><b>{p.name}</b></td><td className="r">{p.total}</td><td className="r">{p.done}</td><td className="r">{p.onTime + p.late ? Math.round(p.onTime / (p.onTime + p.late) * 100) + "%" : "–"}</td><td className="r">{p.late}</td><td className="r">{p.overdue}</td>
+                <tr key={p.email}><td><b><PersonLink email={p.email}>{p.name}</PersonLink></b></td><td className="r">{p.total}</td><td className="r">{p.done}</td><td className="r">{p.onTime + p.late ? Math.round(p.onTime / (p.onTime + p.late) * 100) + "%" : "–"}</td><td className="r">{p.late}</td><td className="r">{p.overdue}</td>
                   <td><HBar label="" done={p.done} total={p.total} max={maxP} /></td></tr>
               ))}</tbody></table></div>
             {!d.perPerson.length && <p className="empty">Belum ada data.</p>}

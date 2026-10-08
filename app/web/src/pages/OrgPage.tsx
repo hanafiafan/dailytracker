@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { MemberDTO } from "@shared/schemas";
-import { Avatar } from "../components/ui";
+import { Avatar, PersonLink } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
 import { awayOn } from "../lib/leaves";
 import { useLeaves, useMeta, useTasks } from "../lib/queries";
@@ -48,7 +48,7 @@ function Node({ p, open }: { p: Person; open?: number }) {
   return (
     <div className={"onode " + p.level}>
       {p.m ? <Avatar m={p.m} /> : <span className="avatar">{p.name[0]}</span>}
-      <div style={{ minWidth: 0 }}><b className="clamp1" title={p.name}>{p.name}</b><small className="clamp1" title={p.role}>{p.role || LEVEL[p.level]}</small></div>
+      <div style={{ minWidth: 0 }}><b className="clamp1" title={p.name}>{p.m ? <PersonLink email={p.m.email}>{p.name}</PersonLink> : p.name}</b><small className="clamp1" title={p.role}>{p.role || LEVEL[p.level]}</small></div>
       {away && <span className="ocnt" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>Cuti</span>}
       {!away && open !== undefined && <span className="ocnt" title="Tugas belum selesai">{open}</span>}
     </div>

@@ -6,7 +6,7 @@ import { CloseProject } from "../components/CloseProject";
 import { Art } from "../components/Illus";
 import { Page } from "../components/Page";
 import { hm } from "../components/TimeTracker";
-import { Avatar, Empty } from "../components/ui";
+import { Avatar, Empty, PersonLink } from "../components/ui";
 import { api, ok } from "../lib/api";
 import { fmtShort, host, today } from "../lib/format";
 import { keys, useAction, useFeed, useMeta, useProjectReport } from "../lib/queries";
@@ -58,7 +58,7 @@ function Overview({ d }: { d: ProjectReportDTO }) {
       <section className="bc s6" style={{ gridColumn: "span 6" }}>
         <div className="bc-h"><span className="bc-ico"><Users size={18} /></span><h3>Progres per orang</h3><span className="muted">{people.length}</span></div>
         <div className="plist">{people.map(x => { const m = member(x.email); return (
-          <div key={x.email} className="tbar who" style={{ gridTemplateColumns: "170px minmax(0,1fr) 54px" }}><span className="nm">{m && <Avatar m={m} />}<span className="clamp1">{x.name}</span></span><div><i style={{ width: `${pct(x.done, x.total)}%` }} /></div><b>{x.done}/{x.total}</b></div>); })}</div>
+          <div key={x.email} className="tbar who" style={{ gridTemplateColumns: "170px minmax(0,1fr) 54px" }}><span className="nm">{m && <Avatar m={m} />}<span className="clamp1"><PersonLink email={x.email}>{x.name}</PersonLink></span></span><div><i style={{ width: `${pct(x.done, x.total)}%` }} /></div><b>{x.done}/{x.total}</b></div>); })}</div>
         {!people.length && <Empty art="people" title="Belum ada tugas" />}
       </section>
       <section className="bc s6" style={{ gridColumn: "span 6" }}>

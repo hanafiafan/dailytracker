@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +25,8 @@ export function TasksPage() {
   const { date, openTask } = useUi();
   const qc = useQueryClient();
   const tq = useTasks(windowFrom(date, today()), true);
-  const [q, setQ] = useState(""), [st, setSt] = useState<Status | "open">("open"), [who, setWho] = useState("");
+  const [params] = useSearchParams();
+  const initSt = params.get("st"), [q, setQ] = useState(""), [st, setSt] = useState<Status | "open">(initSt === "done" || initSt === "todo" || initSt === "doing" || initSt === "open" ? initSt : "open"), [who, setWho] = useState(params.get("who") ?? "");
   const [sort, setSort] = useState<{ k: Key; asc: boolean }>({ k: "date", asc: true });
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);

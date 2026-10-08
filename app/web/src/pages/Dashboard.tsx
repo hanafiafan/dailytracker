@@ -82,13 +82,13 @@ function ManagerDashboard() {
   const asking = idle.filter(m => isToday(m.askAt));
   return (
     <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
-      tabs={[{ id: "orang", label: "Orang" }, { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
+      tabs={[{ id: "orang", label: "Ringkasan" }, { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
       <InstallCard /><NotifyCard manager />
-      <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />
+      {tab === "orang" && <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />}
       <Links />
       {idle.length > 0 && (
         <section className="warnbox" aria-label="Orang tanpa tugas">
