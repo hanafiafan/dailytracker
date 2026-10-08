@@ -533,3 +533,10 @@
 }
 @layer components { .toolbar select.input, .tabs select.input { padding-right: 30px; background-position: right 11px center; } }
 @layer components { .pcard { grid-template-columns: minmax(0, 1fr); } .pcard .ph > div { min-width: 0; } .hero .acts .btn { flex: 1 1 30%; padding: 0 10px; } }
+@layer components {
+  /* the grey surround in the reference is only a presentation backdrop: the app fills the whole window */
+  html, body { background: var(--canvas); } body { padding: 0; }
+  .shell { max-width: none; border-radius: 0; box-shadow: none; min-height: 100dvh; padding: 16px clamp(14px, 2.2vw, 36px) 40px; }
+  .loginwrap { max-width: none; border-radius: 0; box-shadow: none; min-height: 100dvh; }
+  .topnav { top: 12px; }
+}
