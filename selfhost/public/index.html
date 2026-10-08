@@ -91,3 +91,65 @@ p { margin: 0 }
 .claim .who b { display: block }
 .claim .who small { color: var(--muted); overflow-wrap: anywhere }
 
+/* Add panel */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px }
+.panel h2 { font-size: 1.15rem }
+.field { display: grid; gap: 6px }
+.field > span { font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted) }
+.input { width: 100%; border: 1px solid var(--line); background: var(--sunk); border-radius: var(--r); padding: 9px 12px }
+.input:focus { border-color: var(--accent); outline: none; background: var(--surface) }
+textarea.input { resize: vertical; min-height: 64px }
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end }
+.row > .field { flex: 1 1 180px; min-width: 0 }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .85rem; font-weight: 500 }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 500 }
+.check input { width: 18px; height: 18px; accent-color: var(--accent) }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end }
+
+/* People */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0 }
+.card-h { display: flex; align-items: center; gap: 12px }
+.avatar { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: .9rem; color: #fff; flex: none; font-family: var(--font-display) }
+.card-h .nm { flex: 1; min-width: 0 }
+.card-h .nm h3 { font-size: 1.1rem; line-height: 1.2 }
+.card-h .nm p { color: var(--muted); font-size: .82rem }
+.tag { font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-radius: 6px; padding: 3px 7px; white-space: nowrap }
+.tag.on { background: var(--ok-soft); color: var(--ok) }
+.tag.off { background: var(--sunk); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line) }
+.tag.hot { background: var(--bad-soft); color: var(--bad) }
+.tag.late { background: var(--warn-soft); color: var(--warn) }
+.tag.due { background: var(--sunk); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-variant-numeric: tabular-nums }
+.tag.rut { background: var(--accent-soft); color: var(--accent) }
+.meter { display: flex; align-items: center; gap: 10px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums }
+.meter .stackbar { flex: 1; margin: 0; height: 6px }
+
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 6px; border-radius: 8px }
+.task:hover { background: var(--sunk) }
+.task .tt { min-width: 0 }
+.task .tt b { font-weight: 600; overflow-wrap: anywhere }
+.task[data-status="done"] .tt b { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent) }
+.task .tt p { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; white-space: pre-wrap }
+.task .meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px }
+.status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px 4px 6px; font-size: .78rem; font-weight: 600; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; min-width: 6.6rem }
+.status::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); box-sizing: border-box; flex: none }
+.status.doing { background: var(--warn-soft); border-color: transparent; color: var(--warn) }
+.status.doing::before { border-color: var(--warn); background: linear-gradient(90deg, var(--warn) 50%, transparent 50%) }
+.status.done { background: var(--ok-soft); border-color: transparent; color: var(--ok) }
+.status.done::before { border-color: var(--ok); background: var(--ok) radial-gradient(circle, var(--ok-soft) 0 2px, transparent 2.5px) }
+.del { background: none; border: 0; color: var(--muted); font-size: .8rem; padding: 4px 6px; border-radius: 6px }
+.del:hover { color: var(--bad); background: var(--bad-soft) }
+.del.arm { color: var(--bad); background: var(--bad-soft); font-weight: 700 }
+.empty { color: var(--muted); font-size: .88rem; padding: 6px }
+.sub { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px 0 }
+.routines { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.routines .rt { display: inline-flex; align-items: center; gap: 4px; background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px 2px 8px; color: var(--ink) }
+.routines .rt button { background: none; border: 0; color: var(--muted); padding: 0 4px; font-size: .9rem }
+.quick { display: flex; gap: 8px }
+.quick .input { flex: 1; min-width: 0 }
+.quick .input.timein, .input.timein { flex: 0 0 auto; width: 7.2rem; padding-inline: 8px }
+@media (max-width: 420px) { .quick { flex-wrap: wrap } .quick .input:not(.timein) { flex-basis: 100% } .quick .input.timein { flex: 1 } }
+
