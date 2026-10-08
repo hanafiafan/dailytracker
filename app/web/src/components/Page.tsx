@@ -33,6 +33,8 @@ export function TopNav() {
   const qc = useQueryClient();
   const m = member(me.email);
   const [menu, setMenu] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => { navRef.current?.querySelector<HTMLElement>("[aria-current=page]")?.scrollIntoView({ inline: "center", block: "nearest" }); }, [loc]);
   const waiting = (useLeaves(true).data ?? []).filter(l => l.status === "pending" && l.email !== me.email && policy.canManage(l.email)).length;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -50,7 +52,7 @@ export function TopNav() {
   return (
     <header className="topnav">
       <div className="logo"><i><CheckCheck size={18} /></i><span className="t">Tugas Harian</span></div>
-      <nav className="pillnav" aria-label="Menu utama">
+      <nav className="pillnav" aria-label="Menu utama" ref={navRef}>
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon }) => (
           <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
             onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}</a>

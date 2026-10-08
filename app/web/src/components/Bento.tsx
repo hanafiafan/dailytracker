@@ -90,7 +90,7 @@ function Goals({ all }: { all: TaskDTO[] }) {
   const [pick, setPick] = useState<string | null>(null);
   const cur = rows.find(r => r.p.id === pick) ?? rows[0];
   return (
-    <section className="bc s3" style={{ gridColumn: "span 3" }}>
+    <section className="bc s3">
       <div className="bc-h"><span className="bc-ico"><FolderKanban size={18} /></span><h3>Proyek</h3><button className="go" onClick={() => go("/proyek")} aria-label="Buka proyek"><ArrowUpRight size={16} /></button></div>
       {cur ? <>
         <div className="gauge-card" role="link" tabIndex={0} style={{ cursor: "pointer" }} onClick={() => go("/proyek/" + cur.p.id)} onKeyDown={e => e.key === "Enter" && go("/proyek/" + cur.p.id)} aria-label={`Buka detail ${cur.p.name}`}><h4 className="clamp2">{cur.p.name}</h4><Gauge pct={cur.pct} /><div className="gv">{cur.pct}%</div><div className="tg">{cur.done} dari {cur.total} tugas selesai</div></div>
@@ -115,7 +115,7 @@ function Flow({ all, date }: { all: TaskDTO[]; date: string }) {
   const max = Math.max(1, ...data.map(x => x.done + x.open));
   const tip = hov === null ? null : data[hov];
   return (
-    <section className="bc s5" style={{ gridColumn: "span 5" }}>
+    <section className="bc s5">
       <div className="bc-h"><span className="bc-ico"><Sparkles size={18} /></span><h3>Arus kerja</h3>
         <div className="seg" role="group" aria-label="Rentang"><button aria-pressed={span === 7} onClick={() => setSpan(7)}>Minggu</button><button aria-pressed={span === 14} onClick={() => setSpan(14)}>2 minggu</button></div></div>
       <div className="flow" style={{ ["--n" as string]: span }} onMouseLeave={() => setHov(null)}>
@@ -143,7 +143,7 @@ function Side({ all, idle }: { all: TaskDTO[]; idle?: number }) {
   const due = all.filter(t => t.status !== "done" && t.date === today() && t.due).sort((a, b) => a.due!.localeCompare(b.due!));
   const upcoming = all.filter(t => t.status !== "done" && t.date > today()).length;
   return (
-    <div className="s4" style={{ display: "grid", gap: 16, gridColumn: "span 4", alignContent: "stretch" }}>
+    <div className="s4" style={{ display: "grid", gap: 16, alignContent: "stretch" }}>
       <section className="bc promo">
         <span className="pill">Rekap</span><h3>Pantau ketepatan waktu dan beban kerja</h3>
         <button className="btn primary small" style={{ alignSelf: "flex-start" }} onClick={() => go("/laporan")}>Lihat laporan</button>

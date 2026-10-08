@@ -54,7 +54,7 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
         {!review.length && <Empty art="activity" title="Belum ada yang perlu ditinjau" />}
       </section>
       {waiting.length > 0 && (
-        <section className="bc s12" style={{ gridColumn: "1 / -1" }}>
+        <section className="bc s12">
           <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h3>Pengajuan izin & cuti</h3><span className="muted">{waiting.length}</span></div>
           <ul className="alist">{waiting.slice(0, 6).map(l => { const m = member(l.email); return (
             <li key={l.id} className="arow">{m ? <Avatar m={m} /> : <span className="avatar">?</span>}
@@ -62,7 +62,7 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
               <div className="chips" style={{ flexWrap: "nowrap" }}><button className="btn small primary" disabled={decide.isPending} onClick={() => decide.mutate({ id: l.id, status: "approved" })}>Setujui</button><button className="btn small" disabled={decide.isPending} onClick={() => decide.mutate({ id: l.id, status: "rejected" })}>Tolak</button></div></li>); })}</ul>
         </section>
       )}
-      <section className="bc s12" style={{ gridColumn: "1 / -1" }}>
+      <section className="bc s12">
         <div className="bc-h"><span className="bc-ico lime"><Flame size={18} /></span><h3>Mendesak, belum dimulai</h3><span className="muted">{stuck.length}</span></div>
         <ul className="alist">{stuck.slice(0, 8).map(t => <Row key={t.id} t={t} note={`${PRIORITY_LABEL[t.priority]} · ${fmtShort(t.date)}`}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>
         {!stuck.length && <Empty art="calendar" title="Semua yang mendesak sudah berjalan" />}
