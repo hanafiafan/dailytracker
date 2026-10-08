@@ -5,12 +5,13 @@
 // 1) Tempel konfigurasi dari Firebase Console:
 //    Project settings → General → Your apps → Web app → "SDK setup and configuration" → Config
 export const firebaseConfig = {
-  apiKey: "GANTI",
-  authDomain: "GANTI.firebaseapp.com",
-  projectId: "GANTI",
-  storageBucket: "GANTI.appspot.com",
-  messagingSenderId: "GANTI",
-  appId: "GANTI",
+  apiKey: "AIzaSyDuSOicBkI4IWtgBGQuLcr9GkmksRawtvs",
+  authDomain: "dailytask-a8327.firebaseapp.com",
+  projectId: "dailytask-a8327",
+  storageBucket: "dailytask-a8327.firebasestorage.app",
+  messagingSenderId: "747680179966",
+  appId: "1:747680179966:web:d62c34f557459efa1127af",
+  measurementId: "G-LSEM91HZQ3",
 };
 
 // 2) Email Google pemilik aplikasi (yang bisa melihat dan mengatur semua).
