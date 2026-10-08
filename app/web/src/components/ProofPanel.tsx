@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Camera } from "lucide-react";
 import { toast } from "sonner";
 import type { TaskDTO } from "@shared/schemas";
 import { upload } from "../lib/api";
@@ -42,7 +43,7 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
       <p className="foot">Unggah foto atau screenshot hasil kerja, atau tempel link (Drive, Instagram, TikTok, marketplace). Untuk video, pakai link.</p>
       {file
         ? <div className="pv"><img src={file.preview} alt="Pratinjau bukti" /><button type="button" className="linkbtn" onClick={() => { URL.revokeObjectURL(file.preview); setFile(null); }}>Ganti foto</button></div>
-        : <label className="drop"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) setFile({ file: f, preview: URL.createObjectURL(f) }); }} /><span>📷 Pilih foto / screenshot</span></label>}
+        : <label className="drop"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) setFile({ file: f, preview: URL.createObjectURL(f) }); }} /><span className="iconline"><Camera size={18} />Pilih foto / screenshot</span></label>}
       <input className="input" name="link" type="url" inputMode="url" placeholder="atau tempel link hasil kerja" maxLength={500} aria-label="Link bukti" />
       <textarea className="input" name="note" rows={2} maxLength={600} placeholder="Catatan singkat (opsional)" aria-label="Catatan" defaultValue={t.report ?? ""} />
       <div className="actions">

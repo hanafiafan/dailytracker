@@ -15,7 +15,7 @@ export function QuickAddSelf({ email, date }: { email: string; date: string }) {
       if (!String(f.get("title")).trim()) return;
       add.mutate(f); form.reset(); setTimes(false);
     }}>
-      <input className="input" name="title" placeholder="Tambah tugasku sendiri…" maxLength={160} aria-label="Tambah tugas sendiri" />
+      <input className="input" name="title" placeholder="Tambah tugasku sendiri…" maxLength={120} aria-label="Tambah tugas sendiri" />
       <button type="button" className="iconbtn" aria-pressed={times} aria-label="Atur jam" title="Atur jam" onClick={() => setTimes(t => !t)}><Clock size={16} /></button>
       <button className="iconbtn dark" type="submit" aria-label="Tambah"><Plus size={16} /></button>
       {times && <>

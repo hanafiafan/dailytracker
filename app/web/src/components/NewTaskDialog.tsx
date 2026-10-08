@@ -50,7 +50,7 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
             </div>
           </div>
         )}
-        <label className="field"><span>Tugas</span><input className="input" name="title" autoFocus placeholder="Contoh: Foto produk pashmina warna baru" maxLength={160} /></label>
+        <label className="field"><span>Tugas</span><input className="input" name="title" autoFocus placeholder="Contoh: Foto produk pashmina warna baru" maxLength={120} /></label>
         {manager && <label className="field"><span>Deskripsi (opsional)</span><textarea className="input" name="note" rows={2} maxLength={600} placeholder="Detail, link brief, atau target" /></label>}
         <div className="row">
           {!routine && <label className="field"><span>Tanggal</span><input className="input" name="date" type="date" defaultValue={prefill.date ?? date} /></label>}
@@ -58,7 +58,7 @@ export function NewTaskDialog({ prefill, date, onClose }: { prefill: NewTaskPref
         </div>
         <div className="field"><span>Prioritas</span><div className="chips">{PRIORITIES.map(p => <button type="button" key={p} className="chip" aria-pressed={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</button>)}</div></div>
         {labels.length > 0 && <div className="field"><span>Label</span><div className="chips">{labels.map(l => <button type="button" key={l.id} className="chip" data-c={l.color} aria-pressed={lab.has(l.id)} onClick={() => setLab(toggle(lab, l.id))}><i className="sw" />{l.name}</button>)}</div></div>}
-        <div className="field"><span>⏰ Jam kerja (opsional)</span>
+        <div className="field"><span>Jam kerja (opsional)</span>
           <div className="row" style={{ gap: 10 }}>
             <label className="tl"><span>Mulai</span><input className="input timein" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
             <label className="tl"><span>Selesai</span><input className="input timein" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>

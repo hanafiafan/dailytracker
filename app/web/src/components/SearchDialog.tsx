@@ -35,7 +35,7 @@ export function SearchDialog({ onClose }: { onClose: () => void }) {
         <ul>
           {hits.map((t, i) => (
             <li key={t.id}><button aria-selected={i === sel} onClick={() => go(t.id)} onMouseEnter={() => setSel(i)}>
-              <span style={{ flex: 1, minWidth: 0 }}><b>{t.title}</b><small className="muted" style={{ display: "block" }}>{member(t.email)?.name} · {fmtShort(t.date)}{project(t.projectId) ? " · " + project(t.projectId)!.name : ""}</small></span>
+              <span style={{ flex: 1, minWidth: 0 }}><b className="clamp1">{t.title}</b><small className="muted clamp1" style={{ display: "block" }}>{member(t.email)?.name} · {fmtShort(t.date)}{project(t.projectId) ? " · " + project(t.projectId)!.name : ""}</small></span>
               <span className={"tag " + (t.status === "done" ? "on" : "off")}>{STATUS[t.status]}</span>
             </button></li>
           ))}

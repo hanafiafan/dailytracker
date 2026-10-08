@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
+import { Leaf, Target, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { PRIORITIES, STATUSES, type Priority, type Status, type TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
@@ -20,19 +21,20 @@ function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
   return (
     <div className={"kcard" + (p ? "" : " plain") + (t.status === "done" ? " done" : "") + (drag ? " drag" : "")} data-c={p?.color}>
       <div className="top">
-        <h4>{t.title}</h4>
+        <h4 className="clamp2" title={t.title}>{t.title}</h4>
         {(t.priority === "urgent" || t.priority === "high") && <span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span>}
       </div>
       {sp.total > 0 && <div className="ticks" aria-label={`Checklist ${sp.done} dari ${sp.total}`}>{Array.from({ length: sp.total }, (_, i) => <i key={i} className={i < sp.done ? "on" : ""} />)}</div>}
       {(p || t.labelIds.length > 0) && (
         <div className="badges">
-          {p && <span className="pbadge">{p.name}</span>}
-          {t.labelIds.map(id => { const l = label(id); return l ? <span key={id} className="pbadge">#{l.name}</span> : null; })}
+          {p && <span className="pbadge" title={p.name}>{p.name}</span>}
+          {t.labelIds.slice(0, 2).map(id => { const l = label(id); return l ? <span key={id} className="pbadge" title={l.name}>#{l.name}</span> : null; })}
+          {t.labelIds.length > 2 && <span className="pbadge">+{t.labelIds.length - 2}</span>}
         </div>
       )}
       <div className="foot2">
         {m && <Avatar m={m} />}
-        <div className="who"><b>{m?.name ?? t.email}</b><small>{fmtShort(t.date)}{t.start || t.due ? ` · ${t.start ?? ""}${t.start && t.due ? "–" : ""}${t.due ?? ""}` : ""}{t.comments.length ? ` · 💬 ${t.comments.length}` : ""}</small></div>
+        <div className="who"><b className="clamp1">{m?.name ?? t.email}</b><small className="clamp1">{fmtShort(t.date)}{t.start || t.due ? ` · ${t.start ?? ""}${t.start && t.due ? "–" : ""}${t.due ?? ""}` : ""}{t.comments.length ? ` · 💬 ${t.comments.length}` : ""}</small></div>
       </div>
     </div>
   );
@@ -55,7 +57,7 @@ function Column({ status, tasks, canDrag }: { status: Status; tasks: TaskDTO[]; 
     <section ref={setNodeRef} className="col" data-c={COL_TINT[status]} data-over={isOver} aria-label={STATUS[status]}>
       <div className="col-h">{STATUS[status]}<span>{tasks.length}</span></div>
       {tasks.map(t => <DraggableCard key={t.id} t={t} canDrag={canDrag(t)} />)}
-      {!tasks.length && <Empty icon={status === "done" ? "🎯" : status === "doing" ? "🛠️" : "🌿"} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
+      {!tasks.length && <Empty icon={status === "done" ? <Target size={22} /> : status === "doing" ? <Wrench size={22} /> : <Leaf size={22} />} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
     </section>
   );
 }

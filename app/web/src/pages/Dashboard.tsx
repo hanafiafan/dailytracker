@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowUpRight, CheckCircle2, Clock3, Hourglass } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Clock3, Coffee, Hand, History, Hourglass } from "lucide-react";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
 import { InstallCard, NotifyCard } from "../components/Cards";
@@ -55,9 +55,9 @@ function Feed({ limit = 8 }: { limit?: number }) {
         {items.map(a => { const m = member(a.actorEmail); return (
           <li key={a.id}>
             {m ? <Avatar m={m} /> : <span className="avatar sm" style={{ background: "var(--dark)", width: 30, height: 30 }}>{a.actorName[0]}</span>}
-            <div><b>{a.actorEmail === me.email ? "Kamu" : a.actorName}</b> {a.text}{a.taskTitle && <> · <button onClick={() => a.taskId && openTask(a.taskId)}>{a.taskTitle}</button></>}<small>{ago(a.at)}</small></div>
+            <div><div className="clamp2"><b>{a.actorEmail === me.email ? "Kamu" : a.actorName}</b> {a.text}</div>{a.taskTitle && <button className="clamp1" title={a.taskTitle} onClick={() => a.taskId && openTask(a.taskId)}>{a.taskTitle}</button>}<small>{ago(a.at)}</small></div>
           </li>); })}
-        {!items.length && <li><Empty icon="🕓" title="Belum ada aktivitas" /></li>}
+        {!items.length && <li><Empty icon={<History size={22} />} title="Belum ada aktivitas" /></li>}
       </ul>
     </section>
   );
@@ -72,7 +72,7 @@ function Upcoming({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
         {list.map(t => { const late = now() > atMs(t.date, t.due!); return (
           <li key={t.id}><span className={"tag " + (late ? "hot" : "due")} style={{ height: "fit-content" }}>{t.due}</span>
             <div><button onClick={() => openTask(t.id)}>{t.title}</button><small>{member(t.email)?.name}{late ? " · terlambat" : ""}</small></div></li>); })}
-        {!list.length && <li><Empty icon="☕" title="Tidak ada tenggat" /></li>}
+        {!list.length && <li><Empty icon={<Coffee size={22} />} title="Tidak ada tenggat" /></li>}
       </ul>
     </section>
   );
@@ -97,7 +97,7 @@ function ManagerDashboard() {
   const asking = idle.filter(m => isToday(m.askAt));
   const first = (team.find(m => m.email === me.email)?.name ?? me.name).split(" ")[0];
   return (
-    <Page title={`${greeting()}, ${first} 👋`} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
+    <Page title={`${greeting()}, ${first}`} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
       tabs={[{ id: "orang", label: "Orang" }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
@@ -112,7 +112,7 @@ function ManagerDashboard() {
           <span className="warnico" aria-hidden="true">!</span>
           <div className="txt"><b>{idle.length} orang tidak punya tugas aktif hari ini{asking.length ? `, ${asking.length} sudah minta tugas` : ""}</b>
             <div className="idle-list" style={{ marginTop: 6 }}>
-              {idle.map(m => <button key={m.email} className="chip" title={"Beri tugas untuk " + m.name} onClick={() => newTask({ emails: [m.email] })}>{isToday(m.askAt) ? "✋ " : ""}{m.name} +</button>)}
+              {idle.map(m => <button key={m.email} className="chip" title={"Beri tugas untuk " + m.name} onClick={() => newTask({ emails: [m.email] })}>{isToday(m.askAt) && <Hand size={13} />}<span className="clamp1">{m.name}</span><span>+</span></button>)}
             </div></div>
         </section>
       )}
@@ -148,7 +148,7 @@ function MemberDashboard() {
   const upcoming = sortTasks(mine.filter(t => t.date > date && t.status !== "done"));
   const finished = mine.filter(t => t.status === "done").sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)).slice(0, 30);
   return (
-    <Page title={`${greeting()}, ${m.name} 👋`} sub={`${m.role} · ${fmtLong(date)}`} dateNav
+    <Page title={`${greeting()}, ${m.name}`} sub={`${m.role} · ${fmtLong(date)}`} dateNav
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
       <InstallCard /><NotifyCard manager={false} />
       <Tiles tasks={all} date={date} />

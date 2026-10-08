@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, Moon, Plus, Search, Settings, Sun, Users, BarChart3, LogOut } from "lucide-react";
+import { Sparkles, Bell, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Columns3, Moon, Plus, Search, Settings, Sun, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -33,7 +33,7 @@ export function Sidebar() {
   };
   return (
     <aside className="side">
-      <div className="logo"><i>✺</i>Tugas Harian</div>
+      <div className="logo"><i><Sparkles size={18} /></i>Tugas Harian</div>
       <nav className="nav" aria-label="Menu utama">
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon }) => (
           <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
@@ -43,7 +43,7 @@ export function Sidebar() {
       <div className="spacer" />
       <button className="me hide-sm" onClick={() => go("/pengaturan")} aria-label="Profil saya">
         {m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--dark)" }}>{me.name[0]}</span>}
-        <span><b>{m?.name ?? me.name}</b><small>{m?.role || (me.owner ? "Pemilik" : me.email)}</small></span>
+        <span><b className="clamp1">{m?.name ?? me.name}</b><small>{m?.role || (me.owner ? "Pemilik" : me.email)}</small></span>
       </button>
       <nav className="nav hide-sm"><button onClick={out}><LogOut size={19} />Keluar</button></nav>
     </aside>
@@ -72,7 +72,7 @@ function Bell_() {
           <div className="surface-h" style={{ margin: "2px 6px" }}><b>Notifikasi</b>{unread > 0 && <button className="linkbtn" onClick={() => read()}>Tandai semua dibaca</button>}</div>
           {(inbox.data?.items ?? []).map(n => (
             <button key={n.id} className={"notif" + (n.read ? "" : " unread")} onClick={() => { setOpen(false); void read([n.id]); if (n.taskId) openTask(n.taskId); }}>
-              <i /><span>{n.text}<small>{ago(n.at)}</small></span>
+              <i /><span><span className="clamp3">{n.text}</span><small>{ago(n.at)}</small></span>
             </button>
           ))}
           {!inbox.data?.items.length && <p className="empty">Belum ada notifikasi.</p>}
@@ -96,7 +96,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions 
   return (
     <div className="page">
       <div className="topbar">
-        <div><h1>{title}</h1>{sub && <p>{sub}</p>}</div>
+        <div style={{ minWidth: 0, flex: "1 1 260px" }}><h1 className="clamp1" title={title}>{title}</h1>{sub && <p className="clamp1">{sub}</p>}</div>
         <div className="chips" style={{ gap: 10 }}>
           {dateNav && (
             <div className="tools" role="group" aria-label="Pilih hari">

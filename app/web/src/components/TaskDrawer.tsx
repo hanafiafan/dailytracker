@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { CheckCircle2, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PRIORITIES, type ActivityDTO, type TaskDTO } from "@shared/schemas";
 import { useTaskActions } from "../lib/actions";
@@ -12,7 +12,7 @@ import { ProofPanel } from "./ProofPanel";
 import { TimeTags } from "./TaskTags";
 import { Avatar, ConfirmButton } from "./ui";
 
-const ICON: Record<string, string> = { created: "✨", status: "✅", edited: "✏️", assigned: "👤", returned: "↩️", comment: "💬", subtask: "☑️" };
+const ICON: Record<string, ReactNode> = { created: <Sparkles size={14} />, status: <CheckCircle2 size={14} />, edited: <Pencil size={14} />, assigned: <UserRound size={14} />, returned: <Undo2 size={14} />, comment: <MessageSquare size={14} />, subtask: <ListChecks size={14} /> };
 
 export function TaskDrawer({ id }: { id: string }) {
   const { closeTask } = useUi();
@@ -46,7 +46,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const done = t.subtasks.filter(s => s.done).length;
   const photo = t.hasPhoto ? `/api/tasks/${t.id}/proof` : null;
   const cycle = () => { const next = NEXT[t.status]; if (!manager && next === "done") return setProofOpen(true); a.setStatus.mutate(next); };
-  const onBlur = (field: "title" | "note") => (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onBlur = (field: "title" | "note") => (e: React.FocusEvent<HTMLTextAreaElement>) => {
     const v = e.target.value.trim();
     if (field === "title" && !v) { e.target.value = t.title; return; }
     if (v !== t[field]) a.patch.mutate({ [field]: v });
@@ -57,9 +57,9 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <div style={{ flex: 1, display: "grid", gap: 8 }}>
           <div><button className={"status " + t.status} onClick={cycle} disabled={!work} aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button></div>
           {canEdit
-            ? <input className="input" style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 700, padding: "8px 10px" }} defaultValue={t.title} maxLength={160} onBlur={onBlur("title")} aria-label="Judul tugas" />
+            ? <textarea className="input titlefield" rows={3} defaultValue={t.title} maxLength={120} onBlur={onBlur("title")} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} aria-label="Judul tugas" />
             : <h2>{t.title}</h2>}
-          <div className="meta"><TimeTags t={t} />{t.routineId && <span className="tag rut">Rutin</span>}{t.by === "self" && <span className="tag off">Dibuat sendiri</span>}{t.fromAdmin && <span className="tag off">Dari {t.fromAdmin}</span>}</div>
+          <div className="meta"><TimeTags t={t} />{t.routineId && <span className="tag rut">Rutin</span>}{t.by === "self" && <span className="tag off">Buatan sendiri</span>}{t.fromAdmin && <span className="tag off" title={"Dari " + t.fromAdmin}>Dari {t.fromAdmin}</span>}</div>
         </div>
         <button className="iconbtn" onClick={closeTask} aria-label="Tutup"><X size={18} /></button>
       </div>
@@ -145,7 +145,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <section className="timeline">
           <span className="lbl">Aktivitas</span>
           <ul>{activity.map(x => (
-            <li key={x.id}><span>{ICON[x.kind] ?? "•"}</span><div><b>{x.actorName}</b> {x.text}<small>{new Date(x.at).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div></li>
+            <li key={x.id}><span className="tl-ic">{ICON[x.kind] ?? <Pencil size={14} />}</span><div><b>{x.actorName}</b> {x.text}<small>{new Date(x.at).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div></li>
           ))}</ul>
         </section>
       </div>

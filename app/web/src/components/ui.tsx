@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Inbox, Sparkles } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
@@ -39,7 +40,7 @@ export const tally = (list: { status: Status }[]) => {
 export const Center = ({ children }: { children: ReactNode }) => <div className="center"><div>{children}</div></div>;
 export const Loading = () => (
   <div className="shell" aria-busy="true" aria-label="Memuat">
-    <aside className="side"><div className="logo"><i>✺</i>Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
+    <aside className="side"><div className="logo"><i><Sparkles size={18} /></i>Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
     <div className="frame"><div className="sk" style={{ height: 44, width: "40%" }} /><div className="sk" style={{ height: 46, borderRadius: 999 }} />
       <div className="tiles">{[0, 1, 2, 3].map(i => <div key={i} className="sk" style={{ height: 160, borderRadius: 32 }} />)}</div></div>
   </div>
@@ -48,7 +49,7 @@ export const Loading = () => (
 export const Skeleton = ({ h = 16, w = "100%" }: { h?: number; w?: number | string }) => <div className="sk" style={{ height: h, width: w }} />;
 
 /** Friendly empty state. */
-export function Empty({ icon = "🌿", title, children }: { icon?: string; title: string; children?: ReactNode }) {
+export function Empty({ icon = <Inbox size={22} />, title, children }: { icon?: ReactNode; title: string; children?: ReactNode }) {
   return <div className="emptystate"><span aria-hidden="true">{icon}</span><b>{title}</b>{children && <p>{children}</p>}</div>;
 }
 

@@ -23,7 +23,7 @@ export function QuickAdd({ email, name }: { email: string; name: string }) {
       if (!String(f.get("title")).trim()) return;
       add.mutate(f); form.reset(); setTimes(false);
     }}>
-      <input className="input" name="title" placeholder={`Tugas cepat untuk ${name}…`} maxLength={160} aria-label={`Tambah tugas untuk ${name}`} />
+      <input className="input" name="title" placeholder={`Tugas cepat untuk ${name}…`} maxLength={120} aria-label={`Tambah tugas untuk ${name}`} />
       <button type="button" className="iconbtn" aria-pressed={times} aria-label="Atur jam" title="Atur jam" onClick={() => setTimes(t => !t)}><Clock size={16} /></button>
       <button className="iconbtn dark" type="submit" aria-label="Tambah"><Plus size={16} /></button>
       {times && <>
