@@ -2,6 +2,7 @@
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { OAuth2Client } from "google-auth-library";
+import { getCookie } from "hono/cookie";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createApp } from "./app.js";
@@ -37,7 +38,9 @@ if (existsSync(web)) {
     root: web,
     onFound: (path, c) => { c.header("cache-control", /\/assets\//.test(path) ? "public, max-age=31536000, immutable" : "no-cache"); },
   }));
-  app.get("*", c => c.req.path.startsWith("/api/") ? c.json({ error: "not found" }, 404) : c.html(index(), 200, { "cache-control": "no-cache" }));
+  // Local preview only: open the app already signed in as DEV_AUTO_LOGIN (needs ALLOW_DEV_LOGIN and a localhost PUBLIC_URL).
+  const autoLogin = env.ALLOW_DEV_LOGIN && env.DEV_AUTO_LOGIN && /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(env.PUBLIC_URL) ? env.DEV_AUTO_LOGIN : null;
+  app.get("*", c => c.req.path.startsWith("/api/") ? c.json({ error: "not found" }, 404) : autoLogin && !getCookie(c, "th_session") ? c.redirect(`/api/auth/dev?email=${encodeURIComponent(autoLogin)}`) : c.html(index(), 200, { "cache-control": "no-cache" }));
 }
 
 startJobs(db, push, bus);
