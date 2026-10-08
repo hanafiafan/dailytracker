@@ -121,6 +121,8 @@ export function CalendarPage() {
     move.mutate({ id: t.id, date: d!, start, due });
   };
 
+  const [side, setSide] = useState(false);
+  useEffect(() => { document.querySelector(".week-head .today")?.scrollIntoView({ inline: "center", block: "nearest" }); }, [date]);
   // mini month
   const m0 = parseYmd(date); m0.setDate(1);
   const gridStart = weekStart(ymd(m0));
@@ -139,8 +141,9 @@ export function CalendarPage() {
         <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>
       </>}
       tabs={[{ id: "minggu", label: "Minggu" }]} tab="minggu">
+      <button className="btn small calbtn" onClick={() => setSide(s => !s)} aria-expanded={side}>{side ? "Sembunyikan kalender bulan" : "Pilih tanggal"}</button>
       <div className="cal">
-        <div style={{ display: "grid", gap: 14 }}>
+        <div className={"calside" + (side ? " open" : "")} style={{ display: "grid", gap: 14 }}>
           <div className="mini">
             <div className="mini-h"><button className="iconbtn" onClick={() => setDate(addDays(ymd(m0), -1))} aria-label="Bulan lalu"><ChevronLeft size={16} /></button>{title.format(m0)}<button className="iconbtn" onClick={() => setDate(addDays(ymd(m0), 32))} aria-label="Bulan depan"><ChevronRight size={16} /></button></div>
             <div className="mini-g">
