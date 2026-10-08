@@ -455,3 +455,14 @@
     .ptable .detail > td { padding-left: 16px; }
   }
 }
+
+@layer components {
+  .thbtn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-transform: inherit; letter-spacing: inherit; }
+  .thbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+  .ttable th.chk, .ttable td.chk { width: 40px; padding-right: 0; }
+  .ttable th.w-who { width: 18%; } .ttable th.w-proj { width: 15%; } .ttable th.w-prio { width: 110px; } .ttable th.w-date { width: 130px; } .ttable th.w-st { width: 110px; }
+  .ttable td { white-space: nowrap; text-overflow: ellipsis; } .ttable td.bad { color: var(--bad); font-weight: 600; }
+  .ttable .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .bulkbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--volt); border-radius: var(--r-lg); padding: 8px 12px; margin-top: 10px; }
+  .bulkbar .input { height: 30px; min-height: 30px; padding: 0 10px; width: auto; border-radius: 999px; font-size: .8rem; }
+}
