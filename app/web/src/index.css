@@ -590,3 +590,25 @@
   .surface, .card, .bc, .recap { box-shadow: none !important; border: 1px solid #ddd; break-inside: avoid; } .page > * { animation: none !important; }
   :root { color-scheme: light; }
 }
+@layer components {
+  .org { display: grid; justify-items: center; min-width: max-content; padding: 6px 4px 12px; }
+  .otop { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .ostem { width: 2px; height: 28px; background: var(--line-2); }
+  .ounits { display: flex; gap: 22px; align-items: flex-start; position: relative; padding-top: 24px; }
+  .ounits::before { content: ""; position: absolute; top: 0; left: 150px; right: 150px; height: 2px; background: var(--line-2); }
+  .ounit { position: relative; width: 300px; display: grid; gap: 10px; justify-items: stretch; padding-top: 2px; }
+  .ounit::before { content: ""; position: absolute; top: -24px; left: 50%; width: 2px; height: 24px; background: var(--line-2); }
+  .ounits:has(.ounit:only-child)::before { display: none; }
+  .ulabel { justify-self: center; display: inline-flex; gap: 8px; align-items: center; background: var(--ink); color: var(--surface); border-radius: 999px; height: 28px; padding: 0 6px 0 14px; font-weight: 700; font-size: .78rem; }
+  .ulabel span { background: var(--volt); color: #101114; border-radius: 99px; min-width: 20px; height: 20px; display: grid; place-items: center; font-size: .68rem; }
+  .omembers { display: grid; gap: 8px; margin-left: 18px; padding-left: 14px; border-left: 2px solid var(--line-2); }
+  .onode { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 12px 8px 8px; box-shadow: 0 1px 2px rgb(16 17 20 / .04), 0 8px 18px -14px rgb(16 17 20 / .4); min-width: 0; position: relative; }
+  .omembers .onode::before { content: ""; position: absolute; left: -16px; top: 50%; width: 14px; height: 2px; background: var(--line-2); }
+  .onode b { display: block; font-size: .86rem; } .onode small { display: block; color: var(--muted); font-size: .74rem; }
+  .onode .avatar { width: 36px; height: 36px; }
+  .onode.owner { background: var(--ink); color: var(--surface); border-color: transparent; min-width: 230px; } .onode.owner small { color: #aab0bd; }
+  .onode.boss { border-color: var(--ink); min-width: 220px; } .onode.head { background: var(--volt); color: #101114; border-color: transparent; } .onode.head small { color: rgb(16 17 20 / .65); }
+  .ocnt { margin-left: auto; background: var(--glass); color: var(--ink); border-radius: 99px; min-width: 24px; height: 24px; padding: 0 7px; display: grid; place-items: center; font-size: .72rem; font-weight: 800; }
+  .onode.owner .ocnt { background: rgb(255 255 255 / .16); color: inherit; } .onode.head .ocnt { background: rgb(16 17 20 / .12); color: #101114; }
+  .otable td { max-width: none; }
+}
