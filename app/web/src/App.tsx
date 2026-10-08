@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { Redirect, Route, Switch, useSearchParams } from "wouter";
+import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 import { Toaster } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { makePolicy } from "@shared/policy";
@@ -32,6 +32,7 @@ function Signed({ me }: { me: MeDTO }) {
   const teamQ = useTeam(true), metaQ = useMeta(true);
   const [date, setDate] = useState(today());
   const [params, setParams] = useSearchParams();
+  const [, nav] = useLocation();
   const [newTask, setNewTask] = useState<NewTaskPrefill | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, tick] = useReducer(n => n + 1, 0);
@@ -49,7 +50,19 @@ function Signed({ me }: { me: MeDTO }) {
   // Devices that already allowed notifications re-register on every start (subscriptions can expire).
   useEffect(() => { if (pushSupported() && Notification.permission === "granted") registerPush().catch(e => console.warn("push", e)); }, [me.email]);
   useEffect(() => {
-    const on = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); } };
+    let g = 0; // time of the last "g": the next key picks a page
+    const pages: Record<string, string> = { d: "/", p: "/papan", l: "/daftar", k: "/kalender", y: "/proyek", t: "/tim", r: "/laporan", h: "/riwayat" };
+    const on = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); return; }
+      const el = e.target as HTMLElement;
+      if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
+      const k = e.key.toLowerCase();
+      if (Date.now() - g < 900 && pages[k]) { g = 0; nav(pages[k]!); return; }
+      g = 0;
+      if (k === "g") g = Date.now();
+      else if (k === "n") { e.preventDefault(); setNewTask({}); }
+      else if (k === "/") { e.preventDefault(); setSearchOpen(true); }
+    };
     window.addEventListener("keydown", on);
     return () => window.removeEventListener("keydown", on);
   }, []);
