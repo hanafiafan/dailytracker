@@ -105,3 +105,45 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
   );
 }
 
+export function ManageTeam({ list }: { list: MemberDTO[] }) {
+  const { policy } = useViewer();
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+  const reorder = useAction((emails: string[]) => ok(api.team.order.$put({ json: { emails } })), { done: "Urutan tim disimpan" });
+  const add = useAction((f: FormData) => ok(api.team.$post({ json: {
+    name: String(f.get("name")), role: String(f.get("role")), email: String(f.get("email")), group: String(f.get("group") ?? "").trim().toUpperCase(),
+  } })), { done: "Anggota ditambahkan" });
+
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!e.over || e.active.id === e.over.id) return;
+    const ids = list.map(m => m.email), next = arrayMove(ids, ids.indexOf(String(e.active.id)), ids.indexOf(String(e.over.id)));
+    qc.setQueryData<MemberDTO[]>(keys.team, old => old && next.map((id, i) => ({ ...old.find(m => m.email === id)!, sortOrder: i + 1 })).concat(old.filter(m => !next.includes(m.email))));
+    reorder.mutate(next);
+  };
+  return (
+    <details className="manage" id="manage">
+      <summary>Kelola tim</summary>
+      <p className="foot" style={{ margin: "8px 0" }}>{policy.isBoss
+        ? 'Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin "Semua unit" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu.'
+        : `Kamu mengelola unit ${policy.groups.join(", ")}. Orang di unit lain tidak terlihat di sini.`}</p>
+      <p className="foot" style={{ margin: "0 0 6px" }}>Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap.</p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={list.map(m => m.email)} strategy={verticalListSortingStrategy}>
+          <div className="mlist">{list.map(m => <Row key={m.email} m={m} editing={editing === m.email} onEdit={o => setEditing(o ? m.email : null)} />)}</div>
+        </SortableContext>
+      </DndContext>
+      <form className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }} onSubmit={e => {
+        e.preventDefault(); const form = e.currentTarget, f = new FormData(form);
+        if (!String(f.get("name")).trim()) return void toast.error("Tulis nama anggota");
+        add.mutate(f, { onSuccess: () => form.reset(), onError: e2 => toast.error(errorText(e2)) });
+      }}>
+        <label className="field"><span>Nama</span><input className="input" name="name" maxLength={40} /></label>
+        <label className="field"><span>Divisi</span><input className="input" name="role" maxLength={60} /></label>
+        <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required /></label>
+        <UnitField name="group" />
+        <button className="btn" type="submit" disabled={add.isPending}>Tambah anggota</button>
+      </form>
+    </details>
+  );
+}
