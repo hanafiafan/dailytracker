@@ -3,8 +3,8 @@ import { Inbox, Sparkles } from "lucide-react";
 import type { MemberDTO, Status } from "@shared/schemas";
 import { hue, initials } from "../lib/format";
 
-/** Avatar fill colours: only the brand palette (Lean, Heat, Black and deeper shades of Volt). */
-const AVATAR = ["#7182CB", "#E85A0F", "#1D2121", "#5E8A00", "#4655A6", "#B24100", "#3A4040"];
+/** Avatar fill colours: the bright brand colours. */
+const AVATAR = ["#2F6BFF", "#14B053", "#FF7A1A", "#8A4DFF", "#F0348B", "#08B7C8", "#EF4136"];
 
 export function Avatar({ m, big, src }: { m: Pick<MemberDTO, "email" | "name" | "role" | "hasPhoto" | "photoV">; big?: boolean; src?: string | null }) {
   const cls = "avatar" + (big ? " big" : "");
