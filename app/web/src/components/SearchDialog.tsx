@@ -29,7 +29,7 @@ export function SearchDialog({ onClose }: { onClose: () => void }) {
     const all = [
       { k: "Tugas baru", h: "N", icon: <Plus size={15} />, run: () => newTask() },
       { k: "Ke hari ini", h: "", icon: <CalendarClock size={15} />, run: () => setDate(today()) },
-      ...([["Dasbor", "/", "D"], ["Papan", "/papan", "P"], ["Daftar tugas", "/daftar", "L"], ["Kalender", "/kalender", "K"], ["Proyek", "/proyek", "Y"], ...(policy.isManager ? [["Tim", "/tim", "T"]] : []), ["Struktur organisasi", "/struktur", "O"], ["Laporan", "/laporan", "R"], ["Riwayat", "/riwayat", "H"], ["Pengaturan", "/pengaturan", ""]] as [string, string, string][])
+      ...([["Dasbor", "/", "D"], ["Papan", "/papan", "P"], ["Daftar tugas", "/daftar", "L"], ["Kalender", "/kalender", "K"], ["Proyek", "/proyek", "Y"], ...(policy.isManager ? [["Tim", "/tim", "T"]] : []), ["Laporan", "/laporan", "R"], ["Riwayat", "/riwayat", "H"], ["Pengaturan", "/pengaturan", ""]] as [string, string, string][])
         .map(([k, to, h]) => ({ k: "Buka " + k, h: h && "G " + h, icon: <CornerDownLeft size={15} />, run: () => nav(to) })),
       { k: dark ? "Mode terang" : "Mode gelap", h: "", icon: dark ? <Sun size={15} /> : <Moon size={15} />, run: toggleTheme },
     ];
