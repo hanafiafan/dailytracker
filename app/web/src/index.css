@@ -935,3 +935,18 @@
     .bento.pov > .s4 .bc-h h2 { font-size: .68rem; color: var(--muted); font-weight: 700; } .bento.pov > .s4 .mid-n { font-size: 1.35rem; } .bento.pov > .s4 .mid-n small { font-size: .62rem; display: block; margin: 2px 0 0; }
   }
 }
+@layer components {
+  :root { --warn: #7A4E04; }
+  :root[data-theme="dark"] { --warn: #F5C451; }
+  .btn.blue, .btn.small.blue { background: #2A62F0; } .btn.blue:hover { background: #1B4FD6; }
+  .mini-g button.off, .mm-d.off { opacity: .8; }
+  .tag.high { color: #6B4303; } :root[data-theme="dark"] .tag.high { color: #F5C451; }
+}
+@layer components {
+  /* buttons centre their content vertically: tall calendar blocks must show the title at the top */
+  .ev { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 1px; } .ev b { -webkit-line-clamp: 3; }
+  .mx td .cell.none, .cell.none { background: color-mix(in srgb, var(--glass) 60%, transparent); color: var(--muted); box-shadow: none; }
+  .cell.sel { box-shadow: inset 0 0 0 2px var(--blue); }
+  .mx th.today small, .mx th.today b { color: #101114; }
+}
+@layer components { .morechip { margin-top: -13px; } .ev { padding-top: 7px; } }
