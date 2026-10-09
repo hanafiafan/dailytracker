@@ -28,7 +28,7 @@ export function Workload() {
   };
   return (
     <section className="bc">
-      <div className="bc-h"><h3>Beban kerja dua minggu</h3><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Makin gelap = makin banyak tugas</span><span style={{ ["--k" as string]: "var(--bad)" }}>Lebih dari {OVER_TASKS} tugas atau {OVER_HOURS} jam</span></span></div>
+      <div className="bc-h"><h2>Beban kerja dua minggu</h2><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Makin gelap = makin banyak tugas</span><span style={{ ["--k" as string]: "var(--bad)" }}>Lebih dari {OVER_TASKS} tugas atau {OVER_HOURS} jam</span></span></div>
       <div className="heatwrap"><div className="heat" style={{ ["--n" as string]: days.length }} role="table" aria-label="Beban kerja">
         <div />{days.map(d => <div key={d} className={"hh" + (d === today() ? " today" : "")}>{DAYN[new Date(d + "T12:00:00").getDay()]}<b>{Number(d.slice(8))}</b></div>)}<div className="hh">Total</div>
         {people.map(m => {

@@ -23,12 +23,12 @@ export function Achievements({ tasks, date }: { tasks: TaskDTO[]; date: string }
   return (
     <div className="two2">
       <section className="bc">
-        <div className="bc-h"><span className="bc-ico lime"><Target size={18} /></span><h3>Fokus hari ini</h3></div>
+        <div className="bc-h"><span className="bc-ico lime"><Target size={18} /></span><h2>Fokus hari ini</h2></div>
         <ol className="focus">{focus.map((t, i) => <li key={t.id}><span className="n">{i + 1}</span><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left" }} onClick={() => openTask(t.id)}>{t.title}</button><small className="muted">{t.due ? "sebelum " + t.due : "tanpa jam"}</small></li>)}</ol>
         {!focus.length && <p className="muted" style={{ fontSize: ".84rem" }}>Tidak ada tugas yang menunggu. Kerja bagus!</p>}
       </section>
       <section className="bc">
-        <div className="bc-h"><span className="bc-ico"><Medal size={18} /></span><h3>Pencapaian</h3></div>
+        <div className="bc-h"><span className="bc-ico"><Medal size={18} /></span><h2>Pencapaian</h2></div>
         <div className="statrow" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           <div className="stat"><span className="v" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{streak}<Flame size={20} color="var(--c-peach)" /></span><span className="k">hari beruntun</span></div>
           <div className="stat"><span className="v">{weekDone}<small className="muted" style={{ fontSize: "1rem" }}>/{week.length}</small></span><span className="k">target pekan ini</span></div>

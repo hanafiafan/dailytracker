@@ -43,19 +43,19 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
   return (
     <div className="two2">
       <section className="bc">
-        <div className="bc-h"><span className="bc-ico red"><BellRing size={18} /></span><h3>Terlambat</h3><span className="muted">{late.length}</span></div>
+        <div className="bc-h"><span className="bc-ico red"><BellRing size={18} /></span><h2>Terlambat</h2><span className="muted">{late.length}</span></div>
         <ul className="alist">{late.slice(0, 8).map(t => <Row key={t.id} t={t} note={days(t.date)}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>
         {!late.length && <Empty art="tasks" title="Tidak ada yang terlambat" />}
       </section>
       <section className="bc">
-        <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h3>Perlu ditinjau</h3><span className="muted">3 hari terakhir · {review.length}</span></div>
+        <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h2>Perlu ditinjau</h2><span className="muted">3 hari terakhir · {review.length}</span></div>
         <ul className="alist">{review.slice(0, 8).map(t => <Row key={t.id} t={t} note={`selesai ${fmtShort(t.date)}${t.hasPhoto || t.proofLink ? " · ada bukti" : " · tanpa bukti"}`}>
           <button className="btn small" disabled={back.isPending} onClick={() => back.mutate(t.id)}><Undo2 size={13} />Kembalikan</button></Row>)}</ul>
         {!review.length && <Empty art="activity" title="Belum ada yang perlu ditinjau" />}
       </section>
       {waiting.length > 0 && (
         <section className="bc s12">
-          <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h3>Pengajuan izin & cuti</h3><span className="muted">{waiting.length}</span></div>
+          <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h2>Pengajuan izin & cuti</h2><span className="muted">{waiting.length}</span></div>
           <ul className="alist">{waiting.slice(0, 6).map(l => { const m = member(l.email); return (
             <li key={l.id} className="arow">{m ? <Avatar m={m} /> : <span className="avatar">?</span>}
               <div style={{ minWidth: 0 }}><b className="clamp1">{m?.name ?? l.email} · {LEAVE_LABEL[l.kind]}</b><small className="muted clamp1">{l.from === l.to ? fmtShort(l.from) : `${fmtShort(l.from)} – ${fmtShort(l.to)}`}{l.reason ? ` · ${l.reason}` : ""}</small></div>
@@ -63,7 +63,7 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
         </section>
       )}
       <section className="bc s12">
-        <div className="bc-h"><span className="bc-ico lime"><Flame size={18} /></span><h3>Mendesak, belum dimulai</h3><span className="muted">{stuck.length}</span></div>
+        <div className="bc-h"><span className="bc-ico lime"><Flame size={18} /></span><h2>Mendesak, belum dimulai</h2><span className="muted">{stuck.length}</span></div>
         <ul className="alist">{stuck.slice(0, 8).map(t => <Row key={t.id} t={t} note={`${PRIORITY_LABEL[t.priority]} · ${fmtShort(t.date)}`}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>
         {!stuck.length && <Empty art="calendar" title="Semua yang mendesak sudah berjalan" />}
       </section>

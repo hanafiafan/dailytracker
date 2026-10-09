@@ -69,17 +69,17 @@ export function TimeReport({ from, to }: { from: string; to: string }) {
   const maxP = Math.max(1, ...d.perPerson.map(p => p.min)), maxJ = Math.max(1, ...d.byProject.map(p => p.min)), maxD = Math.max(1, ...d.daily.map(x => x.min));
   return (
     <div className="two2">
-      <section className="bc"><div className="bc-h"><span className="bc-ico"><Timer size={18} /></span><h3>Total waktu tercatat</h3></div>
+      <section className="bc"><div className="bc-h"><span className="bc-ico"><Timer size={18} /></span><h2>Total waktu tercatat</h2></div>
         <div className="big">{Math.floor(d.totalMin / 60)}<small> jam {d.totalMin % 60} mnt</small></div>
         <div className="pixels" style={{ height: 80, alignItems: "stretch", gap: 3 }} role="img" aria-label="Menit per hari">
           {d.daily.map(x => <div key={x.date} title={`${x.date}: ${hm(x.min)}`} style={{ flex: 1, display: "flex", alignItems: "flex-end" }}><i style={{ width: "100%", height: `${Math.max(x.min ? 8 : 3, x.min / maxD * 100)}%`, borderRadius: 4, background: x.min ? "var(--blue)" : "var(--glass)" }} /></div>)}
         </div>
       </section>
-      <section className="bc"><div className="bc-h"><h3>Per proyek</h3></div>
+      <section className="bc"><div className="bc-h"><h2>Per proyek</h2></div>
         {d.byProject.map(b => { const p = projects.find(x => x.id === b.projectId); return <div key={b.projectId ?? "none"} className="tbar" data-c={p?.color}><span className="clamp1">{p?.name ?? "Tanpa proyek"}</span><div><i style={{ width: `${b.min / maxJ * 100}%` }} /></div><b>{hm(b.min)}</b></div>; })}
         {!d.byProject.length && <Empty art="activity" title="Belum ada waktu tercatat">Mulai timer dari panel tugas.</Empty>}
       </section>
-      <section className="bc s12" style={{ gridColumn: "1 / -1" }}><div className="bc-h"><h3>Per orang</h3></div>
+      <section className="bc s12" style={{ gridColumn: "1 / -1" }}><div className="bc-h"><h2>Per orang</h2></div>
         {d.perPerson.map(p => { const m = members.find(x => x.email === p.email); return <div key={p.email} className="tbar who"><span className="nm">{m && <Avatar m={m} />}<span className="clamp1">{p.name}</span></span><div><i style={{ width: `${p.min / maxP * 100}%` }} /></div><b>{hm(p.min)}</b></div>; })}
         {!d.perPerson.length && <p className="muted" style={{ fontSize: ".84rem" }}>Belum ada data.</p>}
       </section>
