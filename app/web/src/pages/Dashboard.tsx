@@ -143,9 +143,8 @@ function MemberDashboard() {
     <Page title={<>Halo, <em>{m.name.split(" ")[0]}</em></>} sub={`${m.name} · ${m.role} · ${fmtLong(date)}`} dateNav
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
       <InstallCard /><NotifyCard manager={false} />
-      <Bento all={mine} day={all} date={date} people={[]} />
-      <Achievements tasks={mine} date={date} />
-      {todayView && loaded && isIdle(mine) && (
+      {tab === "hari" && <Bento all={mine} day={all} date={date} people={[]} />}
+      {tab === "hari" && todayView && loaded && isIdle(mine) && (
         <section className="warnbox" role="status">
           <span className="warnico" aria-hidden="true">!</span>
           {asked
@@ -162,6 +161,7 @@ function MemberDashboard() {
             : <p className="empty">{loaded ? "Belum ada tugas. Tugas dari atasan akan muncul di sini, atau tambahkan sendiri di bawah." : "Memuat…"}</p>}
           <QuickAddSelf email={m.email} date={date} />
         </section>
+        <Achievements tasks={mine} date={date} />
       </>}
       {tab === "depan" && <section className="list"><h2>Tugas mendatang</h2>{upcoming.length ? <ul className="tasks">{upcoming.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} />)}</ul> : <p className="empty">Tidak ada tugas mendatang.</p>}</section>}
       {tab === "selesai" && <section className="list"><h2>Baru selesai</h2>{finished.length ? <ul className="tasks">{finished.map(t => <TaskRow key={t.id} t={t} canDelete={false} />)}</ul> : <p className="empty">Belum ada tugas selesai.</p>}</section>}
