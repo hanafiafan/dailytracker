@@ -320,3 +320,96 @@ describe("daily backup", () => {
     expect(files.at(-1)).toBe("app-2026-01-21.db");
   });
 });
+
+describe("team chat", () => {
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4]);
+  const upload = (t: ReturnType<typeof setup>, as: string, channel: string, file: File) => { const fd = new FormData(); fd.set("channel", channel); fd.set("file", file); return t.call(as, "POST", "/chat/attachments", fd); };
+  const post = (t: ReturnType<typeof setup>, as: string, ch: string, body: object) => t.call(as, "POST", `/chat/channels/${ch}/messages`, body);
+
+  it("channels follow project access; strangers get nothing", async () => {
+    const t = setup();
+    const proj = await json(await t.call(OWNER, "POST", "/meta/projects", { name: "Kampanye" }));
+    await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T", projectId: proj.id });
+    expect((await json(await t.call("a@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["general", "p-" + proj.id]);
+    expect((await json(await t.call("b@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["general"]);
+    expect((await json(await t.call("hcs@x.id", "GET", "/chat/channels"))).length).toBe(2);
+    expect((await t.call("out@x.id", "GET", "/chat/channels")).status).toBe(403);
+    expect((await t.call("b@x.id", "GET", `/chat/channels/p-${proj.id}/messages`)).status).toBe(403);
+    expect((await post(t, "b@x.id", "p-" + proj.id, { text: "hai" })).status).toBe(403);
+    expect((await post(t, "a@x.id", "p-" + proj.id, { text: "hai" })).status).toBe(201);
+    expect((await t.call("a@x.id", "GET", "/chat/channels/p-nope/messages")).status).toBe(403);
+  });
+
+  it("messages: validation, links shown per viewer, mentions notify, unread, delete rules", async () => {
+    const t = setup();
+    const task = (await json(await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Rahasia A" }))).ids[0] as string;
+    expect((await post(t, "a@x.id", "general", { text: "" })).status).toBe(400);
+    expect((await post(t, "b@x.id", "general", { text: "x", refs: [{ type: "task", id: task }] })).status).toBe(400); // cannot link a task you cannot see
+    expect((await post(t, "b@x.id", "general", { text: "x", refs: [{ type: "member", id: "nobody@x.id" }] })).status).toBe(400);
+    const m = await post(t, "a@x.id", "general", { text: "cek ini @B", refs: [{ type: "task", id: task }, { type: "member", id: "b@x.id" }] });
+    expect(m.status).toBe(201);
+    expect(t.sent.some(s => s.to.includes("b@x.id") && s.title.includes("menyebutmu"))).toBe(true);
+    const seenByB = (await json(await t.call("b@x.id", "GET", "/chat/channels/general/messages"))).messages[0];
+    expect(seenByB.refs.find((r: J) => r.type === "task")).toMatchObject({ ok: false, label: "Tugas" }); // the title is not leaked
+    const seenByA = (await json(await t.call("a@x.id", "GET", "/chat/channels/general/messages"))).messages[0];
+    expect(seenByA.refs.find((r: J) => r.type === "task")).toMatchObject({ ok: true, label: "Rahasia A" });
+    expect((await json(await t.call("b@x.id", "GET", "/chat/channels"))).find((c: J) => c.id === "general").unread).toBe(1);
+    expect((await json(await t.call("a@x.id", "GET", "/chat/channels"))).find((c: J) => c.id === "general").unread).toBe(0);
+    await t.call("b@x.id", "POST", "/chat/channels/general/read");
+    expect((await json(await t.call("b@x.id", "GET", "/chat/channels"))).find((c: J) => c.id === "general").unread).toBe(0);
+    const id = seenByA.id;
+    expect((await t.call("b@x.id", "DELETE", `/chat/messages/${id}`)).status).toBe(403);
+    expect((await t.call("hcs@x.id", "DELETE", `/chat/messages/${id}`)).status).toBe(200); // a manager of the author
+    const gone = (await json(await t.call("a@x.id", "GET", "/chat/channels/general/messages"))).messages[0];
+    expect(gone).toMatchObject({ deleted: true, text: "" });
+  });
+
+  it("attachments: real type checked, size capped, only readable by the channel", async () => {
+    const t = setup();
+    const proj = await json(await t.call(OWNER, "POST", "/meta/projects", { name: "P" }));
+    await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "T", projectId: proj.id });
+    const pc = "p-" + proj.id;
+    expect((await upload(t, "a@x.id", "general", new File([new TextEncoder().encode("<html><script>alert(1)</script>")], "x.png", { type: "image/png" }))).status).toBe(400);
+    expect((await upload(t, "a@x.id", "general", new File([PNG], "x.svg", { type: "image/svg+xml" }))).status).toBe(400);
+    expect((await upload(t, "a@x.id", "general", new File([new Uint8Array(9 * 1024 * 1024)], "big.pdf", { type: "application/pdf" }))).status).toBe(413);
+    expect((await upload(t, "b@x.id", pc, new File([PNG], "x.png", { type: "image/png" }))).status).toBe(403);
+    const up = await upload(t, "a@x.id", pc, new File([PNG], "foto?.png", { type: "image/png" }));
+    expect(up.status).toBe(201);
+    const file = await json(up);
+    expect(file.name).toBe("foto_.png");
+    expect((await t.call("hcs@x.id", "GET", `/chat/files/${file.id}`)).status).toBe(404); // not attached to a message yet: only its uploader sees it
+    expect((await post(t, "hcs@x.id", pc, { attachmentIds: [file.id] })).status).toBe(400); // someone else's upload cannot be used
+    expect((await post(t, "a@x.id", "general", { attachmentIds: [file.id] })).status).toBe(400); // wrong channel
+    expect((await post(t, "a@x.id", pc, { attachmentIds: [file.id] })).status).toBe(201);
+    const dl = await t.call("hcs@x.id", "GET", `/chat/files/${file.id}`);
+    expect(dl.status).toBe(200);
+    expect(dl.headers.get("content-type")).toBe("image/png");
+    expect(dl.headers.get("content-security-policy")).toContain("sandbox");
+    expect((await t.call("b@x.id", "GET", `/chat/files/${file.id}`)).status).toBe(404); // b has no access to the project channel
+    const pdf = await json(await upload(t, "a@x.id", "general", new File([new TextEncoder().encode("%PDF-1.4")], "a.pdf", { type: "application/pdf" })));
+    await post(t, "a@x.id", "general", { text: "lihat", attachmentIds: [pdf.id] });
+    expect((await t.call("b@x.id", "GET", `/chat/files/${pdf.id}`)).headers.get("content-disposition")).toContain("attachment");
+  });
+});
+
+describe("leave evidence", () => {
+  const day = (n: number) => new Date(Date.now() + 7 * 3600e3 + n * 86400e3).toISOString().slice(0, 10);
+  const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
+  it("link and photo are optional, safe, and visible to the requester and their managers only", async () => {
+    const t = setup();
+    const body = { kind: "sakit", from: day(1), to: day(1) };
+    expect((await t.call("a@x.id", "POST", "/leaves", { ...body, proofLink: "javascript:alert(1)" })).status).toBe(400);
+    const made = await t.call("a@x.id", "POST", "/leaves", { ...body, proofLink: "https://example.com/surat-dokter" });
+    expect(made.status).toBe(201);
+    const l = await json(made);
+    expect(l).toMatchObject({ proofLink: "https://example.com/surat-dokter", hasPhoto: false });
+    expect((await t.call("a@x.id", "PUT", `/leaves/${l.id}/proof`, new Uint8Array([1, 2, 3, 4, 5]))).status).toBe(400);
+    expect((await t.call("b@x.id", "PUT", `/leaves/${l.id}/proof`, JPG)).status).toBe(403);
+    expect((await t.call("a@x.id", "PUT", `/leaves/${l.id}/proof`, JPG)).status).toBe(200);
+    expect((await json(await t.call("a@x.id", "GET", "/leaves")))[0].hasPhoto).toBe(true);
+    expect((await t.call("hcs@x.id", "GET", `/leaves/${l.id}/proof`)).headers.get("content-type")).toBe("image/jpeg");
+    expect((await t.call("b@x.id", "GET", `/leaves/${l.id}/proof`)).status).toBe(404);
+    await t.call("hcs@x.id", "PATCH", `/leaves/${l.id}/decision`, { status: "approved" });
+    expect((await t.call("a@x.id", "PUT", `/leaves/${l.id}/proof`, JPG)).status).toBe(403); // frozen once decided
+  });
+});
