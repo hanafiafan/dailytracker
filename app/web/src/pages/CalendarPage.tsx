@@ -138,10 +138,10 @@ export function CalendarPage() {
   const title = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
 
   return (
-    <Page title="Kalender" sub={`${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(parseYmd(days[0]!))} – ${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(parseYmd(days[6]!))}`}
+    <Page title="Kalender" sub={mobile ? undefined : `${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(parseYmd(days[0]!))} – ${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(parseYmd(days[6]!))}`}
       actions={<>
         {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
-        <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>
+        {!mobile && <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>}
       </>}>
       {mobile ? <Agenda days={days} tasks={tasks} /> : <>
       <button className="btn small calbtn" onClick={() => setSide(s => !s)} aria-expanded={side}>{side ? "Sembunyikan kalender bulan" : "Pilih tanggal"}</button>
