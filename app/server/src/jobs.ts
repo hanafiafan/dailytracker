@@ -32,10 +32,10 @@ export async function runReminders(db: Db, push: Push, now = Date.now()) {
     const dl = atMs(date, t.due);
     if (now > dl && !t.remLate) {
       db.update(tasks).set({ remLate: true }).where(eq(tasks.id, t.id)).run();
-      await push.send([t.email], "Tugas terlambat", `${t.title} (tenggat ${t.due})`, "late-" + t.id);
+      await push.send([t.email], "Tugas terlambat", `${t.title} (tenggat ${t.due})`, "late-" + t.id, `/?t=${t.id}`);
     } else if (dl > now && dl - now <= 30 * 60000 && !t.remDue && !t.remLate) {
       db.update(tasks).set({ remDue: true }).where(eq(tasks.id, t.id)).run();
-      await push.send([t.email], "Tenggat sebentar lagi", `${t.title} jam ${t.due}`, "due-" + t.id);
+      await push.send([t.email], "Tenggat sebentar lagi", `${t.title} jam ${t.due}`, "due-" + t.id, `/?t=${t.id}`);
     }
   }
 

@@ -14,18 +14,21 @@ export function createPush(db: Db, ownerEmail: string, appUrl: string) {
   webpush.setVapidDetails("mailto:" + ownerEmail, pub, priv);
 
   /** Push to every device of every listed person. Failures never throw: a notification must not break the request. */
-  async function send(emails: Iterable<string>, title: string, body: string, tag = "") {
-    const payload = JSON.stringify({ title, body, tag, url: appUrl });
+  async function send(emails: Iterable<string>, title: string, body: string, tag = "", path = "") {
+    const stats = { sent: 0, failed: 0 };
+    const payload = JSON.stringify({ title, body, tag, url: new URL(path, appUrl).href });
     for (const email of new Set(emails)) {
       for (const row of db.select().from(pushSubs).where(eq(pushSubs.email, email)).all()) {
-        try { await webpush.sendNotification(row.sub, payload, { TTL: 86400, urgency: "high" }); }
+        try { await webpush.sendNotification(row.sub, payload, { TTL: 86400, urgency: "high" }); stats.sent++; }
         catch (e) {
+          stats.failed++;
           const code = (e as { statusCode?: number }).statusCode;
           if (code === 404 || code === 410) db.delete(pushSubs).where(eq(pushSubs.endpoint, row.endpoint)).run();
           else console.warn("push", code ?? (e as Error).message);
         }
       }
     }
+    return stats;
   }
   /** The owner, admins of all units, and admins of this person's unit (except the person themself). */
   function managersOf(email: string): string[] {

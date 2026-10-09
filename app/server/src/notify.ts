@@ -11,7 +11,7 @@ type TaskRow = typeof tasks.$inferSelect;
 export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: string) => string) {
   const deliver = (to: string[], kind: string, taskId: string | null, title: string, body: string, tag: string) => {
     deliverInbox(db, bus, to, kind, taskId, body ? `${title}: ${body}` : title);
-    return push.send(to, title, body, tag);
+    return push.send(to, title, body, tag, taskId ? `/?t=${taskId}` : "");
   };
   return {
     newTask: (t: TaskRow) =>
