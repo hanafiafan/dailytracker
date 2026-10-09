@@ -14,8 +14,8 @@ export function setup() {
   const env = { GOOGLE_CLIENT_ID: "cid", OWNER_EMAIL: OWNER, PUBLIC_URL: "http://localhost/", DATA_DIR: "", PORT: 0, HOST: "", WEB_DIR: "", ALLOW_DEV_LOGIN: false };
   const bus = createBus();
   const push = createPush(db, OWNER, env.PUBLIC_URL);
-  const sent: { to: string[]; title: string }[] = [];
-  vi.spyOn(push, "send").mockImplementation(async (to, title) => { sent.push({ to: [...to], title }); });
+  const sent: { to: string[]; title: string; path: string }[] = [];
+  vi.spyOn(push, "send").mockImplementation(async (to, title, _body, _tag, path = "") => { sent.push({ to: [...to], title, path }); return { sent: 0, failed: 0 }; });
   const app = createApp({ db, env, push, bus, verifyGoogle: async cred => ({ email: cred.split(":")[1]!, name: "N", verified: true }) });
   const login = (email: string) => {
     db.insert(sessions).values({ tokenHash: createHash("sha256").update("tok-" + email).digest("hex"), email, name: email, exp: Date.now() + 1e7 }).onConflictDoNothing().run();

@@ -269,3 +269,31 @@ describe("equipment bookings and revisions", () => {
     expect((await json(await t.call("a@x.id", "GET", "/tasks"))).find((x: J) => x.id === id).revisions).toBe(2);
   });
 });
+
+describe("push devices", () => {
+  const sub = (n: string) => ({ endpoint: `https://fcm.googleapis.com/fcm/send/${n}`, keys: { p256dh: "p", auth: "a" } });
+  it("lists only my devices, removes one by id, and rate-limits the test message", async () => {
+    const t = setup();
+    expect((await t.call(null, "GET", "/push/devices")).status).toBe(401);
+    await t.call("a@x.id", "POST", "/push/subscribe", sub("one"));
+    await t.call("a@x.id", "POST", "/push/subscribe", sub("two"));
+    await t.call("b@x.id", "POST", "/push/subscribe", sub("other"));
+    const mine = await json(await t.call("a@x.id", "GET", "/push/devices"));
+    expect(mine).toHaveLength(2);
+    expect(mine[0]).toMatchObject({ service: "fcm.googleapis.com" });
+    expect(JSON.stringify(mine)).not.toContain("/fcm/send/");
+    expect((await t.call("b@x.id", "DELETE", `/push/devices/${mine[0].id}`)).status).toBe(200); // someone else's id: nothing happens
+    expect((await json(await t.call("a@x.id", "GET", "/push/devices"))).length).toBe(2);
+    await t.call("a@x.id", "DELETE", `/push/devices/${mine[0].id}`);
+    expect((await json(await t.call("a@x.id", "GET", "/push/devices"))).length).toBe(1);
+    expect((await t.call("a@x.id", "POST", "/push/test")).status).toBe(200);
+    expect((await t.call("a@x.id", "POST", "/push/test")).status).toBe(429);
+    expect(t.sent.some(s => s.to.includes("a@x.id") && s.title === "Notifikasi uji")).toBe(true);
+  });
+  it("puts a deep link to the task in every task notification", async () => {
+    const t = setup();
+    const id = (await json(await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Tautan" }))).ids[0] as string;
+    await new Promise(r => setTimeout(r, 20));
+    expect(t.sent.some(s => s.to.includes("a@x.id") && s.path === `/?t=${id}`)).toBe(true);
+  });
+});
