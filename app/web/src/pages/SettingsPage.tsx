@@ -38,7 +38,7 @@ export function SettingsPage() {
             <div className="seg" role="group" aria-label="Tema"><button aria-pressed={theme === "light"} onClick={() => pick("light")}>Terang</button><button aria-pressed={theme === "dark"} onClick={() => pick("dark")}>Gelap</button></div>
             <p className="muted" style={{ fontSize: ".8rem", marginTop: 8 }}>Pilihan disimpan di browser ini.</p>
           </section>
-          <section className="surface"><div className="surface-h"><h2>Pintasan keyboard</h2></div>
+          <section className="surface hide-touch"><div className="surface-h"><h2>Pintasan keyboard</h2></div>
             <ul className="keys">{[["Ctrl/⌘ + K", "Cari dan perintah"], ["/", "Cari"], ["N", "Tugas baru"], ["G lalu D", "Dasbor"], ["G lalu P", "Papan"], ["G lalu L", "Daftar"], ["G lalu K", "Kalender"], ["G lalu Y", "Proyek"], ["G lalu A", "Alat & studio"], ["G lalu I", "Izin & cuti"], ["G lalu R", "Laporan"], ["G lalu H", "Riwayat"]].map(([k, v]) => <li key={k}><kbd>{k}</kbd><span>{v}</span></li>)}</ul>
           </section>
           <InstallCard />
