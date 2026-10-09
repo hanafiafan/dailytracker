@@ -22,8 +22,8 @@ export function setup() {
     return { cookie: "th_session=tok-" + email };
   };
   const call = (as: string | null, method: string, path: string, body?: unknown, extra: Record<string, string> = {}) => app.request("/api" + path, {
-    method, headers: { "x-app": "1", ...(as ? login(as) : {}), ...(body !== undefined && !(body instanceof FormData) && !(body instanceof Uint8Array) ? { "content-type": "application/json" } : {}), ...extra },
-    body: body === undefined ? undefined : body instanceof FormData || body instanceof Uint8Array ? body as BodyInit : JSON.stringify(body),
+    method, headers: { "x-app": "1", ...(as ? login(as) : {}), ...(body !== undefined && !(body instanceof FormData) && !(body instanceof Uint8Array) && !(body instanceof URLSearchParams) ? { "content-type": "application/json" } : {}), ...extra },
+    body: body === undefined ? undefined : body instanceof FormData || body instanceof Uint8Array || body instanceof URLSearchParams ? body as BodyInit : JSON.stringify(body),
   });
   db.insert(members).values([
     { email: "vero@x.id", name: "Vero", isAdmin: true, sortOrder: 1 },

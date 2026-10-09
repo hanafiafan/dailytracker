@@ -129,3 +129,20 @@ describe("browser headers", () => {
     expect(r.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
   });
 });
+
+describe("sign-in by redirect (no popup)", () => {
+  const form = (o: Record<string, string>) => new URLSearchParams(o);
+  it("accepts the token only when state matches the cookie, and never leaves a session behind otherwise", async () => {
+    const t = setup();
+    const ok = await t.call(null, "POST", "/auth/google-redirect", form({ id_token: "tok:a@x.id", state: "s1" }), { cookie: "th_oauth=s1" });
+    expect(ok.status).toBe(302);
+    expect(ok.headers.get("location")).toBe("/");
+    expect(ok.headers.get("set-cookie")).toContain("th_session=");
+    const bad = await t.call(null, "POST", "/auth/google-redirect", form({ id_token: "tok:a@x.id", state: "other" }), { cookie: "th_oauth=s1" });
+    expect(bad.headers.get("location")).toBe("/?e=login");
+    expect(bad.headers.get("set-cookie") ?? "").not.toContain("th_session=");
+    const none = await t.call(null, "POST", "/auth/google-redirect", form({ id_token: "tok:a@x.id", state: "s1" }));
+    expect(none.headers.get("location")).toBe("/?e=login");
+    expect((await t.call(null, "POST", "/auth/google-redirect", form({ state: "s1" }), { cookie: "th_oauth=s1" })).headers.get("location")).toBe("/?e=login");
+  });
+});

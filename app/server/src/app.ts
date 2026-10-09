@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { deleteCookie, getCookie } from "hono/cookie";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
@@ -36,7 +37,7 @@ export function createApp(deps: Deps) {
     // No request needs more than a compressed photo (about 1.5 MB); anything bigger is refused before it is read into memory.
     .use(bodyLimit({ maxSize: 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) }))
     // Every write must carry this header: cross-site forms and images cannot add it.
-    .use(async (c, next) => c.req.method !== "GET" && c.req.header("x-app") !== "1" ? c.json({ error: "bad request" }, 400) : next())
+    .use(async (c, next) => c.req.method !== "GET" && c.req.path !== "/api/auth/google-redirect" && c.req.header("x-app") !== "1" ? c.json({ error: "bad request" }, 400) : next())
     .get("/config", c => c.json({ googleClientId: env.GOOGLE_CLIENT_ID, vapidPublicKey: push.publicKey }))
     .post("/auth/google", zValidator("json", z.object({ credential: z.string().min(10) })), async c => {
       try {
@@ -45,6 +46,20 @@ export function createApp(deps: Deps) {
         startSession(c, deps, id.email.toLowerCase(), id.name);
         return c.json({ ok: true });
       } catch (e) { console.warn("login", (e as Error).message); return c.json({ error: "Login Google ditolak" }, 401); }
+    })
+    // Sign-in without a popup (iPhone/Safari): Google sends the browser back here with the ID token in a form post.
+    // The "state" value we put in a cookie before leaving must come back unchanged, which stops someone else's login being forced on you.
+    .post("/auth/google-redirect", async c => {
+      try {
+        const body = await c.req.parseBody(), state = String(body.state ?? ""), token = String(body.id_token ?? "");
+        const mine = getCookie(c, "th_oauth");
+        deleteCookie(c, "th_oauth", { path: "/api/auth" });
+        if (!token || !state || state !== mine) return c.redirect("/?e=login");
+        const id = await deps.verifyGoogle(token);
+        if (!id.verified) return c.redirect("/?e=login");
+        startSession(c, deps, id.email.toLowerCase(), id.name);
+        return c.redirect("/");
+      } catch (e) { console.warn("login redirect", (e as Error).message); return c.redirect("/?e=login"); }
     })
     // Local preview only: sign in as any registered email without Google. Refused unless explicitly enabled AND served from localhost.
     .post("/auth/dev", zValidator("json", z.object({ email: z.string().email() })), c => {
