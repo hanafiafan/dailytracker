@@ -162,6 +162,9 @@ export const leaves = sqliteTable("leaves", {
   from: text("from_date").notNull(),
   to: text("to_date").notNull(),
   reason: text("reason").notNull().default(""),
+  /** Supporting evidence: a link and/or a photo (doctor's note, invitation, ...). */
+  proofLink: text("proof_link"),
+  proofPhoto: blob("proof_photo", { mode: "buffer" }),
   status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   decidedBy: text("decided_by"),
   decidedAt: integer("decided_at"),
@@ -197,3 +200,31 @@ export const bookings = sqliteTable("bookings", {
   note: text("note").notNull().default(""),
   createdAt: integer("created_at").notNull(),
 }, t => [index("bookings_slot").on(t.resourceId, t.date), index("bookings_date").on(t.date)]);
+
+/** Team chat. A channel is "general" or "p-<projectId>"; there is no channels table, access is worked out from the project. */
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey(),
+  channel: text("channel").notNull(),
+  email: text("email").notNull(),
+  text: text("text").notNull().default(""),
+  /** Things the message points at: people, tasks, projects. Titles are looked up per viewer, never stored. */
+  refs: text("refs", { mode: "json" }).$type<{ type: "member" | "task" | "project"; id: string }[]>().notNull().default([]),
+  createdAt: integer("created_at").notNull(),
+  deletedAt: integer("deleted_at"),
+}, t => [index("messages_channel").on(t.channel, t.createdAt)]);
+export const attachments = sqliteTable("attachments", {
+  id: text("id").primaryKey(),
+  messageId: text("message_id").references(() => messages.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  createdAt: integer("created_at").notNull(),
+}, t => [index("attachments_message").on(t.messageId)]);
+export const channelReads = sqliteTable("channel_reads", {
+  email: text("email").notNull(),
+  channel: text("channel").notNull(),
+  readAt: integer("read_at").notNull(),
+}, t => [primaryKey({ columns: [t.email, t.channel] })]);

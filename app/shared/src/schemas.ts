@@ -56,12 +56,15 @@ export const projectClose = z.object({
 export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.enum(COLORS).default("gray") });
 export const LEAVE_KINDS = ["cuti", "izin", "sakit"] as const;
 export type LeaveKind = (typeof LEAVE_KINDS)[number];
-export const leaveCreate = z.object({ kind: z.enum(LEAVE_KINDS), from: date, to: date, reason: z.string().trim().max(200).default("") });
+export const httpUrl = z.string().trim().url().max(500).refine(u => /^https?:\/\//i.test(u), "Hanya tautan http(s)");
+export const leaveCreate = z.object({ kind: z.enum(LEAVE_KINDS), from: date, to: date, reason: z.string().trim().max(200).default(""), proofLink: httpUrl.nullish() });
 export const leaveDecision = z.object({ status: z.enum(["approved", "rejected"]) });
 export const RESOURCE_KINDS = ["alat", "studio", "lokasi"] as const;
 export type ResourceKind = (typeof RESOURCE_KINDS)[number];
 export const resourceInput = z.object({ name: z.string().trim().min(1).max(60), kind: z.enum(RESOURCE_KINDS).default("alat"), note: z.string().trim().max(200).default(""), archived: z.boolean().default(false) });
 export const bookingCreate = z.object({ resourceId: z.string().min(1), date, start: hm, end: hm, taskId: z.string().nullish(), note: z.string().trim().max(200).default("") });
+export const ChatRef = z.object({ type: z.enum(["member", "task", "project"]), id: z.string().min(1).max(80) });
+export const messageCreate = z.object({ text: z.string().trim().max(2000).default(""), refs: z.array(ChatRef).max(20).default([]), attachmentIds: z.array(z.string()).max(6).default([]) });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
 export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
@@ -101,7 +104,7 @@ export interface RoutineDTO { id: string; email: string; title: string; note: st
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
 export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
 export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null }
-export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }
+export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; proofLink: string | null; hasPhoto: boolean; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }
 export interface TimeEntryDTO { id: string; taskId: string; email: string; startedAt: number; endedAt: number | null }
 export interface RunningTimerDTO { entry: TimeEntryDTO; taskTitle: string }
 export interface TimeReportDTO {
@@ -117,3 +120,7 @@ export interface ProjectReportDTO {
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }
+export interface ChatRefDTO { type: "member" | "task" | "project"; id: string; label: string; ok: boolean }
+export interface AttachmentDTO { id: string; name: string; mime: string; size: number }
+export interface MessageDTO { id: string; channel: string; email: string; name: string; text: string; refs: ChatRefDTO[]; attachments: AttachmentDTO[]; createdAt: number; deleted: boolean }
+export interface ChannelDTO { id: string; kind: "general" | "project"; name: string; projectId: string | null; color: Color | null; unread: number; last: { text: string; name: string; at: number } | null }
