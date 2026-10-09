@@ -128,6 +128,8 @@ export function createApp(deps: Deps) {
     .use(secureHeaders({
       strictTransportSecurity: env.PUBLIC_URL.startsWith("https:") ? "max-age=31536000" : false,
       xFrameOptions: "DENY", referrerPolicy: "same-origin",
+      // Google Sign-In opens a popup that talks back to this page: "same-origin" would cut that link and leave the popup blank.
+      crossOriginOpenerPolicy: "same-origin-allow-popups",
       permissionsPolicy: { camera: [], microphone: [], geolocation: [], payment: [] },
       contentSecurityPolicy: {
         defaultSrc: ["'self'"], scriptSrc: ["'self'", "https://accounts.google.com/gsi/client"], styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com/gsi/style"],

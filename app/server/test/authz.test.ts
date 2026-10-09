@@ -118,3 +118,14 @@ describe("request size", () => {
     expect((await t.call("a@x.id", "PUT", "/team/a@x.id/photo", new Uint8Array(10))).status).toBe(400);
   });
 });
+
+describe("browser headers", () => {
+  it("keeps the Google Sign-In popup working and forbids framing", async () => {
+    const t = setup();
+    const r = await t.call(null, "GET", "/config");
+    expect(r.headers.get("cross-origin-opener-policy")).toBe("same-origin-allow-popups");
+    expect(r.headers.get("x-frame-options")).toBe("DENY");
+    expect(r.headers.get("content-security-policy")).toContain("https://accounts.google.com/gsi/client");
+    expect(r.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+  });
+});
