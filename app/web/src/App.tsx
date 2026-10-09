@@ -20,6 +20,7 @@ const ProjectsPage = lazy(() => import("./pages/ProjectsPage").then(m => ({ defa
 const HistoryPage = lazy(() => import("./pages/HistoryPage").then(m => ({ default: m.HistoryPage })));
 const LeavePage = lazy(() => import("./pages/LeavePage").then(m => ({ default: m.LeavePage })));
 const ResourcesPage = lazy(() => import("./pages/ResourcesPage").then(m => ({ default: m.ResourcesPage })));
+const InboxPage = lazy(() => import("./pages/InboxPage").then(m => ({ default: m.InboxPage })));
 const TasksPage = lazy(() => import("./pages/TasksPage").then(m => ({ default: m.TasksPage })));
 const Board = lazy(() => import("./pages/Board").then(m => ({ default: m.Board })));
 const CalendarPage = lazy(() => import("./pages/CalendarPage").then(m => ({ default: m.CalendarPage })));
@@ -56,7 +57,7 @@ function Signed({ me }: { me: MeDTO }) {
   useEffect(() => { if (pushSupported() && Notification.permission === "granted") registerPush().catch(e => console.warn("push", e)); }, [me.email]);
   useEffect(() => {
     let g = 0; // time of the last "g": the next key picks a page
-    const pages: Record<string, string> = { d: "/", p: "/papan", l: "/daftar", k: "/kalender", y: "/proyek", t: "/tim", r: "/laporan", h: "/riwayat", i: "/izin", a: "/alat" };
+    const pages: Record<string, string> = { d: "/", p: "/papan", l: "/daftar", k: "/kalender", y: "/proyek", t: "/tim", r: "/laporan", h: "/riwayat", i: "/izin", a: "/alat", m: "/inbox" };
     const on = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); return; }
       const el = e.target as HTMLElement;
@@ -107,6 +108,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/riwayat"><HistoryPage /></Route>
               <Route path="/struktur"><Redirect to="/tim" /></Route>
               <Route path="/izin"><LeavePage /></Route>
+              <Route path="/inbox"><InboxPage /></Route>
               <Route path="/alat"><ResourcesPage /></Route>
               <Route path="/laporan"><ReportsPage /></Route>
               <Route path="/pengaturan"><SettingsPage /></Route>

@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { BookingDTO, ProjectReportDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
+import type { ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
-  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const, timer: ["timer"] as const, resources: ["resources"] as const,
+  meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const, timer: ["timer"] as const, chat: ["chat"] as const, resources: ["resources"] as const,
 };
 
 /** null = not signed in. */
@@ -40,6 +40,8 @@ export const useTimeReport = (from: string, to: string) => useQuery({ queryKey: 
 export const useProjectReport = (id: string) => useQuery({ queryKey: [...keys.analytics, "project", id], queryFn: () => ok(api.reports.project[":id"].$get({ param: { id } })) as unknown as Promise<ProjectReportDTO> });
 export const useResources = (enabled: boolean) => useQuery({ queryKey: [...keys.resources, "list"], enabled, queryFn: () => ok(api.resources.$get()) as unknown as Promise<ResourceDTO[]> });
 export const useBookings = (from: string, to: string) => useQuery({ queryKey: [...keys.resources, "bookings", from, to], placeholderData: prev => prev, queryFn: () => ok(api.bookings.$get({ query: { from, to } })) as unknown as Promise<BookingDTO[]> });
+export const useChannels = (enabled = true) => useQuery({ queryKey: [...keys.chat, "channels"], enabled, queryFn: () => ok(api.chat.channels.$get()) as unknown as Promise<ChannelDTO[]> });
+export const useMessages = (channel: string | null) => useQuery({ queryKey: [...keys.chat, "messages", channel], enabled: !!channel, placeholderData: prev => prev, queryFn: () => ok(api.chat.channels[":id"].messages.$get({ param: { id: channel! } })) as unknown as Promise<{ messages: MessageDTO[]; more: boolean }> });
 export const useMeta = (enabled: boolean) => useQuery({ queryKey: keys.meta, enabled, queryFn: () => ok(api.meta.$get()) as unknown as Promise<MetaDTO> });
 export const useInbox = (enabled: boolean) => useQuery({
   queryKey: keys.inbox, enabled,
@@ -69,6 +71,7 @@ export function useLive(qc: QueryClient, active: boolean) {
       else if (topic === "inbox") void qc.invalidateQueries({ queryKey: keys.inbox });
       else if (topic === "team") void qc.invalidateQueries({ queryKey: keys.team });
       else if (topic === "leaves") void qc.invalidateQueries({ queryKey: keys.leaves });
+      else if (topic === "chat") void qc.invalidateQueries({ queryKey: keys.chat });
       else if (topic === "resources") void qc.invalidateQueries({ queryKey: keys.resources });
       else if (topic === "links") void qc.invalidateQueries({ queryKey: keys.links });
     });
