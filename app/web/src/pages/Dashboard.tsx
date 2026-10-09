@@ -22,6 +22,8 @@ import { QuickAddSelf } from "../components/QuickAddSelf";
 import { Attention, attention } from "../components/Attention";
 import { Achievements } from "../components/Achievements";
 import { Bento } from "../components/Bento";
+import { MobileHome } from "../components/MobileHome";
+import { useIsMobile } from "../lib/useMedia";
 import { fmtTime } from "../lib/format";
 
 const now = () => Date.now();
@@ -62,6 +64,7 @@ function Upcoming({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
 function ManagerDashboard() {
   const { team, policy, me, member } = useViewer();
   const { date, setDate, newTask } = useUi();
+  const mobile = useIsMobile();
   const [tab, setTab] = useState("orang");
   const [unit, setUnit] = useState("");
   const [view, setView] = useState<"tabel" | "kartu">(() => { try { return localStorage.getItem("th-people-view") === "kartu" ? "kartu" : "tabel"; } catch { return "tabel"; } });
@@ -88,7 +91,9 @@ function ManagerDashboard() {
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
       {tab === "orang" && <><InstallCard /><NotifyCard manager /></>}
-      {tab === "orang" && <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />}
+      {tab === "orang" && (mobile
+        ? <MobileHome manager all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} attention={attn} onAttention={() => setTab("perhatian")} />
+        : <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />)}
       {tab === "orang" && <Links />}
       {tab === "orang" && idle.length > 0 && (
         <section className="warnbox" aria-label="Orang tanpa tugas">
@@ -127,6 +132,7 @@ function ManagerDashboard() {
 function MemberDashboard() {
   const { me, member } = useViewer();
   const { date, setDate } = useUi();
+  const mobile = useIsMobile();
   const [tab, setTab] = useState("hari");
   const m = member(me.email)!;
   const tq = useTasks(windowFrom(date, today()), true);
@@ -143,7 +149,7 @@ function MemberDashboard() {
     <Page title={<>Halo, <em>{m.name.split(" ")[0]}</em></>} sub={`${m.name} · ${m.role} · ${fmtLong(date)}`} dateNav
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
       {tab === "hari" && <><InstallCard /><NotifyCard manager={false} /></>}
-      {tab === "hari" && <Bento all={mine} day={all} date={date} people={[]} />}
+      {tab === "hari" && (mobile ? <MobileHome manager={false} all={mine} day={all} date={date} people={[]} /> : <Bento all={mine} day={all} date={date} people={[]} />)}
       {tab === "hari" && todayView && loaded && isIdle(mine) && (
         <section className="warnbox" role="status">
           <span className="warnico" aria-hidden="true">!</span>

@@ -105,7 +105,7 @@ function Goals({ all }: { all: TaskDTO[] }) {
   );
 }
 
-function Flow({ all, date }: { all: TaskDTO[]; date: string }) {
+export function Flow({ all, date }: { all: TaskDTO[]; date: string }) {
   const { setDate } = useUi();
   const [span, setSpan] = useState<7 | 14>(7);
   const [hov, setHov] = useState<number | null>(null);
