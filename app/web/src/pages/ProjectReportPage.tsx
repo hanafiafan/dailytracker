@@ -159,7 +159,7 @@ export function ProjectReportPage() {
   const dates = tasks.map(t => t.date).sort(), who = [...new Set(tasks.map(t => t.email))].map(e => member(e)).filter(Boolean);
   const progress = pct(s.done, s.total);
   return (
-    <Page noNew title={p.name} sub={<Link href="/proyek" className="plink" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><ArrowLeft size={14} />Semua proyek</Link>}
+    <Page noNew back="/proyek" title={p.name} sub={<Link href="/proyek" className="plink back-desktop" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><ArrowLeft size={14} />Semua proyek</Link>}
       tabs={[{ id: "ringkas", label: "Ringkasan" }, { id: "tugas", label: `Tugas (${s.total})` }, { id: "bukti", label: "Bukti" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={<button className="btn small" onClick={() => window.print()}><Printer size={14} />Cetak</button>}>
       <section className="projhead" data-c={p.color}>

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { BellRing, Bookmark, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
+import { BellRing, Bookmark, MoreHorizontal, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { loadTemplates, saveTemplates } from "../lib/templates";
@@ -14,6 +14,8 @@ import { TaskTimer } from "./TimeTracker";
 import { ProofPanel } from "./ProofPanel";
 import { TimeTags } from "./TaskTags";
 import { Avatar, ConfirmButton } from "./ui";
+import { Sheet } from "./Sheet";
+import { useIsMobile } from "../lib/useMedia";
 
 const ICON: Record<string, ReactNode> = { created: <Sparkles size={14} />, status: <CheckCircle2 size={14} />, edited: <Pencil size={14} />, assigned: <UserRound size={14} />, returned: <Undo2 size={14} />, comment: <MessageSquare size={14} />, subtask: <ListChecks size={14} /> };
 
@@ -39,6 +41,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const a = useTaskActions(t);
   const qc = useQueryClient();
   const [proofOpen, setProofOpen] = useState(false);
+  const mobile = useIsMobile(), [more, setMore] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [sub, setSub] = useState("");
   const canEdit = policy.canManage(t.email) || (me.email === t.email && !!me.member && t.by === "self");
@@ -60,7 +63,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <div style={{ flex: 1, display: "grid", gap: 8 }}>
           <div><button className={"status " + t.status} onClick={cycle} disabled={!work} aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button></div>
           {canEdit
-            ? <textarea className="input titlefield" rows={3} defaultValue={t.title} maxLength={120} onBlur={onBlur("title")} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} aria-label="Judul tugas" />
+            ? <textarea className="input titlefield" rows={2} defaultValue={t.title} maxLength={120} onBlur={onBlur("title")} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} aria-label="Judul tugas" />
             : <h2>{t.title}</h2>}
           <div className="meta"><TimeTags t={t} />{t.routineId && <span className="tag rut">Rutin</span>}{t.by === "self" && <span className="tag off">Buatan sendiri</span>}{t.fromAdmin && <span className="tag off" title={"Dari " + t.fromAdmin}>Dari {t.fromAdmin}</span>}</div>
         </div>
@@ -151,11 +154,20 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
       </div>
       <footer className="drawer-f">
         {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (manager ? a.setStatus.mutate("done") : setProofOpen(true))}>Tandai selesai</button>}
+        {mobile ? <><button className="btn" onClick={() => setMore(true)}><MoreHorizontal size={16} />Lainnya</button>
+          <Sheet open={more} onClose={() => setMore(false)} title="Aksi tugas"><div className="alist sheetacts" onClick={() => setMore(false)}>
         {manager && t.status !== "done" && t.email !== me.email && <button className="btn" onClick={() => a.nudge.mutate()} disabled={a.nudge.isPending}><BellRing size={14} />Ingatkan</button>}
         {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
         {(manager || me.member) && <button className="btn" onClick={() => { newTask({ emails: [t.email], title: t.title.slice(0, 108) + " (salinan)", note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }); closeTask(); }}><Copy size={14} />Duplikat</button>}
         <button className="btn" onClick={() => { saveTemplates([{ title: t.title, note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }, ...loadTemplates().filter(x => x.title !== t.title)]); toast.success("Disimpan sebagai templat"); }}><Bookmark size={14} />Simpan templat</button>
         {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
+          </div></Sheet></> : <>
+        {manager && t.status !== "done" && t.email !== me.email && <button className="btn" onClick={() => a.nudge.mutate()} disabled={a.nudge.isPending}><BellRing size={14} />Ingatkan</button>}
+        {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+        {(manager || me.member) && <button className="btn" onClick={() => { newTask({ emails: [t.email], title: t.title.slice(0, 108) + " (salinan)", note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }); closeTask(); }}><Copy size={14} />Duplikat</button>}
+        <button className="btn" onClick={() => { saveTemplates([{ title: t.title, note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }, ...loadTemplates().filter(x => x.title !== t.title)]); toast.success("Disimpan sebagai templat"); }}><Bookmark size={14} />Simpan templat</button>
+        {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
+        </>}
       </footer>
       {lightbox && photo && <div className="lightbox" role="dialog" onClick={() => setLightbox(false)}><img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup"><X size={18} /></button></div>}
     </>

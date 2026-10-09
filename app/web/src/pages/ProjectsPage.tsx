@@ -8,6 +8,8 @@ import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
 import { today } from "../lib/format";
 import { useLocation } from "wouter";
+import { ArrowUpRight } from "lucide-react";
+import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useTasks, windowFrom } from "../lib/queries";
 import { useUi, useViewer } from "../lib/viewer";
@@ -60,6 +62,7 @@ export function ProjectsPage() {
   const { date } = useUi();
   const [tab, setTab] = useState("ringkas"), [closing, setClosing] = useState<string | null>(null);
   const [, go] = useLocation();
+  const mobile = useIsMobile();
   const reopen = useAction((id: string) => ok(api.meta.projects[":id"].reopen.$post({ param: { id } })), { done: "Proyek dibuka kembali", refresh: [keys.meta] });
   const tq = useTasks(windowFrom(date, today()), true);
   const rows = useMemo(() => {
@@ -74,7 +77,13 @@ export function ProjectsPage() {
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
       tabs={[{ id: "ringkas", label: "Ringkasan" }, { id: "waktu", label: "Garis waktu" }, ...(policy.isManager ? [{ id: "kelola", label: "Kelola proyek & label" }] : [])]} tab={tab} onTab={setTab}>
-      {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length ? (
+      {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length && mobile ? (
+        <div className="mpgrid">{rows.map(({ p, total, late, open, pct }, i) => (
+          <button key={p.id} className={"mproj " + (p.closedAt ? "" : i % 3 === 0 ? "lime" : i % 3 === 1 ? "dark" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
+            <span className="mt-go"><ArrowUpRight size={16} /></span><small className="clamp2">{p.name}{p.closedAt ? " · selesai" : ""}</small><b>{pct}<span>%</span></b>
+            <em>{open} terbuka · {total} tugas{late ? ` · ${late} terlambat` : ""}</em><span className="mprog"><i style={{ width: `${pct}%` }} /></span>
+          </button>))}</div>
+      ) : rows.length ? (
         <div className="pcards">
           {rows.map(({ p, total, done, late, open, pct, who }) => (
             <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
