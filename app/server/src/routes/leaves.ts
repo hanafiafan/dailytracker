@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { leaveCreate, leaveDecision } from "@shared/schemas";
 import { addDays, wib } from "@shared/time";
 import { leaves } from "../db/schema.js";
@@ -12,11 +12,15 @@ import { logActivity } from "../services.js";
 const MAX_DAYS = 60;
 const span = (a: string, b: string) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 86_400_000) + 1;
 
+const { proofPhoto: _photo, ...leaveCols } = getTableColumns(leaves);
+/** Leave columns without the photo bytes, plus whether a photo exists. */
+const listCols = { ...leaveCols, hasPhoto: sql<boolean>`proof_photo is not null` };
+
 // Leave requests: a member asks for days off; the managers of that person decide.
 export const leaveRoutes = ({ db, bus }: Deps, notify: Notify) => new Hono<AppEnv>()
   .get("/", c => {
     const u = c.var.user;
-    return c.json(db.select().from(leaves).orderBy(desc(leaves.from)).limit(500).all().filter(l => l.email === u.email || u.policy.canManage(l.email)).map(toLeave));
+    return c.json(db.select(listCols).from(leaves).orderBy(desc(leaves.from)).limit(500).all().filter(l => l.email === u.email || u.policy.canManage(l.email)).map(toLeave));
   })
   .post("/", zValidator("json", leaveCreate), c => {
     const u = c.var.user, b = c.req.valid("json");
@@ -26,12 +30,28 @@ export const leaveRoutes = ({ db, bus }: Deps, notify: Notify) => new Hono<AppEn
     if (span(b.from, b.to) > MAX_DAYS) return c.json({ error: `Maksimal ${MAX_DAYS} hari sekali ajuan.` }, 400);
     const clash = db.select().from(leaves).where(eq(leaves.email, u.email)).all().some(l => l.status !== "rejected" && l.from <= b.to && l.to >= b.from);
     if (clash) return c.json({ error: "Sudah ada pengajuan pada tanggal itu." }, 409);
-    const row = { id: newId(), email: u.email, ...b, status: "pending" as const, createdAt: Date.now() };
+    const row = { id: newId(), email: u.email, ...b, proofLink: b.proofLink ?? null, status: "pending" as const, createdAt: Date.now() };
     db.insert(leaves).values(row).run();
     logActivity(db, u, null, "leave", `mengajukan ${b.kind} ${b.from === b.to ? b.from : `${b.from} s/d ${b.to}`}`);
     bus.emit("leaves");
     void notify.leaveRequested(u.email, u.member.name, b.kind, b.from, b.to);
-    return c.json(toLeave({ ...row, decidedBy: null, decidedAt: null }), 201);
+    return c.json(toLeave({ ...row, decidedBy: null, decidedAt: null, hasPhoto: false }), 201);
+  })
+  // Evidence photo (JPEG, already shrunk by the browser). Only the requester, and only while the request is still pending.
+  .put("/:id/proof", async c => {
+    const u = c.var.user, l = db.select().from(leaves).where(eq(leaves.id, c.req.param("id"))).get();
+    if (!l) return c.json({ error: "not found" }, 404);
+    if (l.email !== u.email || l.status !== "pending") return c.json({ error: "forbidden" }, 403);
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    if (!(bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) || bytes.length > 900_000) return c.json({ error: "Foto harus JPG dan kurang dari 900 KB" }, 400);
+    db.update(leaves).set({ proofPhoto: Buffer.from(bytes) }).where(eq(leaves.id, l.id)).run();
+    bus.emit("leaves");
+    return c.json({ ok: true });
+  })
+  .get("/:id/proof", c => {
+    const u = c.var.user, l = db.select().from(leaves).where(eq(leaves.id, c.req.param("id"))).get();
+    if (!l || !l.proofPhoto || !(l.email === u.email || u.policy.canManage(l.email))) return c.json({ error: "not found" }, 404);
+    return c.body(new Uint8Array(l.proofPhoto), 200, { "content-type": "image/jpeg", "cache-control": "private, max-age=3600" });
   })
   .patch("/:id/decision", zValidator("json", leaveDecision), c => {
     const u = c.var.user, l = db.select().from(leaves).where(eq(leaves.id, c.req.param("id"))).get();
