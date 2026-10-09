@@ -32,3 +32,6 @@ export const requireUser = (deps: Deps) => createMiddleware<AppEnv>(async (c, ne
   c.set("user", { email: s.email, name: s.name, owner, member: team.find(m => m.email === s.email) ?? null, policy: makePolicy(s.email, owner, team) });
   await next();
 });
+
+/** Signed in with Google is not enough: the data belongs to the team, so only the owner and listed members get past this. */
+export const requireTeam = createMiddleware<AppEnv>(async (c, next) => (c.var.user.owner || c.var.user.member ? next() : c.json({ error: "forbidden" }, 403)));
