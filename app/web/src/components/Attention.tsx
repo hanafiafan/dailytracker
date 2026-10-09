@@ -58,7 +58,8 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
           <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h2>Pengajuan izin & cuti</h2><span className="muted">{waiting.length}</span></div>
           <ul className="alist">{waiting.slice(0, 6).map(l => { const m = member(l.email); return (
             <li key={l.id} className="arow">{m ? <Avatar m={m} /> : <span className="avatar">?</span>}
-              <div style={{ minWidth: 0 }}><b className="clamp1">{m?.name ?? l.email} · {LEAVE_LABEL[l.kind]}</b><small className="muted clamp1">{l.from === l.to ? fmtShort(l.from) : `${fmtShort(l.from)} – ${fmtShort(l.to)}`}{l.reason ? ` · ${l.reason}` : ""}</small></div>
+              <div style={{ minWidth: 0 }}><b className="clamp1">{m?.name ?? l.email} · {LEAVE_LABEL[l.kind]}</b><small className="muted clamp1">{l.from === l.to ? fmtShort(l.from) : `${fmtShort(l.from)} – ${fmtShort(l.to)}`}{l.reason ? ` · ${l.reason}` : ""}{l.proofLink || l.hasPhoto ? " · ada bukti" : ""}</small>
+                {(l.proofLink || l.hasPhoto) && <span className="chips" style={{ marginTop: 4 }}>{l.proofLink && <a className="chip" href={l.proofLink} target="_blank" rel="noopener noreferrer">Buka tautan</a>}{l.hasPhoto && <a className="chip" href={`/api/leaves/${l.id}/proof`} target="_blank" rel="noopener noreferrer">Lihat foto</a>}</span>}</div>
               <div className="chips" style={{ flexWrap: "nowrap" }}><button className="btn small primary" disabled={decide.isPending} onClick={() => decide.mutate({ id: l.id, status: "approved" })}>Setujui</button><button className="btn small" disabled={decide.isPending} onClick={() => decide.mutate({ id: l.id, status: "rejected" })}>Tolak</button></div></li>); })}</ul>
         </section>
       )}
