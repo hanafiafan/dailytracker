@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 import { Toaster } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,18 +14,18 @@ import { today } from "./lib/format";
 import { registerPush, pushSupported } from "./lib/push";
 import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
 import { UiContext, ViewerContext, type NewTaskPrefill, type Ui, type Viewer } from "./lib/viewer";
-import { ProjectReportPage } from "./pages/ProjectReportPage";
-import { ProjectsPage } from "./pages/ProjectsPage";
-import { HistoryPage } from "./pages/HistoryPage";
-import { LeavePage } from "./pages/LeavePage";
-import { ResourcesPage } from "./pages/ResourcesPage";
-import { TasksPage } from "./pages/TasksPage";
-import { Board } from "./pages/Board";
-import { CalendarPage } from "./pages/CalendarPage";
+const ProjectReportPage = lazy(() => import("./pages/ProjectReportPage").then(m => ({ default: m.ProjectReportPage })));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage").then(m => ({ default: m.ProjectsPage })));
+const HistoryPage = lazy(() => import("./pages/HistoryPage").then(m => ({ default: m.HistoryPage })));
+const LeavePage = lazy(() => import("./pages/LeavePage").then(m => ({ default: m.LeavePage })));
+const ResourcesPage = lazy(() => import("./pages/ResourcesPage").then(m => ({ default: m.ResourcesPage })));
+const TasksPage = lazy(() => import("./pages/TasksPage").then(m => ({ default: m.TasksPage })));
+const Board = lazy(() => import("./pages/Board").then(m => ({ default: m.Board })));
+const CalendarPage = lazy(() => import("./pages/CalendarPage").then(m => ({ default: m.CalendarPage })));
 import { Dashboard } from "./pages/Dashboard";
-import { ReportsPage } from "./pages/ReportsPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { TeamPage } from "./pages/TeamPage";
+const ReportsPage = lazy(() => import("./pages/ReportsPage").then(m => ({ default: m.ReportsPage })));
+const SettingsPage = lazy(() => import("./pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
+const TeamPage = lazy(() => import("./pages/TeamPage").then(m => ({ default: m.TeamPage })));
 import { api, ok } from "./lib/api";
 import { keys } from "./lib/queries";
 
@@ -94,6 +94,7 @@ function Signed({ me }: { me: MeDTO }) {
         <div className="shell">
           <TopNav />
           <main className="frame">
+            <Suspense fallback={<Loading />}>
             <Switch>
               <Route path="/"><Dashboard /></Route>
               <Route path="/papan"><Board /></Route>
@@ -110,6 +111,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/pengaturan"><SettingsPage /></Route>
               <Route><Redirect to="/" /></Route>
             </Switch>
+            </Suspense>
           </main>
         </div>
         {taskId && <TaskDrawer id={taskId} />}
