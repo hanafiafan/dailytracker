@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
 import { fmtShort, today } from "../lib/format";
 import { pushSupported, unregisterPush } from "../lib/push";
-import { keys, useInbox, useLeaves } from "../lib/queries";
+import { keys, useChannels, useInbox, useLeaves } from "../lib/queries";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
 import { RunningPill } from "./TimeTracker";
@@ -23,6 +23,7 @@ const NAV = [
   { to: "/kalender", label: "Kalender", Icon: CalendarDays },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban },
   { to: "/tim", label: "Tim", Icon: Users, manager: true },
+  { to: "/inbox", label: "Inbox", Icon: MessageSquare },
   { to: "/alat", label: "Alat", Icon: Camera },
   { to: "/izin", label: "Izin", Icon: CalendarOff },
   { to: "/laporan", label: "Laporan", Icon: BarChart3 },
@@ -37,6 +38,7 @@ export function TopNav() {
   const qc = useQueryClient();
   const m = member(me.email);
   const [menu, setMenu] = useState(false);
+  const msgs = (useChannels().data ?? []).reduce((s, c) => s + c.unread, 0);
   const navRef = useRef<HTMLElement>(null);
   useEffect(() => { navRef.current?.querySelector<HTMLElement>("[aria-current=page]")?.scrollIntoView({ inline: "center", block: "nearest" }); }, [loc]);
   const waiting = (useLeaves(true).data ?? []).filter(l => l.status === "pending" && l.email !== me.email && policy.canManage(l.email)).length;
@@ -49,14 +51,14 @@ export function TopNav() {
   }, [menu]);
   const mobile = useIsMobile();
   const out = logout;
-  if (mobile) return <MobileChrome waiting={waiting} out={out} />;
+  if (mobile) return <MobileChrome waiting={waiting} msgs={msgs} out={out} />;
   return (
     <header className="topnav">
       <div className="logo"><i><CheckCheck size={18} /></i><span className="t">Tugas Harian</span></div>
       <nav className="pillnav" aria-label="Menu utama" ref={navRef}>
         {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon }) => (
           <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
-            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}</a>
+            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot">{msgs > 99 ? "99+" : msgs}</i>}</a>
         ))}
       </nav>
       <div className="navtools">

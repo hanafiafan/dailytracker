@@ -4,9 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, ok } from "../lib/api";
 import { keys, useInbox } from "../lib/queries";
 import { useUi } from "../lib/viewer";
+import { useLocation } from "wouter";
 
 export function Bell_() {
   const { openTask } = useUi();
+  const [, go] = useLocation();
   const inbox = useInbox(true), qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -26,7 +28,7 @@ export function Bell_() {
         <div className="popover" role="dialog" aria-label="Notifikasi">
           <div className="surface-h" style={{ margin: "2px 6px" }}><b>Notifikasi</b>{unread > 0 && <button className="linkbtn" onClick={() => read()}>Tandai semua dibaca</button>}</div>
           {(inbox.data?.items ?? []).map(n => (
-            <button key={n.id} className={"notif" + (n.read ? "" : " unread")} onClick={() => { setOpen(false); void read([n.id]); if (n.taskId) openTask(n.taskId); }}>
+            <button key={n.id} className={"notif" + (n.read ? "" : " unread")} onClick={() => { setOpen(false); void read([n.id]); if (n.taskId) openTask(n.taskId); else if (n.kind === "chat") go("/inbox"); }}>
               <i /><span><span className="clamp3">{n.text}</span><small>{ago(n.at)}</small></span>
             </button>
           ))}

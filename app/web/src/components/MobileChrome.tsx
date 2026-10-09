@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2 } from "lucide-react";
+import { MessageSquare, ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2 } from "lucide-react";
 import { getTheme, toggleTheme } from "../lib/theme";
 import { useUi, useViewer } from "../lib/viewer";
 import { Bell_ } from "./Bell";
@@ -9,7 +9,8 @@ import { RunningPill } from "./TimeTracker";
 import { Avatar } from "./ui";
 
 const MORE = [
-  { to: "/daftar", label: "Daftar tugas", Icon: ListChecks, tone: "lime" },
+  { to: "/inbox", label: "Inbox", Icon: MessageSquare, tone: "lime" },
+  { to: "/daftar", label: "Daftar tugas", Icon: ListChecks, tone: "gray" },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban, tone: "dark" },
   { to: "/tim", label: "Tim", Icon: Users, manager: true, tone: "gray" },
   { to: "/alat", label: "Alat & studio", Icon: Camera, tone: "gray" },
@@ -20,7 +21,7 @@ const MORE = [
 ];
 
 /** Phone shell: round-button header and a floating bottom bar (Dasbor, Papan, + , Kalender, Menu). Everything else lives in the Menu sheet. */
-export function MobileChrome({ waiting, out }: { waiting: number; out: () => void }) {
+export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: number; out: () => void }) {
   const [loc, go] = useLocation();
   const { me, member, policy } = useViewer();
   const { openSearch, newTask } = useUi();
@@ -44,14 +45,14 @@ export function MobileChrome({ waiting, out }: { waiting: number; out: () => voi
         <Item to="/" label="Dasbor" Icon={LayoutDashboard} /><Item to="/papan" label="Papan" Icon={Columns3} />
         <button className="mfab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
         <Item to="/kalender" label="Kalender" Icon={CalendarDays} />
-        <button className={"mnav" + (inMore ? " on" : "")} onClick={() => setMenu(true)} aria-label="Menu lainnya"><Grid2x2 size={20} /><span>Menu</span>{waiting > 0 && <i className="navdot">{waiting}</i>}</button>
+        <button className={"mnav" + (inMore ? " on" : "")} onClick={() => setMenu(true)} aria-label="Menu lainnya"><Grid2x2 size={20} /><span>Menu</span>{waiting + msgs > 0 && <i className="navdot">{waiting + msgs > 99 ? "99+" : waiting + msgs}</i>}</button>
       </nav>
       <Sheet open={menu} onClose={() => setMenu(false)} title="Semua halaman">
         <div className="mtiles">
           {MORE.filter(x => !x.manager || policy.isManager).map(({ to, label, Icon, tone }) => (
             <button key={to} className={"mtile " + tone} onClick={() => { setMenu(false); go(to); }}>
               <span className="mt-ico"><Icon size={20} /></span><b>{label}</b><span className="mt-go"><ArrowUpRight size={16} /></span>
-              {to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}
+              {to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot">{msgs}</i>}
             </button>
           ))}
         </div>
