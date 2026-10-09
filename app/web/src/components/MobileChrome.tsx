@@ -48,7 +48,7 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
         <Bell_ />
       </header>
       <nav className="mbar" aria-label="Menu utama" style={{ ["--i" as string]: idx }}>
-        <div className="mbar-bg" aria-hidden="true" />
+        <div className="mbar-bg" aria-hidden="true"><i className="nl" /><i className="nn" /><i className="nr" /></div>
         <span className="mbubble" aria-hidden="true"><span key={idx} className="mpop"><Active size={24} strokeWidth={2.2} /></span></span>
         <ul>{TABS.map((t, i) => {
           const sel = i === idx, n = badge(t.to);
