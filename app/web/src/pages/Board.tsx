@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { Leaf, Target, Wrench } from "lucide-react";
+import { Leaf, SlidersHorizontal, Target, Wrench } from "lucide-react";
+import { Sheet } from "../components/Sheet";
 import { toast } from "sonner";
 import { PRIORITIES, STATUSES, type Priority, type Status, type TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
@@ -11,6 +12,7 @@ import { api, ok } from "../lib/api";
 import { STATUS, fmtShort, today } from "../lib/format";
 import { patchTaskLocally, useAction, useTasks, windowFrom, keys } from "../lib/queries";
 import { PRIORITY_LABEL, PRIORITY_RANK, subtaskProgress, weekStart } from "../lib/tasks";
+import { useIsMobile } from "../lib/useMedia";
 import { useUi, useViewer } from "../lib/viewer";
 
 const COL_TINT: Record<Status, string> = { todo: "gray", doing: "sky", done: "mint" };
@@ -69,6 +71,8 @@ export function Board() {
   const [range, setRange] = useState<"hari" | "minggu" | "aktif">("minggu");
   const [who, setWho] = useState(""), [proj, setProj] = useState(""), [lab, setLab] = useState(""), [prio, setPrio] = useState<Priority | "">(""), [q, setQ] = useState("");
   const [dragging, setDragging] = useState<TaskDTO | null>(null);
+  const mobile = useIsMobile();
+  const [mst, setMst] = useState<Status>("todo"), [filterOpen, setFilterOpen] = useState(false);
   const tq = useTasks(windowFrom(date, today()), true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }));
   const move = useAction((v: { id: string; status: Status }) => ok(api.tasks[":id"].status.$patch({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
@@ -100,11 +104,12 @@ export function Board() {
   };
   const onStart = (e: DragStartEvent) => setDragging(tasks.find(t => t.id === e.active.id) ?? null);
   return (
-    <Page title="Papan tugas" sub="Seret kartu antar kolom untuk mengubah status. Ketuk kartu untuk detail." dateNav>
+    <Page title="Papan tugas" sub={mobile ? undefined : "Seret kartu antar kolom untuk mengubah status. Ketuk kartu untuk detail."} dateNav>
       <div className="toolbar">
         <div className="seg" role="group" aria-label="Rentang">
           {([["hari", "Hari"], ["minggu", "Minggu"], ["aktif", "Semua aktif"]] as const).map(([k, l]) => <button key={k} aria-pressed={range === k} onClick={() => setRange(k)}>{l}</button>)}
         </div>
+        {mobile ? <button className="btn small" onClick={() => setFilterOpen(true)}><SlidersHorizontal size={14} />Filter{[who, proj, lab, prio, q].filter(Boolean).length ? ` (${[who, proj, lab, prio, q].filter(Boolean).length})` : ""}</button> : <>
         <input className="input" style={{ width: 200 }} placeholder="Cari judul…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari judul" />
         <div className="grow">
           {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
@@ -112,13 +117,40 @@ export function Board() {
           {labels.length > 0 && <select className="input" style={{ width: "auto" }} value={lab} onChange={e => setLab(e.target.value)} aria-label="Label"><option value="">Semua label</option>{labels.map(l => <option key={l.id} value={l.id}>#{l.name}</option>)}</select>}
           <select className="input" style={{ width: "auto" }} value={prio} onChange={e => setPrio(e.target.value as Priority | "")} aria-label="Prioritas"><option value="">Semua prioritas</option>{PRIORITIES.map(p => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}</select>
         </div>
+        </>}
       </div>
+      <Sheet open={filterOpen} onClose={() => setFilterOpen(false)} title="Filter papan"><div className="mfilters">
+        <input className="input" style={{ width: 200 }} placeholder="Cari judul…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari judul" />
+        <div className="grow">
+          {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
+          <select className="input" style={{ width: "auto" }} value={proj} onChange={e => setProj(e.target.value)} aria-label="Proyek"><option value="">Semua proyek</option><option value="none">Tanpa proyek</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          {labels.length > 0 && <select className="input" style={{ width: "auto" }} value={lab} onChange={e => setLab(e.target.value)} aria-label="Label"><option value="">Semua label</option>{labels.map(l => <option key={l.id} value={l.id}>#{l.name}</option>)}</select>}
+          <select className="input" style={{ width: "auto" }} value={prio} onChange={e => setPrio(e.target.value as Priority | "")} aria-label="Prioritas"><option value="">Semua prioritas</option>{PRIORITIES.map(p => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}</select>
+        </div>
+        <button className="btn primary" onClick={() => setFilterOpen(false)}>Terapkan</button><button className="btn ghost" onClick={() => { setWho(""); setProj(""); setLab(""); setPrio(""); setQ(""); }}>Atur ulang</button></div></Sheet>
+      {mobile ? (
+        <div className="mboard">
+          <div className="msegs" role="tablist" aria-label="Status">
+            {STATUSES.map(s => <button key={s} role="tab" aria-selected={mst === s} onClick={() => setMst(s)}>{STATUS[s]}<i>{tasks.filter(t => t.status === s).length}</i></button>)}
+          </div>
+          <div className="mklist">
+            {tasks.filter(t => t.status === mst).map(t => (
+              <div key={t.id} className="mk">
+                <div role="button" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)} aria-label={t.title}><Card t={t} /></div>
+                {canDrag(t) && t.status !== "done" && (
+                  <button className={"btn small " + (t.status === "todo" ? "blue" : "primary")} onClick={() => { if (t.status === "todo") { patchTaskLocally(qc, t.id, { status: "doing" }); move.mutate({ id: t.id, status: "doing" }); } else openTask(t.id); }}>{t.status === "todo" ? "Mulai kerjakan" : "Selesaikan"}</button>
+                )}
+              </div>))}
+            {!tasks.some(t => t.status === mst) && <Empty art="tasks" title={mst === "done" ? "Belum ada yang selesai" : mst === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"} />}
+          </div>
+        </div>
+      ) : (
       <DndContext sensors={sensors} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setDragging(null)}>
         <div className="board">
           {STATUSES.map(s => <Column key={s} status={s} tasks={tasks.filter(t => t.status === s)} canDrag={canDrag} />)}
         </div>
         <DragOverlay>{dragging ? <Card t={dragging} drag /> : null}</DragOverlay>
-      </DndContext>
+      </DndContext>)}
     </Page>
   );
 }
