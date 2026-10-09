@@ -44,8 +44,8 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   return (
     <>
       <div className="scrim" onClick={onClose} />
-      <form className="dialog" role="dialog" aria-label="Tugas baru" onSubmit={e => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}>
-        <header className="dialog-h"><div><h2>{manager ? "Tugas baru" : "Tugas untukku"}</h2><p className="muted">{manager ? "Bagikan pekerjaan ke satu orang atau lebih." : "Catatan pekerjaan pribadimu."}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></header>
+      <div className="dialog" role="dialog" aria-label="Tugas baru"><form style={{ display: "contents" }} onSubmit={e => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}>
+        <div className="dialog-h"><div><h2>{manager ? "Tugas baru" : "Tugas untukku"}</h2><p className="muted">{manager ? "Bagikan pekerjaan ke satu orang atau lebih." : "Catatan pekerjaan pribadimu."}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></div>
         <div className="dialog-b">
           {manager && (
             <section className="dsec"><h3>Penerima</h3>
@@ -92,7 +92,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
           {routine && manager && <section className="dsec"><h3>Bukti</h3><label className="check"><input type="checkbox" checked={proof} onChange={e => setProof(e.target.checked)} />Karyawan wajib melampirkan bukti</label></section>}
         </div>
         <footer className="dialog-f"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button type="submit" className="btn primary" disabled={save.isPending}>{routine ? "Simpan tugas rutin" : manager ? "Bagikan tugas" : "Simpan"}</button></footer>
-      </form>
+      </form></div>
     </>
   );
 }

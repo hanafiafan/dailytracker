@@ -19,8 +19,8 @@ export function CloseProject({ p, openTasks, onClose }: { p: ProjectDTO; openTas
   return (
     <>
       <div className="scrim" onClick={onClose} />
-      <form className="dialog" role="dialog" aria-label="Tutup proyek" onSubmit={e => { e.preventDefault(); submit(); }}>
-        <header className="dialog-h"><div><h2>Tutup proyek</h2><p className="muted clamp1">{p.name}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></header>
+      <div className="dialog" role="dialog" aria-label="Tutup proyek"><form style={{ display: "contents" }} onSubmit={e => { e.preventDefault(); submit(); }}>
+        <div className="dialog-h"><div><h2>Tutup proyek</h2><p className="muted clamp1">{p.name}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></div>
         <div className="dialog-b">
           <section className="dsec"><h3>Ringkasan hasil</h3>
             <label className="field"><span>Apa yang dicapai?</span><textarea className="input" rows={4} maxLength={1000} value={summary} onChange={e => setSummary(e.target.value)} placeholder="Hasil, angka penting, catatan untuk proyek berikutnya" autoFocus /></label>
@@ -30,7 +30,7 @@ export function CloseProject({ p, openTasks, onClose }: { p: ProjectDTO; openTas
             <label className="check"><input type="checkbox" checked={force} onChange={e => setForce(e.target.checked)} />Tetap tutup proyek ini</label></section>}
         </div>
         <footer className="dialog-f"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button className="btn primary" disabled={save.isPending}>Tutup proyek</button></footer>
-      </form>
+      </form></div>
     </>
   );
 }
