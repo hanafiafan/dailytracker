@@ -33,7 +33,7 @@ export function Login() {
             catch { toast.error("Gagal masuk. Coba lagi."); }
           },
         });
-        window.google!.accounts.id.renderButton(slot.current, { theme: "filled_blue", size: "large", shape: "pill", text: "signin_with", locale: "id", width: 280 });
+        window.google!.accounts.id.renderButton(slot.current, { theme: "filled_blue", size: "large", shape: "pill", text: "signin_with", locale: "id", width: Math.min(340, Math.max(220, window.innerWidth - 64)) });
       } catch { toast.error("Tombol Google tidak bisa dimuat. Periksa koneksi."); }
     })();
     return () => { dead = true; };
