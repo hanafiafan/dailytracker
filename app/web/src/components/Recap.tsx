@@ -3,6 +3,7 @@ import { PersonLink } from "./ui";
 import { addDays, parseYmd } from "@shared/time";
 import { DAYN, fmtShort, isToday, today } from "../lib/format";
 import { isIdle } from "../lib/tasks";
+import { useIsMobile } from "../lib/useMedia";
 
 type Cell = { total: number; done: number };
 const shade = (c: Cell) => {
@@ -11,10 +12,12 @@ const shade = (c: Cell) => {
   return { background: `color-mix(in srgb, var(--blue) ${Math.round(10 + p * 75)}%, var(--surface))`, color: p >= 0.6 ? "#fff" : "var(--ink)" };
 };
 
-export function Recap({ people, tasks, date, days: n, onDays, onPick, loaded }: {
+export function Recap({ people, tasks, date, days: n0, onDays, onPick, loaded }: {
   people: MemberDTO[]; tasks: TaskDTO[]; date: string; days: 7 | 14; onDays: (n: 7 | 14) => void; onPick: (d: string) => void; loaded: boolean;
 }) {
   const t0 = today();
+  const mobile = useIsMobile();
+  const n = mobile ? 7 : n0;
   const days = Array.from({ length: n }, (_, i) => addDays(date, i - n + 1));
   const byPerson = Map.groupBy(tasks, t => t.email);
   const cellOf = (list: TaskDTO[], d: string): Cell => { const l = list.filter(x => x.date === d); return { total: l.length, done: l.filter(x => x.status === "done").length }; };
@@ -40,6 +43,23 @@ export function Recap({ people, tasks, date, days: n, onDays, onPick, loaded }: 
       </tr>
     );
   });
+  if (mobile) return (
+    <section className="recap" aria-label="Rekap">
+      <div className="recap-h"><div><h2>Rekap per orang</h2><p>{fmtShort(days[0]!)} – {fmtShort(days[n - 1]!)} · selesai/total tugas. Ketuk kotak untuk membuka hari itu.</p></div></div>
+      <div className="rmlist">
+        <div className="rmhead">{days.map(d => <span key={d} className={d === t0 ? "today" : ""}>{DAYN[parseYmd(d).getDay()]}<b>{parseYmd(d).getDate()}</b></span>)}</div>
+        {people.map(m => {
+          const list = byPerson.get(m.email) ?? [], cells = days.map(d => cellOf(list, d));
+          const done = cells.reduce((a, c) => a + c.done, 0), total = cells.reduce((a, c) => a + c.total, 0), warn = date === t0 && loaded && isIdle(list);
+          return (
+            <div key={m.email} className="rmrow">
+              <div className="rmwho"><span className="rmname"><b><PersonLink email={m.email}>{m.name}</PersonLink></b>{warn && <span className="warnico" title="Tidak ada tugas aktif" aria-label="Tidak ada tugas aktif">!</span>}<small>{m.role}</small></span><span className="rmtot"><b>{total ? Math.round(done / total * 100) + "%" : "–"}</b><small>{done}/{total}</small></span></div>
+              <div className="rmcells">{cells.map((c, i) => <CellBtn key={days[i]} label={m.name} c={c} d={days[i]!} />)}</div>
+            </div>);
+        })}
+      </div>
+    </section>
+  );
   return (
     <section className="recap" aria-label="Rekap">
       <div className="recap-h">
