@@ -23,15 +23,15 @@ function BookDialog({ r, date, start, onClose }: { r: ResourceDTO; date: string;
   return (
     <>
       <div className="scrim" onClick={onClose} />
-      <form className="dialog" role="dialog" aria-label="Booking" onSubmit={e => { e.preventDefault(); if (to <= from) return void toast.error("Jam selesai harus setelah jam mulai"); save.mutate(undefined, { onSuccess: onClose }); }}>
-        <header className="dialog-h"><div><h2>Booking {r.name}</h2><p className="muted">{date}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></header>
+      <div className="dialog" role="dialog" aria-label="Booking"><form style={{ display: "contents" }} onSubmit={e => { e.preventDefault(); if (to <= from) return void toast.error("Jam selesai harus setelah jam mulai"); save.mutate(undefined, { onSuccess: onClose }); }}>
+        <div className="dialog-h"><div><h2>Booking {r.name}</h2><p className="muted">{date}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></div>
         <div className="dialog-b"><section className="dsec">
           <div className="dgrid"><label className="field"><span>Mulai</span><input className="input" type="time" value={from} onChange={e => setFrom(e.target.value)} required /></label><label className="field"><span>Selesai</span><input className="input" type="time" value={to} onChange={e => setTo(e.target.value)} required /></label></div>
           <label className="field"><span>Untuk tugas <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span><select className="input" value={taskId} onChange={e => setTaskId(e.target.value)}><option value="">Tanpa tugas</option>{tasks.map(t => <option key={t.id} value={t.id}>{t.title.slice(0, 60)}</option>)}</select></label>
           <label className="field"><span>Catatan</span><input className="input" maxLength={200} value={note} onChange={e => setNote(e.target.value)} placeholder="Contoh: bawa lensa 50mm" /></label>
         </section></div>
         <footer className="dialog-f"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button className="btn primary" disabled={save.isPending}>Simpan booking</button></footer>
-      </form>
+      </form></div>
     </>
   );
 }
@@ -44,7 +44,7 @@ function Manage({ list }: { list: ResourceDTO[] }) {
   const del = useAction((id: string) => ok(api.resources[":id"].$delete({ param: { id } })), { done: "Dihapus", refresh: [keys.resources] });
   return (
     <section className="bc">
-      <div className="bc-h"><h3>Daftar alat, studio, dan lokasi</h3></div>
+      <div className="bc-h"><h2>Daftar alat, studio, dan lokasi</h2></div>
       <form className="quick compact" onSubmit={e => { e.preventDefault(); if (name.trim()) add.mutate(undefined, { onSuccess: () => setName("") }); }}>
         <input className="input" placeholder="Nama, contoh: Kamera Sony A7 IV" value={name} maxLength={60} onChange={e => setName(e.target.value)} aria-label="Nama" />
         <select className="input" style={{ width: "auto" }} value={kind} onChange={e => setKind(e.target.value as ResourceKind)} aria-label="Jenis">{RESOURCE_KINDS.map(k => <option key={k} value={k}>{KIND[k].label}</option>)}</select>
@@ -94,12 +94,12 @@ export function ResourcesPage() {
           {list.map(r => {
             const I = KIND[r.kind].Icon;
             return [
-              <div key={r.id} className="bkname"><span className="bc-ico"><I size={16} /></span><span style={{ minWidth: 0 }}><b className="clamp1">{r.name}</b><small className="muted">{KIND[r.kind].label}</small></span></div>,
+              <div key={r.id} className="bkname"><span className="bc-ico"><I size={16} /></span><span style={{ minWidth: 0 }}><b className="clamp1">{r.name}</b><small className="muted">{KIND[r.kind].label}</small></span>{canBook && date >= today() && <button className="iconbtn bkplus" aria-label={`Booking ${r.name}`} onClick={() => setSlot({ r, start: "09:00" })}><Plus size={14} /></button>}</div>,
               <div key={r.id + "t"} className="bktrack" onClick={e => {
                 if (!canBook || date < today() || (e.target as HTMLElement).closest(".bkbar")) return;
                 const rect = e.currentTarget.getBoundingClientRect(), h = Math.floor(H0 + (e.clientX - rect.left) / rect.width * (H1 - H0));
                 setSlot({ r, start: `${String(Math.max(H0, Math.min(H1 - 1, h))).padStart(2, "0")}:00` });
-              }} role="button" aria-label={`Booking ${r.name}`}>
+              }}>
                 {hours.map(h => <i key={h} style={{ left: `${(h - H0) * 60 / SPAN * 100}%` }} />)}
                 {(byRes.get(r.id) ?? []).map(bar)}
               </div>,

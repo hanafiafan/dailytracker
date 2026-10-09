@@ -21,7 +21,7 @@ function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
   return (
     <div className={"kcard" + (p ? "" : " plain") + (t.status === "done" ? " done" : "") + (drag ? " drag" : "")} data-c={p?.color}>
       <div className="top">
-        <h4 className="clamp2" title={t.title}>{t.title}</h4>
+        <h3 className="clamp2" title={t.title}>{t.title}</h3>
         {(t.priority === "urgent" || t.priority === "high") && <span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span>}
       </div>
       {sp.total > 0 && <div className="ticks" aria-label={`Checklist ${sp.done} dari ${sp.total}`}>{Array.from({ length: sp.total }, (_, i) => <i key={i} className={i < sp.done ? "on" : ""} />)}</div>}
@@ -55,7 +55,7 @@ function Column({ status, tasks, canDrag }: { status: Status; tasks: TaskDTO[]; 
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <section ref={setNodeRef} className="col" data-c={COL_TINT[status]} data-over={isOver} aria-label={STATUS[status]}>
-      <div className="col-h">{STATUS[status]}<span>{tasks.length}</span></div>
+      <h2 className="col-h">{STATUS[status]}<span>{tasks.length}</span></h2>
       {tasks.map(t => <DraggableCard key={t.id} t={t} canDrag={canDrag(t)} />)}
       {!tasks.length && <Empty icon={status === "done" ? <Target size={22} /> : status === "doing" ? <Wrench size={22} /> : <Leaf size={22} />} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
     </section>

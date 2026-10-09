@@ -38,31 +38,31 @@ function Overview({ d }: { d: ProjectReportDTO }) {
   return (
     <div className="bento" data-c={p.color}>
       <section className="bc s4">
-        <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h3>Penyelesaian</h3></div>
+        <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h2>Penyelesaian</h2></div>
         <div className="mid-n">{s.done}<small> dari {s.total} tugas</small></div>
         <div className="split" style={{ height: 14 }} aria-hidden="true"><i style={{ flex: s.done || 0.0001, background: "var(--d, var(--blue))" }} /><i style={{ flex: s.open || 0.0001, background: "var(--glass)" }} /></div>
         <div className="legend"><span style={{ ["--k" as string]: "var(--d, var(--blue))" }}>Selesai {s.done}</span><span style={{ ["--k" as string]: "var(--sunk)" }}>Terbuka {s.open}</span></div>
       </section>
       <section className="bc s4">
-        <div className="bc-h"><span className="bc-ico"><CalendarRange size={18} /></span><h3>Ketepatan waktu</h3></div>
+        <div className="bc-h"><span className="bc-ico"><CalendarRange size={18} /></span><h2>Ketepatan waktu</h2></div>
         <div className="mid-n">{done.length ? pct(s.onTime, s.done) + "%" : "–"}</div>
         <p className="muted" style={{ fontSize: ".82rem" }}>{s.onTime} tepat waktu · {s.late} terlambat dari {s.done} selesai</p>
         <div className="legend"><span style={{ ["--k" as string]: "var(--ok)" }}>Bukti {pct(s.withProof, s.done)}%</span><span style={{ ["--k" as string]: "var(--warn)" }}>Revisi {s.revisions}×</span></div>
       </section>
       <section className="bc s4">
-        <div className="bc-h"><span className="bc-ico lime"><Timer size={18} /></span><h3>Waktu tercatat</h3></div>
+        <div className="bc-h"><span className="bc-ico lime"><Timer size={18} /></span><h2>Waktu tercatat</h2></div>
         <div className="mid-n">{s.minutes ? hm(s.minutes) : "–"}</div>
         <p className="muted" style={{ fontSize: ".82rem" }}>{s.minutes ? `rata-rata ${hm(Math.round(s.minutes / Math.max(1, s.done)))} per tugas selesai` : "Belum ada timer yang dijalankan"}</p>
       </section>
 
       <section className="bc s6">
-        <div className="bc-h"><span className="bc-ico"><Users size={18} /></span><h3>Progres per orang</h3><span className="muted">{people.length}</span></div>
+        <div className="bc-h"><span className="bc-ico"><Users size={18} /></span><h2>Progres per orang</h2><span className="muted">{people.length}</span></div>
         <div className="plist">{people.map(x => { const m = member(x.email); return (
           <div key={x.email} className="tbar who" style={{ gridTemplateColumns: "170px minmax(0,1fr) 54px" }}><span className="nm">{m && <Avatar m={m} />}<span className="clamp1"><PersonLink email={x.email}>{x.name}</PersonLink></span></span><div><i style={{ width: `${pct(x.done, x.total)}%` }} /></div><b>{x.done}/{x.total}</b></div>); })}</div>
         {!people.length && <Empty art="people" title="Belum ada tugas" />}
       </section>
       <section className="bc s6">
-        <div className="bc-h"><span className="bc-ico red"><ListChecks size={18} /></span><h3>Berikutnya</h3><span className="muted">{s.open} terbuka</span></div>
+        <div className="bc-h"><span className="bc-ico red"><ListChecks size={18} /></span><h2>Berikutnya</h2><span className="muted">{s.open} terbuka</span></div>
         <ul className="alist">{next.map(t => (
           <li key={t.id} className="arow" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
             <div style={{ minWidth: 0 }}><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left", maxWidth: "100%" }} onClick={() => openTask(t.id)}>{t.title}</button><small className="muted">{t.name} · {fmtShort(t.date)}</small></div>
@@ -74,7 +74,7 @@ function Overview({ d }: { d: ProjectReportDTO }) {
       </section>
       {(p.summary || p.links.length > 0) && (
         <section className="bc s12">
-          <div className="bc-h"><span className="bc-ico green"><FolderKanban size={18} /></span><h3>Ringkasan hasil</h3></div>
+          <div className="bc-h"><span className="bc-ico green"><FolderKanban size={18} /></span><h2>Ringkasan hasil</h2></div>
           {p.summary && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65 }}>{p.summary}</p>}
           {p.links.length > 0 && <div className="chips">{p.links.map(l => <a key={l} className="chip" href={l} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} />{host(l)}</a>)}</div>}
         </section>
@@ -89,7 +89,7 @@ function Tasks({ tasks }: { tasks: T[] }) {
   const rows = tasks.filter(t => !f || t.status === f);
   return (
     <section className="bc">
-      <div className="bc-h"><h3>Semua tugas</h3><div className="seg" role="group" aria-label="Status"><button aria-pressed={!f} onClick={() => setF("")}>Semua {tasks.length}</button>{(["todo", "doing", "done"] as const).map(s => <button key={s} aria-pressed={f === s} onClick={() => setF(s)}>{ST[s]} {tasks.filter(t => t.status === s).length}</button>)}</div></div>
+      <div className="bc-h"><h2>Semua tugas</h2><div className="seg" role="group" aria-label="Status"><button aria-pressed={!f} onClick={() => setF("")}>Semua {tasks.length}</button>{(["todo", "doing", "done"] as const).map(s => <button key={s} aria-pressed={f === s} onClick={() => setF(s)}>{ST[s]} {tasks.filter(t => t.status === s).length}</button>)}</div></div>
       <table className="htable" style={{ tableLayout: "fixed" }}>
         <thead><tr><th style={{ width: "38%" }}>Tugas</th><th className="hide-s">Penerima</th><th>Tanggal</th><th className="hide-s">Prioritas</th><th style={{ width: 120 }}>Status</th></tr></thead>
         <tbody>{rows.map(t => { const m = member(t.email), late = t.status !== "done" && t.date < today(); return (
@@ -111,7 +111,7 @@ function Proofs({ tasks }: { tasks: T[] }) {
   const done = tasks.filter(t => t.status === "done");
   return (
     <section className="bc">
-      <div className="bc-h"><span className="bc-ico"><ImageIcon size={18} /></span><h3>Bukti dan hasil per tugas</h3><span className="muted">{done.length}</span></div>
+      <div className="bc-h"><span className="bc-ico"><ImageIcon size={18} /></span><h2>Bukti dan hasil per tugas</h2><span className="muted">{done.length}</span></div>
       <div className="proofgrid">{done.map(t => (
         <article key={t.id} className="proofcard">
           {t.hasPhoto ? <button className="thumbbig" onClick={() => setZoom(t.id)} aria-label={`Perbesar bukti ${t.title}`}><img src={`/api/tasks/${t.id}/proof`} alt="" loading="lazy" /></button> : <div className="thumbbig empty">Tanpa foto</div>}
@@ -133,7 +133,7 @@ function Activity({ ids }: { ids: Set<string> }) {
   const items = (useFeed(true, 100).data ?? []).filter(a => a.taskId && ids.has(a.taskId));
   const ago = (ms: number) => { const m = Math.round((Date.now() - ms) / 60000); return m < 60 ? `${Math.max(1, m)} mnt lalu` : m < 1440 ? `${Math.floor(m / 60)} jam lalu` : `${Math.floor(m / 1440)} hari lalu`; };
   return (
-    <section className="bc"><div className="bc-h"><span className="bc-ico"><History size={18} /></span><h3>Aktivitas proyek</h3></div>
+    <section className="bc"><div className="bc-h"><span className="bc-ico"><History size={18} /></span><h2>Aktivitas proyek</h2></div>
       <div className="tline"><div>{items.map(a => { const m = member(a.actorEmail); return (
         <div key={a.id} className="it">{m ? <Avatar m={m} /> : <span className="avatar">{a.actorName[0]}</span>}
           <div style={{ minWidth: 0 }}><div><b>{a.actorEmail === me.email ? "Kamu" : a.actorName}</b> {a.text}</div>{a.taskTitle && <button className="linkbtn clamp1" style={{ maxWidth: "100%", textAlign: "left" }} onClick={() => a.taskId && openTask(a.taskId)}>{a.taskTitle}</button>}</div>

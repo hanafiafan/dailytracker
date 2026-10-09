@@ -24,7 +24,7 @@ export function HistoryPage() {
       </>}>
       <section className="bc">
         {items.length ? <div className="tline">
-          {[...groups].map(([label, list]) => <div key={label}><h4>{label}</h4>
+          {[...groups].map(([label, list]) => <div key={label}><h2>{label}</h2>
             {list.map(a => { const m = member(a.actorEmail); return (
               <div key={a.id} className="it">
                 {m ? <Avatar m={m} /> : <span className="avatar">{a.actorName[0]}</span>}

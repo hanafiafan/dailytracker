@@ -84,7 +84,7 @@ export function OrgView() {
         </div></div></section>
       ) : (
         <section className="bc">
-          <div className="bc-h"><h3>Daftar anggota</h3>
+          <div className="bc-h"><h2>Daftar anggota</h2>
             <select className="input" value={unit} onChange={e => setUnit(e.target.value)} aria-label="Unit" style={{ width: "auto" }}><option value="">Semua unit</option>{units.map(u => <option key={u} value={u}>{u}</option>)}</select>
             <label className="searchbox"><input value={q} onChange={e => setQ(e.target.value)} placeholder="Cari nama atau jabatan…" aria-label="Cari anggota" /></label></div>
           <div className="heatwrap"><table className="htable otable">

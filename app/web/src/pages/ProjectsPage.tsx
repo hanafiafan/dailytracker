@@ -40,7 +40,7 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
   const todayIdx = days.indexOf(today());
   if (!rows.length) return <div className="bc"><Empty art="calendar" title="Belum ada jadwal proyek">Tugas yang punya proyek akan tampil di sini.</Empty></div>;
   return (
-    <section className="bc"><div className="bc-h"><h3>Garis waktu 4 minggu</h3><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Bagian gelap = selesai</span></span></div>
+    <section className="bc"><div className="bc-h"><h2>Garis waktu 4 minggu</h2><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Bagian gelap = selesai</span></span></div>
       <div className="heatwrap"><div className="gantt" style={{ ["--n" as string]: DAYS }}>
         <div />{days.map((d, i) => <div key={d} className={"gd" + (d === today() ? " today" : "") + (i % 7 === 0 ? " wk" : "")}>{i % 7 === 0 || d === today() ? <b>{Number(d.slice(8))}</b> : Number(d.slice(8))}</div>)}
         {rows.map(({ p, a, b, pct, l }) => [
@@ -78,7 +78,7 @@ export function ProjectsPage() {
         <div className="pcards">
           {rows.map(({ p, total, done, late, open, pct, who }) => (
             <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h3 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h3><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
+              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
               <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>

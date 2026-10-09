@@ -35,7 +35,7 @@ function Feed({ limit = 8 }: { limit?: number }) {
       <ul className="feed">
         {items.map(a => { const m = member(a.actorEmail); return (
           <li key={a.id}>
-            {m ? <Avatar m={m} /> : <span className="avatar sm" style={{ background: "var(--dark)", width: 30, height: 30 }}>{a.actorName[0]}</span>}
+            {m ? <Avatar m={m} /> : <span className="avatar sm" style={{ background: "var(--tile)", width: 30, height: 30 }}>{a.actorName[0]}</span>}
             <div><div className="clamp2"><b>{a.actorEmail === me.email ? "Kamu" : a.actorName}</b> {a.text}</div>{a.taskTitle && <button className="clamp1" title={a.taskTitle} onClick={() => a.taskId && openTask(a.taskId)}>{a.taskTitle}</button>}<small>{ago(a.at)}</small></div>
           </li>); })}
         {!items.length && <li><Empty art="activity" title="Belum ada aktivitas" /></li>}

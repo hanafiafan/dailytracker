@@ -18,7 +18,7 @@ function Request() {
   const send = useAction(() => ok(api.leaves.$post({ json: { kind, from, to, reason } })), { done: "Pengajuan terkirim", refresh: [keys.leaves, keys.activity] });
   return (
     <section className="bc">
-      <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h3>Ajukan izin atau cuti</h3></div>
+      <div className="bc-h"><span className="bc-ico"><CalendarOff size={18} /></span><h2>Ajukan izin atau cuti</h2></div>
       <form className="dsec" style={{ border: 0, padding: 0 }} onSubmit={e => { e.preventDefault(); if (to < from) return; send.mutate(undefined, { onSuccess: () => setReason("") }); }}>
         <div className="seg" role="group" aria-label="Jenis" style={{ justifySelf: "start" }}>{LEAVE_KINDS.map(k => <button type="button" key={k} aria-pressed={kind === k} onClick={() => setKind(k)}>{LEAVE_LABEL[k]}</button>)}</div>
         <div className="dgrid">
@@ -65,20 +65,20 @@ export function LeavePage() {
       {tab === "saya" && (
         <div className="two2">
           <Request />
-          <section className="bc"><div className="bc-h"><h3>Riwayat saya</h3></div>
+          <section className="bc"><div className="bc-h"><h2>Riwayat saya</h2></div>
             <ul className="alist">{mine.map(l => <Row key={l.id} l={l} manage={false} />)}</ul>
             {!mine.length && <Empty art="calendar" title="Belum ada pengajuan" />}
           </section>
         </div>
       )}
       {tab === "persetujuan" && (
-        <section className="bc"><div className="bc-h"><h3>Menunggu keputusan</h3><span className="muted">{waiting.length}</span></div>
+        <section className="bc"><div className="bc-h"><h2>Menunggu keputusan</h2><span className="muted">{waiting.length}</span></div>
           <ul className="alist">{waiting.map(l => <Row key={l.id} l={l} manage />)}</ul>
           {!waiting.length && <Empty art="activity" title="Tidak ada pengajuan yang menunggu" />}
         </section>
       )}
       {tab === "jadwal" && (
-        <section className="bc"><div className="bc-h"><h3>Sedang dan akan tidak masuk</h3><span className="muted">{away.length}</span></div>
+        <section className="bc"><div className="bc-h"><h2>Sedang dan akan tidak masuk</h2><span className="muted">{away.length}</span></div>
           <ul className="alist">{away.sort((a, b) => a.from.localeCompare(b.from)).map(l => <Row key={l.id} l={l} manage />)}</ul>
           {!away.length && <Empty art="calendar" title="Semua masuk seperti biasa" />}
         </section>
