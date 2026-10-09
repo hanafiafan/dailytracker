@@ -93,12 +93,16 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
         <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button>
         <Avatar m={m} />
         <div className="who"><b><PersonLink email={m.email}>{m.name}</PersonLink></b><small>{m.role || "—"}</small><small>{m.email}</small></div>
-        {m.group && <span className="tag due">{m.group}</span>}
-        {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
-        {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
-        {policy.isBoss && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
-        <button className="btn small" onClick={() => onEdit(!editing)}>{editing ? "Tutup" : "Ubah"}</button>
-        {!self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
+        <div className="mtags">
+          {m.group && <span className="tag due">{m.group}</span>}
+          {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
+          {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
+        </div>
+        <div className="mact">
+          {policy.isBoss && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
+          <button className="btn small" onClick={() => onEdit(!editing)}>{editing ? "Tutup" : "Ubah"}</button>
+          {!self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
+        </div>
         {policy.isBoss && m.isAdmin && !self && units(team).length > 0 && <ScopeChips m={m} />}
       </div>
       {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
@@ -125,10 +129,10 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
   return (
     <details className="manage" id="manage" open={open}>
       <summary>Kelola tim</summary>
-      <p className="foot" style={{ margin: "8px 0" }}>{policy.isBoss
+      <p className="foot hide-touch" style={{ margin: "8px 0" }}>{policy.isBoss
         ? 'Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin "Semua unit" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu.'
         : `Kamu mengelola unit ${policy.groups.join(", ")}. Orang di unit lain tidak terlihat di sini.`}</p>
-      <p className="foot" style={{ margin: "0 0 6px" }}>Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap.</p>
+      <p className="foot hide-touch" style={{ margin: "0 0 6px" }}>Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap.</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={list.map(m => m.email)} strategy={verticalListSortingStrategy}>
           <div className="mlist">{list.map(m => <Row key={m.email} m={m} editing={editing === m.email} onEdit={o => setEditing(o ? m.email : null)} />)}</div>
