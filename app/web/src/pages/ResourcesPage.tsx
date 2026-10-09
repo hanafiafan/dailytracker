@@ -7,6 +7,7 @@ import { Avatar, Empty } from "../components/ui";
 import { api, ok } from "../lib/api";
 import { today } from "../lib/format";
 import { keys, useAction, useBookings, useResources, useTasks } from "../lib/queries";
+import { useIsMobile } from "../lib/useMedia";
 import { useUi, useViewer } from "../lib/viewer";
 
 const KIND: Record<ResourceKind, { label: string; Icon: typeof Camera }> = { alat: { label: "Alat", Icon: Camera }, studio: { label: "Studio", Icon: Clapperboard }, lokasi: { label: "Lokasi", Icon: MapPin } };
@@ -73,6 +74,7 @@ export function ResourcesPage() {
   const list = all.filter(r => !r.archived && (!kind || r.kind === kind));
   const byRes = useMemo(() => Map.groupBy(books, b => b.resourceId), [books]);
   const canBook = !!me.member || policy.isManager;
+  const mobile = useIsMobile();
   const hours = Array.from({ length: H1 - H0 + 1 }, (_, i) => H0 + i);
   const bar = (b: BookingDTO) => {
     const m = member(b.email), mine = b.email === me.email, can = mine || policy.canManage(b.email);
@@ -88,6 +90,25 @@ export function ResourcesPage() {
       tabs={policy.isManager ? [{ id: "jadwal", label: "Jadwal" }, { id: "kelola", label: "Kelola daftar" }] : undefined} tab={tab} onTab={setTab}
       actions={tab === "jadwal" ? <div className="seg" role="group" aria-label="Jenis"><button aria-pressed={!kind} onClick={() => setKind("")}>Semua</button>{RESOURCE_KINDS.map(k => <button key={k} aria-pressed={kind === k} onClick={() => setKind(k)}>{KIND[k].label}</button>)}</div> : undefined}>
       {tab === "kelola" && policy.isManager ? <Manage list={all} /> : (
+        mobile ? (
+          <div className="mres">
+            {list.map(r => {
+              const I = KIND[r.kind].Icon, bs = byRes.get(r.id) ?? [];
+              return (
+                <section key={r.id} className={"mres-card" + (bs.length ? "" : " free")}>
+                  <div className="mres-h"><span className="mt-ico"><I size={20} /></span><div style={{ minWidth: 0 }}><b className="clamp1">{r.name}</b><small className="muted">{KIND[r.kind].label} · {bs.length ? `${bs.length} booking` : "kosong seharian"}</small></div>
+                    {canBook && date >= today() && <button className="rbtn dark" aria-label={`Booking ${r.name}`} onClick={() => setSlot({ r, start: "09:00" })}><Plus size={18} /></button>}</div>
+                  {bs.map(b => { const m = member(b.email), can = b.email === me.email || policy.canManage(b.email); return (
+                    <div key={b.id} className={"mres-b" + (b.email === me.email ? " mine" : "")}>
+                      <b>{b.start}<small>{b.end}</small></b>
+                      <span className="mres-t"><span className="clamp1">{b.taskTitle ?? (b.note || "Dipakai")}</span><small className="clamp1">{m?.name ?? b.email}</small></span>
+                      {can && <button className="rbtn" aria-label="Batalkan booking" onClick={() => del.mutate(b.id)}><X size={16} /></button>}
+                    </div>); })}
+                </section>);
+            })}
+            {!list.length && <Empty art="calendar" title="Belum ada alat atau ruangan">{policy.isManager ? "Tambahkan di tab Kelola daftar." : "Minta admin menambahkan alat dan ruangan."}</Empty>}
+          </div>
+        ) : (
         <section className="bc"><div className="heatwrap"><div className="bkgrid">
           <div />
           <div className="bkhours">{hours.map(h => <span key={h} style={{ left: `${(h - H0) * 60 / SPAN * 100}%` }}>{String(h).padStart(2, "0")}</span>)}</div>
@@ -108,7 +129,7 @@ export function ResourcesPage() {
         </div></div>
         {!list.length && <Empty art="calendar" title="Belum ada alat atau ruangan">{policy.isManager ? "Tambahkan di tab Kelola daftar." : "Minta admin menambahkan alat dan ruangan."}</Empty>}
         {list.length > 0 && <p className="muted" style={{ fontSize: ".78rem" }}>{canBook && date >= today() ? "Klik jalur waktu untuk booking. " : ""}Biru tua = booking kamu.</p>}
-        </section>
+        </section>)
       )}
       {slot && <BookDialog r={slot.r} date={date} start={slot.start} onClose={() => setSlot(null)} />}
     </Page>

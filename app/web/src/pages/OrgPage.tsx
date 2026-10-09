@@ -3,6 +3,7 @@ import type { MemberDTO } from "@shared/schemas";
 import { Avatar, PersonLink } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
 import { awayOn } from "../lib/leaves";
+import { useIsMobile } from "../lib/useMedia";
 import { useLeaves, useMeta, useTasks } from "../lib/queries";
 import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
@@ -58,6 +59,7 @@ function Node({ p, open }: { p: Person; open?: number }) {
 export function OrgView() {
   const { policy } = useViewer();
   const org = useOrg();
+  const mobile = useIsMobile();
   const [tab, setTab] = useState("bagan"), [unit, setUnit] = useState(""), [q, setQ] = useState("");
   const tq = useTasks(addDays(today(), -30), policy.isManager);
   const openOf = (email?: string) => policy.isManager && email ? (tq.data ?? []).filter(t => t.email === email && t.status !== "done").length : undefined;
@@ -68,7 +70,17 @@ export function OrgView() {
       <div className="seg" role="group" aria-label="Tampilan struktur" style={{ justifySelf: "start" }}>
         <button aria-pressed={tab === "bagan"} onClick={() => setTab("bagan")}>Bagan</button><button aria-pressed={tab === "tabel"} onClick={() => setTab("tabel")}>Tabel</button>
       </div>
-      {tab === "bagan" ? (
+      {tab === "bagan" && mobile ? (
+        <div className="morg">
+          <div className="morg-top">{[...org.top, ...org.bossP].map(p => <Node key={p.key} p={p} open={openOf(p.m?.email)} />)}</div>
+          {org.byUnit.map(u => (
+            <section key={u.unit} className="bc"><div className="bc-h"><span className="ulabel">{u.unit}<span>{u.members.length + u.heads.length}</span></span></div>
+              {u.heads.map(h => <Node key={h.key} p={h} open={openOf(h.m?.email)} />)}
+              <div className="morg-list">{u.members.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}{!u.members.length && <small className="muted">Belum ada anggota</small>}</div>
+            </section>))}
+          {org.loose.length > 0 && <section className="bc"><div className="bc-h"><span className="ulabel">{NOUNIT}<span>{org.loose.length}</span></span></div><div className="morg-list">{org.loose.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}</div></section>}
+        </div>
+      ) : tab === "bagan" ? (
         <section className="bc"><div className="heatwrap"><div className="org">
           <div className="otop">{[...org.top, ...org.bossP].map(p => <Node key={p.key} p={p} open={openOf(p.m?.email)} />)}</div>
           <div className="ostem" />

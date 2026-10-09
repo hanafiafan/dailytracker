@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { useIsMobile } from "../lib/useMedia";
 import { addDays } from "@shared/time";
 import { DAYN, fmtShort, today } from "../lib/format";
 import { useLeaves, useTasks, windowFrom } from "../lib/queries";
@@ -18,6 +19,7 @@ export function Workload() {
   const tq = useTasks(windowFrom(date, today()), true);
   const start = weekStart(date), days = Array.from({ length: 14 }, (_, i) => addDays(start, i));
   const leaves = useLeaves(true).data ?? [];
+  const mobile = useIsMobile();
   const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
   const open = (tq.data ?? []).filter(t => t.status !== "done");
   const cell = (email: string, d: string) => {
@@ -26,6 +28,17 @@ export function Workload() {
     const away = !!awayOn(leaves, email, d);
     return { n: l.length, h, away, over: !away && (l.length >= OVER_TASKS || h > OVER_HOURS) };
   };
+  if (mobile) return (
+    <section className="bc">
+      <div className="bc-h"><h2>Beban kerja dua minggu</h2></div>
+      <p className="muted" style={{ fontSize: ".78rem" }}>Angka = tugas terbuka per hari. Merah = terlalu padat, garis kuning = cuti. Ketuk hari untuk membuka kalender.</p>
+      <div className="mwl">{people.map(m => { const cs = days.map(d => cell(m.email, d)), total = cs.reduce((s, c) => s + c.n, 0); return (
+        <div key={m.email} className="mwl-row">
+          <div className="mwl-h"><span className="hp"><Avatar m={m} /><b className="clamp1"><PersonLink email={m.email}>{m.name}</PersonLink></b></span><span className="mwl-t">{total}<small> tugas</small></span></div>
+          <div className="mwl-g">{cs.map((c, i) => <button key={days[i]} className={"hc" + (c.over ? " over" : "") + (c.away ? " away" : "")} style={{ ["--lv" as string]: Math.min(c.n / 5, 1) }} title={fmtShort(days[i]!)} onClick={() => { setDate(days[i]!); go("/kalender"); }}><small>{Number(days[i]!.slice(8))}</small>{c.away ? "cuti" : c.n || ""}</button>)}</div>
+        </div>); })}</div>
+    </section>
+  );
   return (
     <section className="bc">
       <div className="bc-h"><h2>Beban kerja dua minggu</h2><span className="legend"><span style={{ ["--k" as string]: "var(--blue)" }}>Makin gelap = makin banyak tugas</span><span style={{ ["--k" as string]: "var(--bad)" }}>Lebih dari {OVER_TASKS} tugas atau {OVER_HOURS} jam</span></span></div>
