@@ -10,6 +10,7 @@ import { TopNav } from "./components/Page";
 import { SearchDialog } from "./components/SearchDialog";
 import { TaskDrawer } from "./components/TaskDrawer";
 import { Onboarding } from "./components/Onboarding";
+import { Legal } from "./components/Legal";
 import { Center, Loading } from "./components/ui";
 import { today } from "./lib/format";
 import { registerPush, pushSupported } from "./lib/push";
@@ -116,6 +117,7 @@ function Signed({ me }: { me: MeDTO }) {
             </Switch>
             </Suspense>
           </main>
+          <Legal />
         </div>
         <Onboarding />
         {taskId && <TaskDrawer id={taskId} />}

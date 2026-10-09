@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { api, ok } from "../lib/api";
 import { keys } from "../lib/queries";
 import { InstallCard } from "./Cards";
+import { Legal } from "./Legal";
 
 interface GIS { accounts: { id: { initialize(o: object): void; renderButton(el: HTMLElement, o: object): void } } }
 declare global { interface Window { google?: GIS } }
@@ -68,6 +69,7 @@ export function Login() {
           <div ref={slot} style={{ minHeight: 44, display: "flex", marginTop: 8 }} />
           <button className="btn" style={{ height: 46 }} onClick={signInByRedirect}>Tombol di atas kosong? Masuk lewat halaman Google</button>
           <InstallCard />
+          <Legal />
         </div>
       </main>
     </div>
