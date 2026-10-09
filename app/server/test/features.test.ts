@@ -297,3 +297,26 @@ describe("push devices", () => {
     expect(t.sent.some(s => s.to.includes("a@x.id") && s.path === `/?t=${id}`)).toBe(true);
   });
 });
+
+describe("daily backup", () => {
+  it("writes one copy per day, is idempotent, restorable, and prunes to 14", async () => {
+    const { mkdtempSync, readdirSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { default: Database } = await import("better-sqlite3");
+    const { runBackup } = await import("../src/backup.js");
+    const t = setup();
+    const dir = mkdtempSync(join(tmpdir(), "bk-"));
+    const day0 = Date.UTC(2026, 0, 1, 5);
+    const first = await runBackup(t.db, dir, day0);
+    expect(first).toBeTruthy();
+    expect(await runBackup(t.db, dir, day0 + 3600e3)).toBeNull();
+    const copy = new Database(first!, { readonly: true });
+    expect((copy.prepare("select count(*) c from members").get() as { c: number }).c).toBe(4);
+    copy.close();
+    for (let d = 1; d <= 20; d++) await runBackup(t.db, dir, day0 + d * 864e5);
+    const files = readdirSync(dir).filter(f => f.endsWith(".db")).sort();
+    expect(files).toHaveLength(14);
+    expect(files.at(-1)).toBe("app-2026-01-21.db");
+  });
+});

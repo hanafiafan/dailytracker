@@ -51,5 +51,5 @@ if (existsSync(web)) {
   app.get("*", c => c.req.path.startsWith("/api/") ? c.json({ error: "not found" }, 404) : c.html(index(), 200, { "cache-control": "no-cache" }));
 }
 
-startJobs(db, push, bus);
+startJobs(db, push, bus, join(env.DATA_DIR, "backups"));
 serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOST }, i => console.log(`Tugas Harian listening on ${i.address}:${i.port}`));

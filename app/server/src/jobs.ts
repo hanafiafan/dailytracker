@@ -6,6 +6,7 @@ import { leaves, meta, members, pushSubs, routines, tasks } from "./db/schema.js
 import { makePolicy } from "@shared/policy";
 import type { Bus } from "./events.js";
 import type { Push } from "./push.js";
+import { runBackup } from "./backup.js";
 
 /** Idempotent: a routine's task for a date has the fixed id r-<routine>-<date>. Returns how many were created. */
 export function ensureRoutines(db: Db, date: string, now = Date.now()) {
@@ -65,11 +66,12 @@ export async function runReminders(db: Db, push: Push, now = Date.now()) {
 }
 
 /** Every 15 minutes (on the clock); also once at startup so a restart never skips today's routines. */
-export function startJobs(db: Db, push: Push, bus: Bus) {
+export function startJobs(db: Db, push: Push, bus: Bus, backupDir?: string) {
   const tick = () => {
     try {
       if (ensureRoutines(db, wib().date)) bus.emit("tasks");
       runReminders(db, push).catch(e => console.error("reminders", e));
+      if (backupDir) runBackup(db, backupDir).then(f => f && console.log("backup", f)).catch(e => console.error("backup", e));
     } catch (e) { console.error("jobs", e); }
   };
   tick();
