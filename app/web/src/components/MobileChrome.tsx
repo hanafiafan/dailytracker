@@ -9,8 +9,7 @@ import { RunningPill } from "./TimeTracker";
 import { Avatar } from "./ui";
 
 const MORE = [
-  { to: "/inbox", label: "Inbox", Icon: MessageSquare, tone: "lime" },
-  { to: "/daftar", label: "Daftar tugas", Icon: ListChecks, tone: "gray" },
+  { to: "/daftar", label: "Daftar tugas", Icon: ListChecks, tone: "lime" },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban, tone: "dark" },
   { to: "/tim", label: "Tim", Icon: Users, manager: true, tone: "gray" },
   { to: "/alat", label: "Alat & studio", Icon: Camera, tone: "gray" },
@@ -29,9 +28,15 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
   const m = member(me.email);
   const on = (to: string) => (to === "/" ? loc === "/" : loc.startsWith(to));
   const inMore = MORE.some(x => on(x.to));
-  const Item = ({ to, label, Icon }: { to: string; label: string; Icon: typeof Search }) => (
-    <a href={to} className={"mnav" + (on(to) ? " on" : "")} aria-current={on(to) ? "page" : undefined} aria-label={label} onClick={e => { e.preventDefault(); go(to); }}><Icon size={20} /><span>{label}</span></a>
-  );
+  const MENU = 4;
+  const TABS = [
+    { to: "/", label: "Dasbor", Icon: LayoutDashboard }, { to: "/papan", label: "Papan", Icon: Columns3 }, { to: "/kalender", label: "Kalender", Icon: CalendarDays },
+    { to: "/inbox", label: "Inbox", Icon: MessageSquare }, { to: "#menu", label: "Menu", Icon: Grid2x2 },
+  ];
+  // the bubble sits over the current page's item; on pages that live in the Menu (or while the sheet is open) it sits over Menu
+  const idx = menu || inMore ? MENU : Math.max(0, TABS.findIndex(t => t.to !== "#menu" && on(t.to)));
+  const Active = TABS[idx]!.Icon;
+  const badge = (to: string) => to === "/inbox" ? msgs : to === "#menu" ? waiting + (idx === 3 ? 0 : 0) : 0;
   const dark = getTheme() === "dark";
   return (
     <>
@@ -39,13 +44,19 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
         <button className="rbtn avatarbtn" onClick={() => setAcct(true)} aria-label="Akun">{m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--ink)", color: "var(--volt)" }}>{me.name[0]}</span>}</button>
         <div className="mhead-mid"><RunningPill /></div>
         <button className="rbtn" onClick={openSearch} aria-label="Cari"><Search size={18} /></button>
+        <button className="rbtn plus" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={20} /></button>
         <Bell_ />
       </header>
-      <nav className="mbar" aria-label="Menu utama">
-        <Item to="/" label="Dasbor" Icon={LayoutDashboard} /><Item to="/papan" label="Papan" Icon={Columns3} />
-        <button className="mfab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
-        <Item to="/kalender" label="Kalender" Icon={CalendarDays} />
-        <button className={"mnav" + (inMore ? " on" : "")} onClick={() => setMenu(true)} aria-label="Menu lainnya"><Grid2x2 size={20} /><span>Menu</span>{waiting + msgs > 0 && <i className="navdot">{waiting + msgs > 99 ? "99+" : waiting + msgs}</i>}</button>
+      <nav className="mbar" aria-label="Menu utama" style={{ ["--i" as string]: idx }}>
+        <div className="mbar-bg" aria-hidden="true" />
+        <span className="mbubble" aria-hidden="true"><span key={idx} className="mpop"><Active size={24} strokeWidth={2.2} /></span></span>
+        <ul>{TABS.map((t, i) => {
+          const sel = i === idx, n = badge(t.to);
+          const body = <><span className="mico"><t.Icon size={22} />{n > 0 && !sel && <i className="navdot">{n > 99 ? "99+" : n}</i>}</span><span className="mlab">{t.label}</span></>;
+          return <li key={t.to}>{t.to === "#menu"
+            ? <button className={"mnav" + (sel ? " on" : "")} onClick={() => setMenu(true)} aria-label="Menu lainnya" aria-haspopup="dialog">{body}</button>
+            : <a href={t.to} className={"mnav" + (sel ? " on" : "")} aria-current={sel ? "page" : undefined} onClick={e => { e.preventDefault(); go(t.to); }}>{body}</a>}</li>;
+        })}</ul>
       </nav>
       <Sheet open={menu} onClose={() => setMenu(false)} title="Semua halaman">
         <div className="mtiles">
