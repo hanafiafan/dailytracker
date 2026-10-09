@@ -8,6 +8,7 @@ import { enablePush, pushSupported, unregisterPush } from "../lib/push";
 import { errorText } from "../lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, ok } from "../lib/api";
+import { logout } from "../lib/session";
 import { getTheme, setTheme, type Theme } from "../lib/theme";
 import { keys } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
@@ -19,7 +20,7 @@ export function SettingsPage() {
   const qc = useQueryClient();
   const [theme, setT] = useState<Theme>(getTheme);
   const pick = (t: Theme) => { setTheme(t); setT(t); };
-  const out = async () => { if (pushSupported() && Notification.permission === "granted") await unregisterPush(); await ok(api.auth.logout.$post()); qc.clear(); await qc.invalidateQueries({ queryKey: keys.me }); };
+  const out = logout;
   return (
     <Page noNew title="Pengaturan" sub={me.email}>
       <div className="two" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", maxWidth: 1040 }}>

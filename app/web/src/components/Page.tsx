@@ -12,6 +12,7 @@ import { useUi, useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
 import { RunningPill } from "./TimeTracker";
 import { Bell_ } from "./Bell";
+import { logout } from "../lib/session";
 import { MobileChrome } from "./MobileChrome";
 import { useIsMobile } from "../lib/useMedia";
 
@@ -47,12 +48,7 @@ export function TopNav() {
     return () => document.removeEventListener("mousedown", on);
   }, [menu]);
   const mobile = useIsMobile();
-  const out = async () => {
-    if (pushSupported() && Notification.permission === "granted") await unregisterPush();
-    await ok(api.auth.logout.$post());
-    qc.clear();
-    await qc.invalidateQueries({ queryKey: keys.me });
-  };
+  const out = logout;
   if (mobile) return <MobileChrome waiting={waiting} out={out} />;
   return (
     <header className="topnav">

@@ -12,6 +12,7 @@ type Success<R> = R extends { ok: true; json(): Promise<infer T> } ? T : never;
 /** Awaits a response; throws ApiError (with the server's message) unless it succeeded. */
 export async function ok<R extends Response>(p: Promise<R>): Promise<Success<R>> {
   const res = await p;
+  if (res.status === 401 && !res.url.includes("/api/auth/") && !location.search.includes("signedout")) { location.replace("/?signedout=1"); throw new ApiError(401, "Sesi berakhir"); }
   if (!res.ok) {
     let msg = res.statusText;
     try { const j = await res.clone().json() as { error?: unknown }; if (typeof j.error === "string") msg = j.error; } catch { /* not JSON */ }
