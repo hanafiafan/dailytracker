@@ -8,6 +8,7 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: { url: string; r
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html"), { denylist: [/^\/api\//] }));
+self.addEventListener("install", () => void self.skipWaiting()); // a new build takes over at once instead of waiting for every tab to close
 self.addEventListener("message", e => { if (e.data?.type === "SKIP_WAITING") void self.skipWaiting(); });
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 
