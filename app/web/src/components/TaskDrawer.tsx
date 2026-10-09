@@ -25,10 +25,10 @@ export function TaskDrawer({ id }: { id: string }) {
   return (
     <>
       <div className="scrim" onClick={closeTask} />
-      <aside className="drawer" role="dialog" aria-label="Detail tugas">
+      <div className="drawer" role="dialog" aria-label="Detail tugas">
         {!t ? <div className="drawer-h"><h2>{q.isError ? "Tugas tidak ditemukan" : "Memuat…"}</h2><button className="iconbtn" onClick={closeTask} aria-label="Tutup"><X size={18} /></button></div>
           : <DrawerBody t={t} key={t.id} activity={act.data ?? []} owner={meta.data?.owner ?? { name: "Pemilik", email: "" }} />}
-      </aside>
+      </div>
     </>
   );
 }
@@ -70,10 +70,10 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <section className="props">
           <span>Ditugaskan</span>
           {manager && people.length > 1
-            ? <select className="input" value={t.email} onChange={e => a.patch.mutate({ email: e.target.value })}>{people.concat(who && !people.some(p => p.email === who.email) ? [who] : []).map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>
+            ? <select className="input" aria-label="Ditugaskan ke" value={t.email} onChange={e => a.patch.mutate({ email: e.target.value })}>{people.concat(who && !people.some(p => p.email === who.email) ? [who] : []).map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>
             : <div className="chips">{who && <Avatar m={who} />}<b>{who?.name ?? t.email}</b></div>}
           <span>Tanggal</span>
-          {canEdit ? <input className="input" type="date" defaultValue={t.date} onBlur={e => e.target.value && e.target.value !== t.date && a.patch.mutate({ date: e.target.value })} /> : <b>{fmtShort(t.date)}</b>}
+          {canEdit ? <input className="input" aria-label="Tanggal" type="date" defaultValue={t.date} onBlur={e => e.target.value && e.target.value !== t.date && a.patch.mutate({ date: e.target.value })} /> : <b>{fmtShort(t.date)}</b>}
           <span>Jam kerja</span>
           {canEdit
             ? <div className="row" style={{ gap: 8 }}>
@@ -88,7 +88,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
             : <span className={"tag " + t.priority} style={{ justifySelf: "start" }}>{PRIORITY_LABEL[t.priority]}</span>}
           <span>Proyek</span>
           {canEdit
-            ? <select className="input" value={t.projectId ?? ""} onChange={e => a.patch.mutate({ projectId: e.target.value || null })}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived || p.id === t.projectId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+            ? <select className="input" aria-label="Proyek" value={t.projectId ?? ""} onChange={e => a.patch.mutate({ projectId: e.target.value || null })}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived || p.id === t.projectId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
             : <b>{projects.find(p => p.id === t.projectId)?.name ?? "—"}</b>}
           <span>Label</span>
           <div className="chips">

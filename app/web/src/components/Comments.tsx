@@ -64,7 +64,7 @@ export function Comments({ t, ownerName, ownerEmail }: { t: TaskDTO; ownerName: 
           <div className="mentionpop" role="listbox">
             {matches.map((p, i) => (
               <button key={p.email} type="button" role="option" aria-selected={i === sel} onMouseDown={e => { e.preventDefault(); choose(p); }}>
-                {p.member ? <Avatar m={p.member} /> : <span className="avatar" style={{ background: "var(--dark)", color: "var(--dark-ink)" }}>{p.name[0]}</span>}{p.name}
+                {p.member ? <Avatar m={p.member} /> : <span className="avatar" style={{ background: "var(--tile)", color: "var(--ink)" }}>{p.name[0]}</span>}{p.name}
               </button>
             ))}
           </div>

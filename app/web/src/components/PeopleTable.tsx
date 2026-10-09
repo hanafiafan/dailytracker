@@ -17,7 +17,7 @@ export function PeopleTable({ people, byPerson, routines, date, loaded }: { peop
     <section className="surface" style={{ padding: 0, overflow: "hidden" }} aria-label="Tugas per orang">
       <table className="ptable">
         <thead><tr>
-          <th className="chev" /><th>Orang</th><th className="prg">Progres</th><th className="num">Selesai</th><th className="num">Dikerjakan</th><th className="num">Terlambat</th><th className="next">Tugas berikutnya</th><th className="act" />
+          <th className="chev"><span className="sr">Buka</span></th><th>Orang</th><th className="prg">Progres</th><th className="num">Selesai</th><th className="num">Dikerjakan</th><th className="num">Terlambat</th><th className="next">Tugas berikutnya</th><th className="act"><span className="sr">Tambah tugas</span></th>
         </tr></thead>
         <tbody>
           {people.map(m => {
@@ -27,8 +27,8 @@ export function PeopleTable({ people, byPerson, routines, date, loaded }: { peop
             const isOpen = open === m.email;
             return (
               <Fragment key={m.email}>
-                <tr className={"ptr" + (isOpen ? " open" : "")} onClick={() => setOpen(isOpen ? null : m.email)} aria-expanded={isOpen}>
-                  <td className="chev"><ChevronRight size={16} style={{ transition: "transform .15s" }} /></td>
+                <tr className={"ptr" + (isOpen ? " open" : "")} onClick={() => setOpen(isOpen ? null : m.email)}>
+                  <td className="chev"><button className="chevbtn" aria-expanded={isOpen} aria-label={`${isOpen ? "Tutup" : "Buka"} tugas ${m.name}`} onClick={e => { e.stopPropagation(); setOpen(isOpen ? null : m.email); }}><ChevronRight size={16} style={{ transition: "transform .15s" }} /></button></td>
                   <td><div className="who"><Avatar m={m} /><div><b className="clamp1">{m.name}</b><small className="clamp1">{[m.role, m.group].filter(Boolean).join(" · ")}</small></div></div></td>
                   <td className="prg"><div className="prog"><div className="stackbar"><i className="s-done" style={{ width: `${all.length ? c.done / all.length * 100 : 0}%` }} /><i className="s-doing" style={{ width: `${all.length ? c.doing / all.length * 100 : 0}%` }} /></div><span>{c.done}/{all.length}</span></div></td>
                   <td className={"num" + (c.done ? "" : " zero")}>{c.done}</td>

@@ -137,8 +137,8 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions,
       </div>
       <button className="fab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
       {(tabs || actions) && (
-        <div className="tabs" role="tablist">
-          {tabs?.map(x => <button key={x.id} role="tab" aria-selected={tab === x.id} onClick={() => onTab?.(x.id)}>{x.label}</button>)}
+        <div className="tabs">
+          {tabs && <div className="tablist" role="tablist">{tabs.map(x => <button key={x.id} role="tab" aria-selected={tab === x.id} onClick={() => onTab?.(x.id)}>{x.label}</button>)}</div>}
           {actions && <div className="grow">{actions}</div>}
         </div>
       )}
