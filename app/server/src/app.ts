@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
@@ -32,6 +33,8 @@ export function createApp(deps: Deps) {
   const lastTest = new Map<string, number>();
 
   const api = new Hono<AppEnv>()
+    // No request needs more than a compressed photo (about 1.5 MB); anything bigger is refused before it is read into memory.
+    .use(bodyLimit({ maxSize: 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) }))
     // Every write must carry this header: cross-site forms and images cannot add it.
     .use(async (c, next) => c.req.method !== "GET" && c.req.header("x-app") !== "1" ? c.json({ error: "bad request" }, 400) : next())
     .get("/config", c => c.json({ googleClientId: env.GOOGLE_CLIENT_ID, vapidPublicKey: push.publicKey }))

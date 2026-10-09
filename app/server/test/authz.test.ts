@@ -108,3 +108,13 @@ describe("authorization matrix", () => {
     expect((await t.call("hcs@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "x", start: "25:99" })).status).toBe(400);
   });
 });
+
+describe("request size", () => {
+  it("refuses oversized bodies before reading them", async () => {
+    const t = setup();
+    const big = new Uint8Array(3 * 1024 * 1024); big.set([0xff, 0xd8, 0xff]);
+    const r = await t.call("a@x.id", "PUT", "/team/a@x.id/photo", big);
+    expect(r.status).toBe(413);
+    expect((await t.call("a@x.id", "PUT", "/team/a@x.id/photo", new Uint8Array(10))).status).toBe(400);
+  });
+});
