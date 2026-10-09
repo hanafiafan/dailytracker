@@ -12,6 +12,9 @@ import { squarePhoto } from "../lib/image";
 import { errorText, keys, useAction } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
 import { Avatar, ConfirmButton } from "./ui";
+import { Sheet } from "./Sheet";
+import { useIsMobile } from "../lib/useMedia";
+import { MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
 import { ymd } from "@shared/time";
 
 const units = (team: MemberDTO[]) => [...new Set(team.map(m => m.group).filter(Boolean))].sort();
@@ -87,6 +90,30 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
   const toggleAdmin = useAction(() => ok(api.team[":email"].$patch({ param: { email: m.email }, json: { isAdmin: !m.isAdmin } })), { done: m.isAdmin ? `${m.name} bukan admin lagi` : `${m.name} sekarang admin` });
   const remove = useAction(() => ok(api.team[":email"].$delete({ param: { email: m.email } })), { done: `${m.name} dihapus dari tim` });
   const self = m.email === me.email;
+  const mobile = useIsMobile();
+  const [sheet, setSheet] = useState(false);
+  if (mobile) return (
+    <>
+      <div ref={setNodeRef} className="mcardrow" style={{ transform: CSS.Translate.toString(transform), transition }}>
+        <button className="mcr-main" onClick={() => setSheet(true)} aria-label={`Kelola ${m.name}`}>
+          <Avatar m={m} />
+          <span className="mcr-who"><b className="clamp1">{m.name}</b><small className="muted clamp1">{m.role || "—"}</small>
+            <span className="mcr-tags">{m.group && <span className="tag due">{m.group}</span>}{m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}{!m.seenAt && <span className="tag off">Belum masuk</span>}</span></span>
+          <MoreHorizontal size={20} />
+        </button>
+      </div>
+      <Sheet open={sheet} onClose={() => setSheet(false)} title={m.name}>
+        <p className="muted" style={{ marginBottom: 10 }}>{m.role || "—"} · {m.email}</p>
+        <div className="alist">
+          <button className="menuitem" onClick={() => { setSheet(false); onEdit(true); }}><Pencil size={18} /><span>Ubah profil</span></button>
+          {policy.isBoss && !self && <button className="menuitem" onClick={() => { toggleAdmin.mutate(); setSheet(false); }}><ShieldCheck size={18} /><span>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</span></button>}
+          {!self && <ConfirmButton className="menuitem danger" label="Hapus dari tim" armed="Yakin hapus?" onConfirm={() => { remove.mutate(); setSheet(false); }} />}
+        </div>
+        {policy.isBoss && m.isAdmin && !self && units(team).length > 0 && <div style={{ marginTop: 12 }}><ScopeChips m={m} /></div>}
+      </Sheet>
+      {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
+    </>
+  );
   return (
     <>
       <div ref={setNodeRef} className={"mrow" + (isDragging ? " dragging" : "")} style={{ transform: CSS.Translate.toString(transform), transition }}>
