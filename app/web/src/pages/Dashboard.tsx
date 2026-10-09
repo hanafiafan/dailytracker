@@ -87,10 +87,10 @@ function ManagerDashboard() {
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
-      <InstallCard /><NotifyCard manager />
+      {tab === "orang" && <><InstallCard /><NotifyCard manager /></>}
       {tab === "orang" && <Bento all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} idle={idle.length} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} />}
-      <Links />
-      {idle.length > 0 && (
+      {tab === "orang" && <Links />}
+      {tab === "orang" && idle.length > 0 && (
         <section className="warnbox" aria-label="Orang tanpa tugas">
           <span className="warnico" aria-hidden="true">!</span>
           <div className="txt"><b>{idle.length} orang tidak punya tugas aktif hari ini{asking.length ? `, ${asking.length} sudah minta tugas` : ""}</b>
@@ -117,7 +117,7 @@ function ManagerDashboard() {
           <div className="two2"><Upcoming tasks={tasks} date={date} /><Feed /></div>
         </>
       )}
-      {tab === "perhatian" && <Attention tasks={tasks} />}
+      {tab === "perhatian" && <Attention tasks={tasks.filter(t => workers.some(w => w.email === t.email))} />}
       {tab === "rekap" && <Recap people={workers} tasks={tasks} date={date} days={recapDays} onDays={setRecapDays} onPick={d => { setDate(d); setTab("orang"); }} loaded={loaded} />}
       {tab === "aktivitas" && <Feed limit={25} />}
     </Page>
@@ -142,7 +142,7 @@ function MemberDashboard() {
   return (
     <Page title={<>Halo, <em>{m.name.split(" ")[0]}</em></>} sub={`${m.name} · ${m.role} · ${fmtLong(date)}`} dateNav
       tabs={[{ id: "hari", label: todayView ? "Hari ini" : fmtShort(date) }, { id: "depan", label: `Mendatang${upcoming.length ? ` (${upcoming.length})` : ""}` }, { id: "selesai", label: "Selesai" }]} tab={tab} onTab={setTab}>
-      <InstallCard /><NotifyCard manager={false} />
+      {tab === "hari" && <><InstallCard /><NotifyCard manager={false} /></>}
       {tab === "hari" && <Bento all={mine} day={all} date={date} people={[]} />}
       {tab === "hari" && todayView && loaded && isIdle(mine) && (
         <section className="warnbox" role="status">

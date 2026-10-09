@@ -60,8 +60,8 @@ export function LeavePage() {
   const away = others.filter(l => l.status === "approved" && l.to >= today());
   const [tab, setTab] = useState(me.member ? "saya" : "persetujuan");
   return (
-    <Page title="Izin & cuti" sub={policy.isManager ? `${waiting.length} menunggu keputusan` : "Ajukan, lalu atasan memutuskan"}
-      tabs={[...(me.member ? [{ id: "saya", label: "Pengajuan saya" }] : []), ...(policy.isManager ? [{ id: "persetujuan", label: `Persetujuan${waiting.length ? ` (${waiting.length})` : ""}` }, { id: "jadwal", label: "Jadwal tidak masuk" }] : [])]} tab={tab} onTab={setTab}>
+    <Page noNew title="Izin & cuti" sub={policy.isManager ? `${waiting.length} menunggu keputusan` : "Ajukan, lalu atasan memutuskan"}
+      tabs={!policy.isManager ? undefined : [...(me.member ? [{ id: "saya", label: "Pengajuan saya" }] : []), ...[{ id: "persetujuan", label: `Persetujuan${waiting.length ? ` (${waiting.length})` : ""}` }, { id: "jadwal", label: "Jadwal tidak masuk" }]]} tab={tab} onTab={setTab}>
       {tab === "saya" && (
         <div className="two2">
           <Request />

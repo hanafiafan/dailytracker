@@ -84,8 +84,8 @@ export function ResourcesPage() {
     );
   };
   return (
-    <Page title="Alat & studio" sub="Booking kamera, lighting, studio, dan lokasi agar tidak bentrok" dateNav
-      tabs={[{ id: "jadwal", label: "Jadwal" }, ...(policy.isManager ? [{ id: "kelola", label: "Kelola daftar" }] : [])]} tab={tab} onTab={setTab}
+    <Page noNew title="Alat & studio" sub="Booking kamera, lighting, studio, dan lokasi agar tidak bentrok" dateNav
+      tabs={policy.isManager ? [{ id: "jadwal", label: "Jadwal" }, { id: "kelola", label: "Kelola daftar" }] : undefined} tab={tab} onTab={setTab}
       actions={tab === "jadwal" ? <div className="seg" role="group" aria-label="Jenis"><button aria-pressed={!kind} onClick={() => setKind("")}>Semua</button>{RESOURCE_KINDS.map(k => <button key={k} aria-pressed={kind === k} onClick={() => setKind(k)}>{KIND[k].label}</button>)}</div> : undefined}>
       {tab === "kelola" && policy.isManager ? <Manage list={all} /> : (
         <section className="bc"><div className="heatwrap"><div className="bkgrid">

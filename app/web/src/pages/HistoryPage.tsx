@@ -17,11 +17,11 @@ export function HistoryPage() {
   const kinds = [...new Set((q.data ?? []).map(a => a.kind))];
   const groups = Map.groupBy(items, a => day(a.at));
   return (
-    <Page title="Riwayat" sub="Semua perubahan pada tugas, terbaru di atas"
+    <Page noNew title="Riwayat" sub={`${items.length} aktivitas · terbaru di atas`}
       actions={<>
         {policy.isManager && <select className="input" value={who} onChange={e => setWho(e.target.value)} aria-label="Pelaku"><option value="">Semua orang</option>{team.filter(m => !m.isAdmin || m.email === me.email).map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
         <select className="input" value={kind} onChange={e => setKind(e.target.value)} aria-label="Jenis"><option value="">Semua jenis</option>{kinds.map(k => <option key={k} value={k}>{KIND[k] ?? k}</option>)}</select>
-      </>} tabs={[{ id: "a", label: `${items.length} aktivitas` }]} tab="a">
+      </>}>
       <section className="bc">
         {items.length ? <div className="tline">
           {[...groups].map(([label, list]) => <div key={label}><h4>{label}</h4>

@@ -25,21 +25,21 @@ export function ReportsPage() {
   const maxP = Math.max(1, ...(d?.perPerson ?? []).map(p => p.total));
   const maxProj = Math.max(1, ...(d?.byProject ?? []).map(p => p.total));
   return (
-    <Page title="Laporan" sub={`${range(from)} – ${range(to, true)}${policy.isManager ? "" : " · hanya tugasmu"}`}
+    <Page noNew title="Laporan" sub={`${range(from)} – ${range(to, true)}${policy.isManager ? "" : " · hanya tugasmu"}`}
       tabs={[{ id: "ringkas", label: "Ringkasan" }, ...(policy.isManager ? [{ id: "orang", label: "Per orang" }] : []), { id: "proyek", label: "Proyek & label" }, { id: "waktu", label: "Waktu kerja" }]} tab={tab} onTab={setTab}
       actions={<>
         <div className="seg" role="group" aria-label="Rentang">{[7, 30, 90].map(n => <button key={n} aria-pressed={days === n} onClick={() => setDays(n)}>{n} hari</button>)}</div>
         <button className="btn small" onClick={() => window.print()}><Printer size={14} />Cetak</button>
-        {policy.isManager && <a className="btn small primary" href={`/api/reports/tasks.csv?from=${from}&to=${to}`} download><Download size={14} />Ekspor CSV</a>}
+        {policy.isManager && tab !== "waktu" && <a className="btn small primary" href={`/api/reports/tasks.csv?from=${from}&to=${to}`} download><Download size={14} />Ekspor CSV</a>}
       </>}>
       {tab === "waktu" ? <TimeReport from={from} to={to} /> : !d ? <p className="muted">Memuat…</p> : <>
-        <div className="surface"><div className="statrow">
+        {tab === "ringkas" && <div className="surface"><div className="statrow">
           <div className="stat" data-c="sky"><span className="v">{d.totals.total}</span><span className="k">Total tugas</span></div>
           <div className="stat" data-c="mint"><span className="v">{d.totals.done}</span><span className="k">Selesai ({pct(d.totals.total ? d.totals.done / d.totals.total : null)})</span></div>
           <div className="stat" data-c="lilac"><span className="v">{pct(d.totals.onTimeRate)}</span><span className="k">Tepat waktu</span></div>
           <div className="stat" data-c="peach"><span className="v">{d.totals.overdue}</span><span className="k">Terlambat (belum selesai)</span></div>
           <div className="stat" data-c="pink"><span className="v">{dur(d.totals.avgCompletionMin)}</span><span className="k">Rata-rata pengerjaan</span></div>
-        </div></div>
+        </div></div>}
 
         {tab === "ringkas" && (
           <div className="two" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>

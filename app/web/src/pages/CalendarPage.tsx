@@ -139,8 +139,7 @@ export function CalendarPage() {
       actions={<>
         {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
         <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>
-      </>}
-      tabs={[{ id: "minggu", label: "Minggu" }]} tab="minggu">
+      </>}>
       <button className="btn small calbtn" onClick={() => setSide(s => !s)} aria-expanded={side}>{side ? "Sembunyikan kalender bulan" : "Pilih tanggal"}</button>
       <div className="cal">
         <div className={"calside" + (side ? " open" : "")} style={{ display: "grid", gap: 14 }}>
