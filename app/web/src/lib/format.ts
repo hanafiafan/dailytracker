@@ -17,5 +17,5 @@ export function dur(ms: number) {
   return Math.floor(m / 1440) + " hari";
 }
 export const hue = (str: string) => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-export const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("") || "?";
+export const initials = (n: string) => n.replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("") || "?";
 export const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, "") + " ↗"; } catch { return "Buka link ↗"; } };
