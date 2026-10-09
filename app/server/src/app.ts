@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
@@ -26,6 +27,8 @@ export function createApp(deps: Deps) {
   const nameOf = (email: string) => db.select({ n: members.name }).from(members).where(eq(members.email, email)).get()?.n ?? email;
   const notify = createNotify(push, db, bus, nameOf);
   const auth = requireUser(deps);
+  const deviceId = (endpoint: string) => createHash("sha256").update(endpoint).digest("hex").slice(0, 12);
+  const lastTest = new Map<string, number>();
 
   const api = new Hono<AppEnv>()
     // Every write must carry this header: cross-site forms and images cannot add it.
@@ -35,7 +38,7 @@ export function createApp(deps: Deps) {
       try {
         const id = await deps.verifyGoogle(c.req.valid("json").credential);
         if (!id.verified) return c.json({ error: "Email Google belum terverifikasi" }, 403);
-        startSession(c, deps, id.email, id.name);
+        startSession(c, deps, id.email.toLowerCase(), id.name);
         return c.json({ ok: true });
       } catch (e) { console.warn("login", (e as Error).message); return c.json({ error: "Login Google ditolak" }, 401); }
     })
@@ -89,6 +92,20 @@ export function createApp(deps: Deps) {
       const sub = c.req.valid("json");
       db.insert(pushSubs).values({ endpoint: sub.endpoint, email: c.var.user.email, sub }).onConflictDoUpdate({ target: pushSubs.endpoint, set: { email: c.var.user.email, sub } }).run();
       return c.json({ ok: true });
+    })
+    // This person's own devices (never the endpoint itself, only a short id and which service delivers to it).
+    .get("/push/devices", auth, c => c.json(db.select().from(pushSubs).where(eq(pushSubs.email, c.var.user.email)).all().map(r => ({ id: deviceId(r.endpoint), service: new URL(r.endpoint).hostname }))))
+    .delete("/push/devices/:id", auth, c => {
+      for (const r of db.select().from(pushSubs).where(eq(pushSubs.email, c.var.user.email)).all()) if (deviceId(r.endpoint) === c.req.param("id")) db.delete(pushSubs).where(eq(pushSubs.endpoint, r.endpoint)).run();
+      return c.json({ ok: true });
+    })
+    // A test message to all of my devices, at most once every 10 seconds.
+    .post("/push/test", auth, async c => {
+      const me = c.var.user.email, now = Date.now();
+      if (now - (lastTest.get(me) ?? 0) < 10_000) return c.json({ error: "Tunggu beberapa detik sebelum mengirim lagi." }, 429);
+      lastTest.set(me, now);
+      const r = (await push.send([me], "Notifikasi uji", "Kalau pesan ini muncul, notifikasi di perangkatmu sudah berfungsi.", "test-" + now)) ?? { sent: 0, failed: 0 };
+      return c.json(r);
     })
     .post("/push/unsubscribe", auth, zValidator("json", z.object({ endpoint: z.string() })), c => {
       db.delete(pushSubs).where(and(eq(pushSubs.endpoint, c.req.valid("json").endpoint), eq(pushSubs.email, c.var.user.email))).run();
