@@ -43,6 +43,13 @@
       "when": 1791487934131,
       "tag": "0005_resources_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791531725596,
+      "tag": "0006_indexes",
+      "breakpoints": true
     }
   ]
 }

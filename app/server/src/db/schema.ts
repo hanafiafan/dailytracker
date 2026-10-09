@@ -65,7 +65,7 @@ export const tasks = sqliteTable("tasks", {
   reportAt: integer("report_at"),
   remDue: bool("rem_due").notNull().default(false),
   remLate: bool("rem_late").notNull().default(false),
-}, t => [index("tasks_email_date").on(t.email, t.date), index("tasks_date").on(t.date)]);
+}, t => [index("tasks_email_date").on(t.email, t.date), index("tasks_date").on(t.date), index("tasks_project").on(t.projectId)]);
 
 export const proofs = sqliteTable("proofs", {
   taskId: text("task_id").primaryKey().references(() => tasks.id, { onDelete: "cascade" }),
@@ -196,4 +196,4 @@ export const bookings = sqliteTable("bookings", {
   end: text("end").notNull(),
   note: text("note").notNull().default(""),
   createdAt: integer("created_at").notNull(),
-}, t => [index("bookings_slot").on(t.resourceId, t.date)]);
+}, t => [index("bookings_slot").on(t.resourceId, t.date), index("bookings_date").on(t.date)]);
