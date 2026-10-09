@@ -1049,7 +1049,8 @@
   body { isolation: isolate; }
   body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--ink); opacity: var(--mark-opacity);
     -webkit-mask: url("/brand/hellens-mark.svg") right 24px top 84px / min(400px, 47vw) auto no-repeat; mask: url("/brand/hellens-mark.svg") right 24px top 84px / min(400px, 47vw) auto no-repeat; }
-  .shell, .loginwrap { background: transparent; box-shadow: none; }
+  .shell, .loginwrap, :root[data-theme="dark"] .shell, :root[data-theme="dark"] .loginwrap { background: transparent; box-shadow: none; }
+  :root[data-theme="dark"] body { background: var(--canvas); }
   @media (max-width: 820px) { body::before { -webkit-mask-position: right 12px top 88px; mask-position: right 12px top 88px; -webkit-mask-size: 60vw auto; mask-size: 60vw auto; } }
   @media print { body::before { display: none; } }
 }
