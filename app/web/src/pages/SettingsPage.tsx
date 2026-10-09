@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Page } from "../components/Page";
 import { InstallCard } from "../components/Cards";
 import { ProfileForm } from "../components/ManageTeam";
+import { Onboarding } from "../components/Onboarding";
 import { PushDevices } from "../components/PushDevices";
 import { enablePush, pushSupported, unregisterPush } from "../lib/push";
 import { errorText } from "../lib/queries";
@@ -18,6 +19,7 @@ export function SettingsPage() {
   const [perm, setPerm] = useState(() => (pushSupported() ? Notification.permission : "unsupported"));
   const m = member(me.email);
   const qc = useQueryClient();
+  const [guide, setGuide] = useState(false);
   const [theme, setT] = useState<Theme>(getTheme);
   const pick = (t: Theme) => { setTheme(t); setT(t); };
   const out = logout;
@@ -42,7 +44,8 @@ export function SettingsPage() {
           <section className="surface hide-touch"><div className="surface-h"><h2>Pintasan keyboard</h2></div>
             <ul className="keys">{[["Ctrl/⌘ + K", "Cari dan perintah"], ["/", "Cari"], ["N", "Tugas baru"], ["G lalu D", "Dasbor"], ["G lalu P", "Papan"], ["G lalu L", "Daftar"], ["G lalu K", "Kalender"], ["G lalu Y", "Proyek"], ["G lalu A", "Alat & studio"], ["G lalu I", "Izin & cuti"], ["G lalu R", "Laporan"], ["G lalu H", "Riwayat"]].map(([k, v]) => <li key={k}><kbd>{k}</kbd><span>{v}</span></li>)}</ul>
           </section>
-          <InstallCard />
+          <section className="surface"><div className="surface-h"><h2>Panduan pemasangan</h2></div><p className="muted" style={{ marginBottom: 10 }}>Langkah menaruh aplikasi di layar utama, mengizinkan notifikasi, dan mengujinya.</p><button className="btn" onClick={() => setGuide(true)}>Buka panduan</button></section>
+          {guide && <Onboarding forceOpen onClose={() => setGuide(false)} />}
           <section className="surface"><div className="surface-h"><h2>Akun</h2></div><p className="muted" style={{ marginBottom: 10 }}>{me.email}</p><button className="btn" onClick={out}>Keluar</button></section>
         </div>
       </div>
