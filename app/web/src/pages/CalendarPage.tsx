@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { addDays, parseYmd, ymd } from "@shared/time";
+import { Agenda } from "../components/Agenda";
 import { Page } from "../components/Page";
+import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { DAYN, today } from "../lib/format";
 import { keys, patchTaskLocally, useAction, useTasks, windowFrom } from "../lib/queries";
@@ -121,6 +123,7 @@ export function CalendarPage() {
     move.mutate({ id: t.id, date: d!, start, due });
   };
 
+  const mobile = useIsMobile();
   const [side, setSide] = useState(false);
   useEffect(() => { document.querySelector(".week-head .today")?.scrollIntoView({ inline: "center", block: "nearest" }); }, [date]);
   // mini month
@@ -140,6 +143,7 @@ export function CalendarPage() {
         {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
         <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>
       </>}>
+      {mobile ? <Agenda days={days} tasks={tasks} /> : <>
       <button className="btn small calbtn" onClick={() => setSide(s => !s)} aria-expanded={side}>{side ? "Sembunyikan kalender bulan" : "Pilih tanggal"}</button>
       <div className="cal">
         <div className={"calside" + (side ? " open" : "")} style={{ display: "grid", gap: 14 }}>
@@ -181,6 +185,7 @@ export function CalendarPage() {
           <DragOverlay>{dragged ? <div className="ev drag" data-c={project(dragged.projectId)?.color ?? "lilac"} style={{ position: "relative", height: 52 }}><b>{dragged.title}</b></div> : null}</DragOverlay>
         </DndContext>
       </div>
+      </>}
     </Page>
   );
 }
