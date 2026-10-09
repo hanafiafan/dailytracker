@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Page } from "../components/Page";
 import { InstallCard } from "../components/Cards";
 import { ProfileForm } from "../components/ManageTeam";
+import { PushDevices } from "../components/PushDevices";
 import { enablePush, pushSupported, unregisterPush } from "../lib/push";
 import { errorText } from "../lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +32,7 @@ export function SettingsPage() {
             {perm === "granted" && <><p>Notifikasi aktif di perangkat ini.</p><div className="actions" style={{ justifyContent: "flex-start", marginTop: 8 }}><button className="btn small" onClick={async () => { await unregisterPush(); toast.success("Notifikasi dimatikan di perangkat ini"); }}>Matikan di perangkat ini</button></div></>}
             {perm === "denied" && <p className="muted">Notifikasi diblokir. Izinkan lewat pengaturan situs di browser, lalu muat ulang.</p>}
             {perm === "default" && <><p className="muted">Dapatkan pemberitahuan tugas baru, pengingat tenggat, dan komentar.</p><div className="actions" style={{ justifyContent: "flex-start", marginTop: 8 }}><button className="btn primary" onClick={async () => { try { if (await enablePush()) toast.success("Notifikasi aktif di perangkat ini"); } catch (e) { toast.error(errorText(e)); } setPerm(Notification.permission); }}>Aktifkan notifikasi</button></div></>}
+            {perm !== "unsupported" && <PushDevices />}
           </section>
           <section className="surface"><div className="surface-h"><h2>Tampilan</h2></div>
             <div className="seg" role="group" aria-label="Tema"><button aria-pressed={theme === "light"} onClick={() => pick("light")}>Terang</button><button aria-pressed={theme === "dark"} onClick={() => pick("dark")}>Gelap</button></div>
