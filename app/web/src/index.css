@@ -775,3 +775,15 @@
   }
 }
 @layer components { @media (max-width: 820px) { .mrow .scope { display: flex; gap: 6px; align-items: center; grid-column: 1 / -1; overflow-x: auto; scrollbar-width: none; } .mrow .scope .chip, .mrow .scope span { flex: none; white-space: nowrap; } } }
+@layer components {
+  .fab { display: none !important; }
+  .addtool { display: none; background: #2F6BFF; color: #fff; border: 0; }
+  @media (max-width: 820px) { .addtool { display: grid; } }
+  /* lime warning box: its chips and icon must stay readable in both themes */
+  .warnbox .chip { background: #101114; color: #fff; box-shadow: none; } .warnbox .chip:hover { background: #2a2c33; }
+  .warnbox .warnico { background: #101114; color: var(--volt); }
+  .feed li:has(.emptyart) { grid-template-columns: 1fr; }
+  /* solid strip above the floating header so nothing shows through at the very top of the screen */
+  .topnav::before { content: ""; position: fixed; z-index: -1; top: 0; left: 0; right: 0; height: calc(12px + env(safe-area-inset-top)); background: var(--canvas); pointer-events: none; }
+}
+@layer components { :root[data-theme] .warnbox .warnico { background: #101114; color: var(--volt); } :root[data-theme] .warnbox .chip { background: #101114; color: #fff; } }
