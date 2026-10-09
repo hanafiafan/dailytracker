@@ -36,7 +36,7 @@ function Overview({ d }: { d: ProjectReportDTO }) {
   const prio = (["urgent", "high", "normal", "low"] as const).map(k => ({ k, n: tasks.filter(t => t.priority === k && t.status !== "done").length }));
   const maxP = Math.max(1, ...prio.map(x => x.n));
   return (
-    <div className="bento" data-c={p.color}>
+    <div className="bento pov" data-c={p.color}>
       <section className="bc s4">
         <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h2>Penyelesaian</h2></div>
         <div className="mid-n">{s.done}<small> dari {s.total} tugas</small></div>
