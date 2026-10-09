@@ -4,9 +4,9 @@ import { toast } from "sonner";
 import { api, ok } from "../lib/api";
 import { enablePush, pushSupported } from "../lib/push";
 import { errorText } from "../lib/queries";
+import { promptInstall, useInstallPrompt, useJustInstalled } from "../lib/install";
 import { useViewer } from "../lib/viewer";
 
-interface InstallEvent extends Event { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> }
 const standalone = () => window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
 const ua = () => navigator.userAgent;
 const isIOS = () => /iphone|ipad|ipod/i.test(ua()) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -27,21 +27,17 @@ function installHelp(canPrompt: boolean) {
 export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClose?: () => void }) {
   const { me } = useViewer();
   const [open, setOpen] = useState(() => !!forceOpen || !done(me.email));
-  const [evt, setEvt] = useState<InstallEvent | null>(null);
-  const [installed, setInstalled] = useState(standalone);
+  const evt = useInstallPrompt();
+  const [accepted, setAccepted] = useState(false);
+  const justInstalled = useJustInstalled();
+  const installed = standalone() || accepted || justInstalled;
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">(() => (pushSupported() ? Notification.permission : "unsupported"));
   const [tested, setTested] = useState<"idle" | "busy" | "ok" | "fail">("idle");
-  useEffect(() => {
-    const on = (e: Event) => { e.preventDefault(); setEvt(e as InstallEvent); };
-    const inst = () => setInstalled(true);
-    window.addEventListener("beforeinstallprompt", on); window.addEventListener("appinstalled", inst);
-    return () => { window.removeEventListener("beforeinstallprompt", on); window.removeEventListener("appinstalled", inst); };
-  }, []);
   useEffect(() => { if (forceOpen) setOpen(true); }, [forceOpen]);
   if (!open) return null;
 
   const close = (finished: boolean) => { if (finished) { try { localStorage.setItem(key(me.email), "1"); } catch { /* private mode */ } } setOpen(false); onClose?.(); };
-  const install = async () => { const e = evt; if (!e) return; setEvt(null); void e.prompt(); try { if ((await e.userChoice).outcome === "accepted") setInstalled(true); } catch { /* dismissed */ } };
+  const install = async () => { if (await promptInstall()) setAccepted(true); };
   const allow = async () => { try { if (await enablePush()) toast.success("Notifikasi aktif di perangkat ini"); } catch (e) { toast.error(errorText(e)); } if (pushSupported()) setPerm(Notification.permission); };
   const test = async () => {
     setTested("busy");
@@ -60,7 +56,7 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
           <section className={"ob-step" + (installed ? " ok" : "")}>
             <span className="ob-n">{installed ? <Check size={16} /> : 1}</span>
             <div><b>Taruh di layar utama</b><p className="muted">{installHelp(!!evt)}</p>
-              {evt && <button className="btn small primary" onClick={install}><MonitorSmartphone size={14} />Pasang</button>}</div>
+              {evt && <button className="btn small primary" onClick={install}><MonitorSmartphone size={14} />Pasang sekarang</button>}</div>
           </section>
           <section className={"ob-step" + (granted ? " ok" : "")}>
             <span className="ob-n">{granted ? <Check size={16} /> : 2}</span>
