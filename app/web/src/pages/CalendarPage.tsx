@@ -85,7 +85,7 @@ function AllDayChip({ t, tint, onOpen }: { t: TaskDTO; tint?: string; onOpen: ()
   const { policy, me } = useViewer();
   const canDrag = policy.canManage(t.email) || (me.email === t.email && t.by === "self");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: t.id, disabled: !canDrag });
-  return <button ref={setNodeRef} className="evchip" data-c={tint ?? "lilac"} style={{ opacity: isDragging ? 0.35 : t.status === "done" ? 0.55 : 1 }} onClick={onOpen} title={t.title} {...attributes} {...listeners}>{t.title}</button>;
+  return <button ref={setNodeRef} className="evchip" data-c={tint ?? "lilac"} style={{ opacity: isDragging ? 0.35 : t.status === "done" ? 0.75 : 1 }} onClick={onOpen} title={t.title} {...attributes} {...listeners}>{t.title}</button>;
 }
 
 export function CalendarPage() {
