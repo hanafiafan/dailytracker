@@ -127,7 +127,7 @@ export function Flow({ all, date }: { all: TaskDTO[]; date: string }) {
         {data.map((x, i) => (
           <button key={x.d} className={x.d === date ? "sel" : ""} onMouseEnter={() => setHov(i)} onFocus={() => setHov(i)} onBlur={() => setHov(null)} onClick={() => setDate(x.d)} aria-label={`${fmtShort(x.d)}: ${x.done} selesai, ${x.open} terbuka`}>
             <span className="col2">
-              <i className="o" style={{ height: `${x.open / max * 100}%` }} /><i className="d" style={{ height: `${x.done / max * 100}%` }} />
+              {x.open > 0 && <i className="o" style={{ height: `${x.open / max * 100}%` }} />}{x.done > 0 && <i className="d" style={{ height: `${x.done / max * 100}%` }} />}
             </span>
             <span>{span === 7 ? DAYN[(new Date(x.d + "T12:00:00").getDay())] : Number(x.d.slice(8))}</span>
           </button>))}
