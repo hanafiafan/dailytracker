@@ -950,3 +950,18 @@
   .mx th.today small, .mx th.today b { color: #101114; }
 }
 @layer components { .morechip { margin-top: -13px; } .ev { padding-top: 7px; } }
+@layer components {
+  /* flow chart: soft rounded track, fully rounded segments that never shrink below a pill, a gentle gradient instead of flat blocks */
+  .flow .col2 { background: var(--glass); gap: 3px; padding: 4px; }
+  :root[data-theme="dark"] .flow .col2 { background: var(--glass); }
+  .flow .col2 i { min-height: 22px; border-radius: 999px; box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), inset 0 -6px 10px -6px rgb(0 0 0 / .18); }
+  .flow .col2 .d { background: linear-gradient(180deg, #E4FA5A, var(--volt)); } .flow .col2 .o { background: linear-gradient(180deg, #6B97FF, var(--blue)); }
+  .flow button:hover .col2, .flow button.sel .col2 { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .pixels i { border-radius: 4px; }
+}
+@layer components {
+  .onboard { width: min(520px, calc(100vw - 24px)); } .ob-steps { gap: 10px; }
+  .ob-step { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 14px; border-radius: 20px; background: var(--canvas); } .ob-step > div { display: grid; gap: 6px; justify-items: start; } .ob-step p { font-size: .84rem; line-height: 1.45; } .ob-step b { font-size: .95rem; }
+  .ob-n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); font-weight: 700; font-size: .84rem; } .ob-step.ok .ob-n { background: var(--volt); color: #101114; } .ob-step.ok { background: color-mix(in srgb, var(--volt) 16%, var(--surface)); }
+}
+@layer components { @media (max-width: 820px) { .dialog.onboard { width: 100%; } } }
