@@ -1043,3 +1043,13 @@
   @media (max-width: 820px) { .shell > .legal { padding-bottom: 6px; } }
   @media print { .legal { display: flex !important; justify-content: flex-end; border-top: 1px solid #ddd; margin-top: 16px; color: #666; } }
 }
+@layer components {
+  /* big Hellens mark behind everything (20%), tinted with the text colour so it works in both themes */
+  :root { --mark-opacity: .2; }
+  body { isolation: isolate; }
+  body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--ink); opacity: var(--mark-opacity);
+    -webkit-mask: url("/brand/hellens-mark.svg") 62% 58% / min(1150px, 135vw) auto no-repeat; mask: url("/brand/hellens-mark.svg") 62% 58% / min(1150px, 135vw) auto no-repeat; }
+  .shell, .loginwrap { background: transparent; box-shadow: none; }
+  @media (max-width: 820px) { body::before { -webkit-mask-position: 50% 52%; mask-position: 50% 52%; -webkit-mask-size: 170vw auto; mask-size: 170vw auto; } }
+  @media print { body::before { display: none; } }
+}
