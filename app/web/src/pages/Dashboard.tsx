@@ -160,6 +160,7 @@ function MemberDashboard() {
         </section>
       )}
       {tab === "hari" && <>
+        {!mobile && <>
         {late.length > 0 && <section className="list"><h2>Belum selesai dari hari sebelumnya</h2><ul className="tasks">{late.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} isLate />)}</ul></section>}
         <section className="list">
           <h2>{todayView ? "Tugas hari ini" : "Tugas " + fmtShort(date)}</h2>
@@ -167,6 +168,8 @@ function MemberDashboard() {
             : <p className="empty">{loaded ? "Belum ada tugas. Tugas dari atasan akan muncul di sini, atau tambahkan sendiri di bawah." : "Memuat…"}</p>}
           <QuickAddSelf email={m.email} date={date} />
         </section>
+        </>}
+        {mobile && <QuickAddSelf email={m.email} date={date} />}
         <Achievements tasks={mine} date={date} />
       </>}
       {tab === "depan" && <section className="list"><h2>Tugas mendatang</h2>{upcoming.length ? <ul className="tasks">{upcoming.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} />)}</ul> : <p className="empty">Tidak ada tugas mendatang.</p>}</section>}

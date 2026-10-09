@@ -5,6 +5,9 @@ import type { MemberDTO, TaskDTO } from "@shared/schemas";
 import { addDays, atMs } from "@shared/time";
 import { fmtShort, today } from "../lib/format";
 import { PRIORITY_RANK, subtaskProgress, weekStart } from "../lib/tasks";
+import { api, ok } from "../lib/api";
+import { keys, patchTaskLocally, useAction } from "../lib/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUi, useViewer } from "../lib/viewer";
 import { Flow } from "./Bento";
 import { Avatar, tally } from "./ui";
@@ -18,7 +21,9 @@ export function MobileHome({ all, day, date, people, manager, attention, onAtten
   all: TaskDTO[]; day: TaskDTO[]; date: string; people: MemberDTO[]; manager: boolean; attention?: number; onAttention?: () => void;
 }) {
   const [, go] = useLocation();
-  const { member, projects, project } = useViewer();
+  const { member, projects, project, me, policy } = useViewer();
+  const qc = useQueryClient();
+  const start = useAction((id: string) => ok(api.tasks[":id"].status.$patch({ param: { id }, json: { status: "doing" } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
   const { openTask, newTask } = useUi();
   const toastKey = "th-toast-" + date;
   const [toastOpen, setToast] = useState(() => { try { return sessionStorage.getItem(toastKey) !== "1"; } catch { return true; } });
@@ -27,7 +32,7 @@ export function MobileHome({ all, day, date, people, manager, attention, onAtten
   const now = Date.now();
   const late = all.filter(t => t.status !== "done" && (t.date < today() || (t.due && t.date === today() && now > atMs(t.date, t.due)))).length;
   const wk = weekStart(date), weekDone = all.filter(t => t.status === "done" && t.date >= wk && t.date <= addDays(wk, 6)).length;
-  const cards = useMemo(() => day.slice().sort((a, b) => Number(a.status === "done") - Number(b.status === "done") || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99")).slice(0, 5), [day]);
+  const cards = useMemo(() => day.slice().sort((a, b) => Number(a.status === "done") - Number(b.status === "done") || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99")).slice(0, manager ? 5 : 12), [day]);
   const proj = useMemo(() => projects.filter(p => !p.archived).map(p => { const l = all.filter(t => t.projectId === p.id), d = l.filter(t => t.status === "done").length; return { p, total: l.length, pct: l.length ? Math.round(d / l.length * 100) : 0 }; }).filter(x => x.total).sort((a, b) => b.total - a.total).slice(0, 8), [projects, all]);
   return (
     <div className="mhome">
@@ -53,18 +58,20 @@ export function MobileHome({ all, day, date, people, manager, attention, onAtten
       </div>
       {manager && !!attention && onAttention && <button className="mwide" onClick={onAttention}><span><b>{attention} perlu perhatian</b><small>terlambat, perlu ditinjau, mendesak</small></span><ChevronRight size={20} /></button>}
 
-      {manager && cards.length > 0 && <>
-        <div className="msec"><h2>Tugas hari ini</h2><button onClick={() => go("/daftar")}>Lihat semua <ChevronRight size={14} /></button></div>
+      {cards.length > 0 && <>
+        <div className="msec"><h2>{manager ? "Tugas hari ini" : "Tugas saya"}</h2><button onClick={() => go("/daftar")}>Lihat semua <ChevronRight size={14} /></button></div>
         <div className="mcards">{cards.map(t => {
-          const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t);
+          const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), canWork = policy.canManage(t.email) || (me.email === t.email && !!me.member);
           const prog = t.status === "done" ? 100 : sp.total ? Math.round(sp.done / sp.total * 100) : t.status === "doing" ? 50 : 0;
           return (
-            <button key={t.id} className="mcard" data-c={p?.color} onClick={() => openTask(t.id)}>
+            <div key={t.id} className="mcardwrap"><button className="mcard" data-c={p?.color} onClick={() => openTask(t.id)}>
               <b className="clamp2">{t.title}</b>
               <small className="muted clamp1">{t.start ? `${t.start}${t.due ? "–" + t.due : ""}` : t.due ? "sebelum " + t.due : "Seharian"}{p ? " · " + p.name : ""}</small>
               <span className="mrow2">{m && <Avatar m={m} />}<span className="clamp1">{m?.name ?? t.email}</span>{t.comments.length > 0 && <em><MessageSquare size={12} />{t.comments.length}</em>}<span className={"stpill " + t.status}>{t.status === "done" ? "Selesai" : t.status === "doing" ? "Dikerjakan" : "Belum"}</span></span>
               <span className="mbarwrap thin"><span className="mprog"><i style={{ width: `${prog}%` }} /></span><b>{prog}%</b></span>
-            </button>);
+            </button>
+            {canWork && t.status !== "done" && <button className={"btn small " + (t.status === "todo" ? "blue" : "primary")} onClick={() => { if (t.status === "todo") { patchTaskLocally(qc, t.id, { status: "doing" }); start.mutate(t.id); } else openTask(t.id); }}>{t.status === "todo" ? "Mulai kerjakan" : "Selesaikan"}</button>}
+            </div>);
         })}</div>
       </>}
 
@@ -78,7 +85,6 @@ export function MobileHome({ all, day, date, people, manager, attention, onAtten
             <span className="mprog"><i style={{ width: `${pc}%` }} /></span>
           </button>))}</div>
       </>}
-      {!manager && <button className="btn blue" style={{ height: 46 }} onClick={() => newTask()}>Tambah tugas</button>}
     </div>
   );
 }
