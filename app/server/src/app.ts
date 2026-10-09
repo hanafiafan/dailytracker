@@ -17,6 +17,7 @@ import { memberColumns, type AppEnv, type Deps } from "./context.js";
 import { inboxRoutes } from "./routes/inbox.js";
 import { leaveRoutes } from "./routes/leaves.js";
 import { timeRoutes } from "./routes/time.js";
+import { chatRoutes } from "./routes/chat.js";
 import { bookingRoutes, resourceRoutes } from "./routes/resources.js";
 import { linkRoutes } from "./routes/links.js";
 import { metaRoutes } from "./routes/meta.js";
@@ -35,7 +36,7 @@ export function createApp(deps: Deps) {
 
   const api = new Hono<AppEnv>()
     // No request needs more than a compressed photo (about 1.5 MB); anything bigger is refused before it is read into memory.
-    .use(bodyLimit({ maxSize: 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) }))
+    .use((c, next) => c.req.path === "/api/chat/attachments" ? next() : bodyLimit({ maxSize: 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) })(c, next))
     // Every write must carry this header: cross-site forms and images cannot add it.
     .use(async (c, next) => c.req.method !== "GET" && c.req.path !== "/api/auth/google-redirect" && c.req.header("x-app") !== "1" ? c.json({ error: "bad request" }, 400) : next())
     .get("/config", c => c.json({ googleClientId: env.GOOGLE_CLIENT_ID, vapidPublicKey: push.publicKey }))
@@ -94,6 +95,7 @@ export function createApp(deps: Deps) {
     .use("/time/*", auth, team).route("/time", timeRoutes(deps))
     .use("/resources/*", auth, team).route("/resources", resourceRoutes(deps))
     .use("/bookings/*", auth, team).route("/bookings", bookingRoutes(deps))
+    .use("/chat/*", auth, team).route("/chat", chatRoutes(deps, notify))
     .use("/links/*", auth, team).route("/links", linkRoutes(deps))
     .use("/meta/*", auth, team).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth, team).route("/inbox", inboxRoutes(deps))
@@ -139,6 +141,8 @@ export function createApp(deps: Deps) {
     }));
 
   return new Hono()
+    // Downloaded chat files get a locked-down policy of their own (the page-wide one would be applied over it otherwise).
+    .use("/api/chat/files/*", async (c, next) => { await next(); c.header("content-security-policy", "sandbox; default-src 'none'"); })
     // Browser hardening: only our own scripts plus Google Sign-In may run, nobody may frame the app, HTTPS is remembered.
     .use(secureHeaders({
       strictTransportSecurity: env.PUBLIC_URL.startsWith("https:") ? "max-age=31536000" : false,

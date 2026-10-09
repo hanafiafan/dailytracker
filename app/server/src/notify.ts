@@ -9,9 +9,9 @@ import { wib } from "@shared/time";
 type TaskRow = typeof tasks.$inferSelect;
 
 export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: string) => string) {
-  const deliver = (to: string[], kind: string, taskId: string | null, title: string, body: string, tag: string) => {
+  const deliver = (to: string[], kind: string, taskId: string | null, title: string, body: string, tag: string, path?: string) => {
     deliverInbox(db, bus, to, kind, taskId, body ? `${title}: ${body}` : title);
-    return push.send(to, title, body, tag, taskId ? `/?t=${taskId}` : "");
+    return push.send(to, title, body, tag, path ?? (taskId ? `/?t=${taskId}` : ""));
   };
   return {
     newTask: (t: TaskRow) =>
@@ -26,6 +26,8 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
       deliver(push.managersOf(email), "leave", null, `${name} mengajukan ${kind}`, from === to ? from : `${from} s/d ${to}`, "leave-" + email + from),
     leaveDecided: (email: string, approved: boolean, kind: string, from: string, to: string) =>
       deliver([email], "leave", null, approved ? "Pengajuan disetujui" : "Pengajuan ditolak", `${kind} ${from === to ? from : `${from} s/d ${to}`}`, "leave-d-" + email + from),
+    chatMention: (to: string[], channelName: string, channel: string, by: string, text: string) =>
+      deliver(to, "chat", null, `${by} menyebutmu di ${channelName}`, text.slice(0, 120), "chat-" + channel, `/inbox?c=${encodeURIComponent(channel)}`),
     done: (t: TaskRow, by: string) =>
       deliver(push.managersOf(t.email).filter(e => e !== by), "done", t.id, `${nameOf(t.email)} menyelesaikan tugas`, t.title, "done-" + t.id),
     ask: (email: string) =>
