@@ -29,7 +29,7 @@ const NAV = [
 export function TopNav() {
   const [loc, go] = useLocation();
   const { policy, me, member } = useViewer();
-  const { openSearch } = useUi();
+  const { openSearch, newTask } = useUi();
   const qc = useQueryClient();
   const m = member(me.email);
   const [menu, setMenu] = useState(false);
@@ -60,6 +60,7 @@ export function TopNav() {
       </nav>
       <div className="navtools">
         <RunningPill />
+        <button className="tool addtool" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={18} /></button>
         <button className="tool" onClick={openSearch} aria-label="Cari (Ctrl+K)" title="Cari (Ctrl+K)"><Search size={17} /></button>
         <Bell_ />
         <div className="usermenu" ref={ref}>
@@ -135,7 +136,6 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions,
           {!noNew && <button className="btn blue hide-mobile" style={{ height: 40 }} onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>}
         </div>
       </div>
-      <button className="fab" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={24} /></button>
       {(tabs || actions) && (
         <div className="tabs">
           {tabs && <div className="tablist" role="tablist">{tabs.map(x => <button key={x.id} role="tab" aria-selected={tab === x.id} onClick={() => onTab?.(x.id)}>{x.label}</button>)}</div>}
