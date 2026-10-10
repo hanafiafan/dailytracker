@@ -83,9 +83,14 @@ function ManagerDashboard() {
   const idle = loaded && date === today() ? workers.filter(m => !m.isAdmin && !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
   const a = attention(tasks, policy.canManage), attn = a.late.length + a.review.length + a.stuck.length;
   const asking = idle.filter(m => isToday(m.askAt));
+  // An admin who is also on the team gets tasks from the owner or other admins: they need their own list too.
+  const self = me.member ? member(me.email) : undefined;
+  const mine = self ? tasks.filter(t => t.email === self.email) : [];
+  const myDay = splitDay(mine, date);
+  const myOpen = mine.filter(t => t.date <= today() && t.status !== "done").length;
   return (
     <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
-      tabs={[{ id: "orang", label: "Ringkasan" }, { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
+      tabs={[{ id: "orang", label: "Ringkasan" }, ...(self ? [{ id: "saya", label: `Tugas saya${myOpen ? ` (${myOpen})` : ""}` }] : []), { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
@@ -122,6 +127,15 @@ function ManagerDashboard() {
           <div className="two2"><Upcoming tasks={tasks} date={date} /><Feed /></div>
         </>
       )}
+      {tab === "saya" && self && <>
+        {myDay.late.length > 0 && <section className="list"><h2>Belum selesai dari hari sebelumnya</h2><ul className="tasks">{myDay.late.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} isLate />)}</ul></section>}
+        <section className="list">
+          <h2>{date === today() ? "Tugas hari ini" : "Tugas " + fmtShort(date)}</h2>
+          {myDay.day.length ? <ul className="tasks">{myDay.day.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} />)}</ul>
+            : <p className="empty">{loaded ? "Belum ada tugas untukmu di tanggal ini." : "Memuat…"}</p>}
+          <QuickAddSelf email={self.email} date={date} />
+        </section>
+      </>}
       {tab === "perhatian" && <Attention tasks={tasks.filter(t => workers.some(w => w.email === t.email))} />}
       {tab === "rekap" && <Recap people={workers} tasks={tasks} date={date} days={recapDays} onDays={setRecapDays} onPick={d => { setDate(d); setTab("orang"); }} loaded={loaded} />}
       {tab === "aktivitas" && <Feed limit={25} />}

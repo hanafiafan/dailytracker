@@ -9,6 +9,7 @@ const KARYAWAN: Sec[] = [
   { h: "Mulai hari", items: [
     "Buka Dasbor: tugasmu hari ini dan yang belum selesai dari hari sebelumnya ada di sana. Ganti hari dengan panah di atas.",
     "Ketuk status tugas untuk mengubahnya: Belum, Dikerjakan, lalu Selesai. Jam mulai dan selesai tercatat otomatis.",
+    "Saat pertama membuka aplikasi di sebuah perangkat, ada langkah wajib: izinkan notifikasi dan kirim notifikasi uji. Aplikasi baru bisa dipakai setelah itu selesai.",
     "Pakai timer di tugas untuk mencatat waktu kerja. Timer yang sedang jalan tampil di bagian atas layar.",
   ] },
   { h: "Menyelesaikan tugas", items: [
@@ -33,7 +34,7 @@ const KARYAWAN: Sec[] = [
 const UNIT: Sec[] = [
   { h: "Yang bisa kamu lakukan", items: [
     "Kamu memantau anggota biasa di unit yang diberikan pemilik. Orang di luar unitmu dan sesama admin tidak terlihat.",
-    "Beri tugas lewat tombol Tambah tugas: pilih orang, tanggal, jam, prioritas, dan Wajib bukti. Pilih Ulangi rutin untuk tugas harian atau mingguan.",
+    "Beri tugas lewat tombol Tambah tugas: pilih orang, tanggal, jam, prioritas, dan Wajib bukti. Kalau memberi jam selesai, pilih juga kapan penerima diingatkan (15 menit sampai 1 hari sebelumnya); tugas dengan tenggat yang sudah mepet langsung ditandai. Pilih Ulangi rutin untuk tugas harian atau mingguan.",
     "Ubah, hapus, atau kembalikan tugas yang sudah selesai kalau buktinya belum sesuai.",
   ] },
   { h: "Memantau", items: [
@@ -46,13 +47,14 @@ const UNIT: Sec[] = [
     "Beri komentar pada tugas, atau kirim pengingat dari tugas yang terlambat (maksimal satu kali per jam per tugas).",
     "Tugas anggota unitmu yang masih belum selesai 15 menit setelah jam selesai otomatis diberi komentar pengingat, dan kamu mendapat pemberitahuan di lonceng. Kamu tidak perlu menagih satu per satu.",
   ] },
-  { h: "Tugasmu sendiri", items: ["Kamu tetap punya tugas pribadi. Kerjakan dan beri bukti seperti karyawan lain (lihat tab Karyawan)."] },
+  { h: "Tugasmu sendiri", items: ["Tugas yang diberikan kepadamu ada di Dasbor, tab Tugas saya. Kerjakan dan beri bukti seperti karyawan lain (lihat tab Karyawan)."] },
 ];
 
 const ADMIN: Sec[] = [
   { h: "Yang bisa kamu lakukan", items: [
     "Admin semua unit memantau seluruh anggota tim, dan boleh memberi tugas ke admin lain.",
     "Tambah anggota baru, ubah profil dan unit, dan jadikan seseorang admin atau cabut aksesnya di halaman Tim.",
+    "Kamu boleh memberi tugas ke admin lain; mereka melihatnya di tab Tugas saya.",
     "Semua yang bisa dilakukan admin unit (lihat tab Admin unit) berlaku untuk semua unit.",
   ] },
   { h: "Memantau", items: [
