@@ -18,7 +18,8 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const templates = loadTemplates();
   const { me, team, policy, projects, labels } = useViewer();
   const manager = policy.isManager;
-  const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
+  // The owner and admins without a unit limit may also give tasks to other admins.
+  const people = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email));
   const [sel, setSel] = useState(new Set(manager ? prefill.emails ?? [] : [me.email]));
   const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
   const [proof, setProof] = useState(true), [routine, setRoutine] = useState(false);

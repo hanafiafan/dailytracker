@@ -77,10 +77,10 @@ function ManagerDashboard() {
   const byPerson = useMemo(() => Map.groupBy(tasks, t => t.email), [tasks]);
   const units = [...new Set(team.map(m => m.group).filter(Boolean))].sort();
   const myUnits = policy.isBoss ? units : policy.groups;
-  const workers = team.filter(m => !m.isAdmin && policy.canManage(m.email) && (!unit || m.group === unit));
+  const workers = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email) && (!unit || m.group === unit));
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
   const leaves = useLeaves(true).data ?? [];
-  const idle = loaded && date === today() ? workers.filter(m => !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
+  const idle = loaded && date === today() ? workers.filter(m => !m.isAdmin && !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
   const a = attention(tasks, policy.canManage), attn = a.late.length + a.review.length + a.stuck.length;
   const asking = idle.filter(m => isToday(m.askAt));
   return (
