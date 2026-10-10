@@ -225,6 +225,17 @@ export const attachments = sqliteTable("attachments", {
   data: blob("data", { mode: "buffer" }).notNull(),
   createdAt: integer("created_at").notNull(),
 }, t => [index("attachments_message").on(t.messageId)]);
+/** Chat groups made by team members: channel id "g-<id>". Only listed members (and the creator) can read them, managers get no automatic access. */
+export const chatGroups = sqliteTable("chat_groups", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const chatGroupMembers = sqliteTable("chat_group_members", {
+  groupId: text("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  email: text("email").notNull().references(() => members.email, { onDelete: "cascade", onUpdate: "cascade" }),
+}, t => [primaryKey({ columns: [t.groupId, t.email] })]);
 export const channelReads = sqliteTable("channel_reads", {
   email: text("email").notNull(),
   channel: text("channel").notNull(),

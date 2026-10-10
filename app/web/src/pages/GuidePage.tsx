@@ -19,7 +19,7 @@ const KARYAWAN: Sec[] = [
   ] },
   { h: "Berkomunikasi", items: [
     "Tulis komentar di dalam tugas untuk bertanya atau memberi kabar. Kamu mendapat pengingat 30 menit sebelum tenggat. Kalau tugas masih belum selesai 15 menit setelah jam selesai, komentar Pengingat otomatis muncul di tugas itu dan masuk ke lonceng. Selesaikan, atau jelaskan kendalanya lewat komentar.",
-    "Inbox untuk percakapan tim. Lonceng menampilkan tugas baru, komentar, dan tag untukmu.",
+    "Inbox untuk percakapan tim: kanal Umum, kanal proyek, dan grup. Siapa pun bisa membuat grup lewat tombol Grup baru, memilih anggotanya, dan mengatur atau menghapusnya lewat ikon roda gigi. Grup bersifat pribadi: hanya anggota yang bisa membaca. Lonceng menampilkan tugas baru, komentar, dan tag untukmu.",
   ] },
   { h: "Izin dan alat", items: [
     "Ajukan cuti atau izin di halaman Izin. Admin yang menyetujui; statusnya terlihat di sana.",

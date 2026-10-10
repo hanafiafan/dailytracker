@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { asc, eq } from "drizzle-orm";
 import { memberCreate, memberMove, memberOrder, memberPatch } from "@shared/schemas";
-import { members } from "../db/schema.js";
+import { chatGroups, members } from "../db/schema.js";
 import { toMemberLite } from "../dto.js";
 import { loadTeam, memberColumns, type AppEnv, type Deps } from "../context.js";
 
@@ -56,6 +56,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     if (!loadTeam(db).some(m => m.email === email)) return c.json({ error: "not found" }, 404);
     if (db.select().from(members).where(eq(members.email, to)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
     db.update(members).set({ email: to, seenAt: null }).where(eq(members.email, email)).run();
+    db.update(chatGroups).set({ createdBy: to }).where(eq(chatGroups.createdBy, email)).run(); // group ownership follows the new email
     bus.emit("team"); bus.emit("tasks");
     return c.json({ ok: true });
   })

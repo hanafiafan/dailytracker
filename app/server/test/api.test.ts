@@ -117,6 +117,25 @@ describe("api", () => {
     expect((await t.call(OWNER, "DELETE", "/team/baru@x.id")).status).toBe(200);
   });
 
+  it("chat groups: members only, the creator manages, the superadmin can remove", async () => {
+    const made = await t.call("a@x.id", "POST", "/chat/groups", { name: "Tim Foto", emails: ["b@x.id"] });
+    expect(made.status).toBe(201);
+    const ch = (await made.json() as { id: string }).id, gid = ch.slice(2);
+    const list = async (who: string) => ((await (await t.call(who, "GET", "/chat/channels")).json()) as { id: string }[]).map(c => c.id);
+    expect(await list("a@x.id")).toContain(ch);
+    expect(await list("b@x.id")).toContain(ch);
+    expect(await list("hcs@x.id")).not.toContain(ch);
+    expect(await list("vero@x.id")).not.toContain(ch);
+    expect((await t.call("b@x.id", "POST", `/chat/channels/${ch}/messages`, { text: "halo" })).status).toBe(201);
+    expect((await t.call("hcs@x.id", "GET", `/chat/channels/${ch}/messages`)).status).toBe(403);
+    expect((await t.call("b@x.id", "PATCH", `/chat/groups/${gid}`, { name: "x" })).status).toBe(403);
+    expect((await t.call("a@x.id", "PATCH", `/chat/groups/${gid}`, { emails: ["b@x.id", "hcs@x.id"] })).status).toBe(200);
+    expect(await list("hcs@x.id")).toContain(ch);
+    expect((await t.call("out@x.id", "POST", "/chat/groups", { name: "n" })).status).toBe(403);
+    expect((await t.call(OWNER, "DELETE", `/chat/groups/${gid}`)).status).toBe(200);
+    expect(await list("a@x.id")).not.toContain(ch);
+  });
+
   it("ask-for-work notifies managers", async () => {
     expect((await t.call("a@x.id", "POST", "/ask")).status).toBe(200);
     const s = t.sent.find(x => x.title.includes("minta tugas"));

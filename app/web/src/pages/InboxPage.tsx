@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, FileText, Hash, MessageSquare, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, FileText, Hash, MessageSquare, Plus, Settings, Trash2, Users } from "lucide-react";
 import type { ChannelDTO, ChatRefDTO, MessageDTO } from "@shared/schemas";
 import { ChatComposer } from "../components/ChatComposer";
 import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
+import { GroupDialog } from "../components/GroupDialog";
 import { api, ok } from "../lib/api";
 import { fmtTime } from "../lib/format";
 import { keys, useChannels, useInbox, useMessages } from "../lib/queries";
@@ -27,13 +28,15 @@ function Body({ m }: { m: MessageDTO }) {
   return <p className="mtext">{parts.map((p, i) => { const k = /^\[\[(\d+)\]\]$/.exec(p); const r = k ? m.refs[Number(k[1])] : undefined; return r ? <Fragment key={i}>{chip(r)}</Fragment> : <Fragment key={i}>{p}</Fragment>; })}</p>;
 }
 
+const ChIcon = ({ c }: { c: ChannelDTO }) => c.kind === "general" ? <MessageSquare size={16} /> : c.kind === "group" ? <Users size={16} /> : <Hash size={16} />;
+
 function Thread({ ch, onBack }: { ch: ChannelDTO; onBack?: () => void }) {
   const { me, member, policy } = useViewer();
   const qc = useQueryClient();
   const q = useMessages(ch.id), list = q.data?.messages ?? [];
   const box = useRef<HTMLDivElement>(null);
   const toEnd = () => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }; // scroll the list itself, not the page
-  const [zoom, setZoom] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<string | null>(null), [cfg, setCfg] = useState(false);
   const last = list.at(-1)?.id;
   useEffect(() => { toEnd(); }, [last, ch.id]);
   useEffect(() => { if (ch.unread > 0 || last) void ok(api.chat.channels[":id"].read.$post({ param: { id: ch.id } })).then(() => qc.invalidateQueries({ queryKey: [...keys.chat, "channels"] })); }, [ch.id, last]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -43,9 +46,11 @@ function Thread({ ch, onBack }: { ch: ChannelDTO; onBack?: () => void }) {
     <section className="thread" aria-label={ch.name}>
       <header className="thread-h">
         {onBack && <button className="rbtn" onClick={onBack} aria-label="Kembali ke daftar"><ArrowLeft size={18} /></button>}
-        <span className={"chdot " + (ch.kind === "general" ? "gen" : "")} data-c={ch.color ?? undefined}>{ch.kind === "general" ? <MessageSquare size={16} /> : <Hash size={16} />}</span>
-        <div style={{ minWidth: 0 }}><b className="clamp1">{ch.name}</b><small className="muted">{ch.kind === "general" ? "Semua anggota tim" : "Anggota proyek dan atasan"}</small></div>
+        <span className={"chdot " + (ch.kind === "general" ? "gen" : "")} data-c={ch.color ?? undefined}><ChIcon c={ch} /></span>
+        <div style={{ minWidth: 0, flex: 1 }}><b className="clamp1">{ch.name}</b><small className="muted">{ch.kind === "general" ? "Semua anggota tim" : ch.kind === "group" ? `${ch.group!.members.length} anggota` : "Anggota proyek dan atasan"}</small></div>
+        {ch.kind === "group" && <button className="rbtn" onClick={() => setCfg(true)} aria-label="Pengaturan grup"><Settings size={17} /></button>}
       </header>
+      {cfg && <GroupDialog ch={ch} onClose={() => setCfg(false)} onDone={id => { if (!id) onBack?.(); }} />}
       <div className="msgs" aria-live="polite" ref={box}>
         {q.data?.more && <p className="muted" style={{ textAlign: "center", fontSize: ".78rem" }}>Menampilkan 60 pesan terbaru</p>}
         {list.map(m => {
@@ -81,7 +86,7 @@ function Channels({ list, active, onPick }: { list: ChannelDTO[]; active: string
   return (
     <ul className="chlist">{list.map(c => (
       <li key={c.id}><button className={c.id === active ? "on" : ""} onClick={() => onPick(c.id)} aria-current={c.id === active ? "true" : undefined}>
-        <span className={"chdot " + (c.kind === "general" ? "gen" : "")} data-c={c.color ?? undefined}>{c.kind === "general" ? <MessageSquare size={16} /> : <Hash size={16} />}</span>
+        <span className={"chdot " + (c.kind === "general" ? "gen" : "")} data-c={c.color ?? undefined}><ChIcon c={c} /></span>
         <span className="chmain"><b className="clamp1">{c.name}</b><small className="clamp1 muted">{c.last ? `${c.last.name}: ${c.last.text.replace(/\[\[\d+\]\]/g, "…")}` : "Belum ada pesan"}</small></span>
         <span className="chside">{c.last && <small className="muted">{ago(c.last.at)}</small>}{c.unread > 0 && <i className="cbadge">{c.unread > 99 ? "99+" : c.unread}</i>}</span>
       </button></li>))}</ul>
@@ -108,6 +113,7 @@ export function InboxPage() {
   const mobile = useIsMobile();
   const chans = useChannels(), list = useMemo(() => chans.data ?? [], [chans.data]);
   const unread = list.reduce((s, c) => s + c.unread, 0), notif = useInbox(true).data?.unread ?? 0;
+  const [newGroup, setNewGroup] = useState(false);
   const [tab, setTab] = useState(params.get("tab") === "notif" ? "notif" : "pesan");
   const picked = params.get("c");
   const active = list.find(c => c.id === picked) ?? (mobile ? null : list[0] ?? null);
@@ -118,10 +124,11 @@ export function InboxPage() {
       tabs={inThread ? undefined : [{ id: "pesan", label: `Pesan${unread ? ` (${unread})` : ""}` }, { id: "notif", label: `Notifikasi${notif ? ` (${notif})` : ""}` }]} tab={tab} onTab={setTab}>
       {tab === "notif" ? <Notifs /> : chans.isError ? <p className="muted">Tidak bisa memuat pesan.</p> : (
         <div className={"inbox" + (inThread ? " in-thread" : "")}>
-          {(!mobile || !active) && <aside className="inbox-l"><Channels list={list} active={active?.id ?? null} onPick={pick} />{!list.length && !chans.isLoading && <Empty art="people" title="Belum ada kanal" />}</aside>}
+          {(!mobile || !active) && <aside className="inbox-l"><button className="btn small" style={{ margin: "0 0 8px" }} onClick={() => setNewGroup(true)}><Plus size={14} />Grup baru</button><Channels list={list} active={active?.id ?? null} onPick={pick} />{!list.length && !chans.isLoading && <Empty art="people" title="Belum ada kanal" />}</aside>}
           {active ? <Thread key={active.id} ch={active} onBack={mobile ? () => pick(null) : undefined} /> : !mobile && <div className="thread empty"><Empty art="activity" title="Pilih percakapan" /></div>}
         </div>
       )}
+      {newGroup && <GroupDialog onClose={() => setNewGroup(false)} onDone={id => { if (id) pick(id); }} />}
     </Page>
   );
 }
