@@ -1110,3 +1110,6 @@
 .guide.compact .guide-body { grid-template-columns: minmax(0, 1fr); } .guide.compact .guide-toc { position: static; grid-auto-flow: column; overflow-x: auto; }
 .guide.compact .guide-toc a span { white-space: nowrap; } .guide.compact .guide-sec { scroll-margin-top: 8px; }
 @media (max-width: 820px) { .guide-body { grid-template-columns: minmax(0, 1fr); } .guide-toc { position: static; grid-auto-flow: column; overflow-x: auto; } .guide-toc a span { white-space: nowrap; } }
+/* Brand tile: black D on lime, same as the app icon */
+.logo i, :root[data-theme="dark"] .logo i, .loginart .logo i { background: #C7FF16; color: #000; }
+.logo i svg { width: 24px; height: 24px; }

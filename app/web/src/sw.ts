@@ -16,7 +16,7 @@ self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", e => {
   let d: { title?: string; body?: string; tag?: string; url?: string } = {};
   try { d = e.data?.json() ?? {}; } catch { /* not JSON */ }
-  e.waitUntil(self.registration.showNotification(d.title || "Tugas Harian", {
+  e.waitUntil(self.registration.showNotification(d.title || "HAN Task Tracker", {
     body: d.body || "", icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", tag: d.tag || undefined, data: { url: d.url || "/" },
   }));
 });

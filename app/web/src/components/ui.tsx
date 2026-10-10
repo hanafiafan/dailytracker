@@ -46,7 +46,7 @@ export const tally = (list: { status: Status }[]) => {
 export const Center = ({ children }: { children: ReactNode }) => <div className="center"><div>{children}</div></div>;
 export const Loading = () => (
   <div className="shell" aria-busy="true" aria-label="Memuat">
-    <aside className="side"><div className="logo"><i />Tugas Harian</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
+    <aside className="side"><div className="logo"><i />HAN Task Tracker</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
     <div className="frame"><div className="sk" style={{ height: 44, width: "40%" }} /><div className="sk" style={{ height: 46, borderRadius: 999 }} />
       <div className="tiles">{[0, 1, 2, 3].map(i => <div key={i} className="sk" style={{ height: 160, borderRadius: 32 }} />)}</div></div>
   </div>
@@ -79,3 +79,10 @@ export function PersonLink({ email, children, className }: { email: string; chil
   const href = "/daftar?who=" + encodeURIComponent(email);
   return <a href={href} className={"plink " + (className ?? "")} title="Lihat tugasnya" onClick={e => { e.preventDefault(); e.stopPropagation(); go(href); }}>{children}</a>;
 }
+
+/** The brand mark (geometric D), black, to sit on the lime logo tile. */
+export const Mark = () => (
+  <svg viewBox="225 225 575 550" width="100%" height="100%" aria-hidden="true" focusable="false">
+    <path fill="currentColor" fillRule="evenodd" d="M 330 225 H 665 C 681 225 694 231 706 243 L 800 337 V 663 L 706 757 C 694 769 681 775 665 775 H 330 V 675 H 225 V 325 H 330 Z M 330 325 H 635 C 650 325 660 335 660 350 V 650 C 660 665 650 675 635 675 H 330 Z" />
+  </svg>
+);

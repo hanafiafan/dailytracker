@@ -1,4 +1,4 @@
-// Tugas Harian server: JSON API + live updates + Web Push + the built web app, in one process.
+// HAN Task Tracker server: JSON API + live updates + Web Push + the built web app, in one process.
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { OAuth2Client } from "google-auth-library";
@@ -52,4 +52,4 @@ if (existsSync(web)) {
 }
 
 startJobs(db, push, bus, join(env.DATA_DIR, "backups"));
-serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOST }, i => console.log(`Tugas Harian listening on ${i.address}:${i.port}`));
+serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOST }, i => console.log(`HAN Task Tracker listening on ${i.address}:${i.port}`));

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">HAN Task Tracker</title>
+  <desc id="desc">Logo berbentuk D geometris hitam, terpusat pada bidang hijau neon.</desc>
+  <rect width="1000" height="1000" fill="#C7FF16"/>
+  <path fill="#000000" fill-rule="evenodd" d="M 330 225 H 665 C 681 225 694 231 706 243 L 800 337 V 663 L 706 757 C 694 769 681 775 665 775 H 330 V 675 H 225 V 325 H 330 Z M 330 325 H 635 C 650 325 660 335 660 350 V 650 C 660 665 650 675 635 675 H 330 Z"/>
+</svg>

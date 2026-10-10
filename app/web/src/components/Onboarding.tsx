@@ -23,7 +23,7 @@ function installHelp(canPrompt: boolean) {
   if (canPrompt) return "Ketuk Pasang untuk menaruh ikon aplikasi di layar atau desktop.";
   if (isIOS()) return "Di Safari: ketuk tombol Bagikan (kotak dengan panah ke atas), lalu pilih Tambah ke Layar Utama, lalu Tambah. Setelah itu buka aplikasi dari ikon barunya.";
   if (isAndroid()) return "Di Chrome: ketuk menu ⋮ di pojok kanan atas, lalu pilih Instal aplikasi atau Tambahkan ke layar utama.";
-  return "Di Chrome/Edge desktop: klik ikon pasang di ujung kanan kolom alamat, atau menu ⋮ lalu Cast, simpan, dan bagikan lalu Instal Tugas Harian.";
+  return "Di Chrome/Edge desktop: klik ikon pasang di ujung kanan kolom alamat, atau menu ⋮ lalu Cast, simpan, dan bagikan lalu Instal HAN Task Tracker.";
 }
 
 /** First sign-in on a device: three short steps (install, allow notifications, test them), then "Selesai" so it never shows again. */
@@ -57,7 +57,7 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
     <>
       <div className="scrim" onClick={mandatory ? undefined : () => close(false)} />
       <div className="dialog onboard" role="dialog" aria-modal="true" aria-label="Siapkan aplikasi">
-        <div className="dialog-h"><div><h2>Siapkan Tugas Harian</h2><p className="muted">{mandatory ? "Wajib diselesaikan dulu sebelum memakai aplikasi: " : ""}tiga langkah agar aplikasi mudah dibuka dan notifikasi tiba tepat waktu.</p></div>{!mandatory && <button className="rbtn" aria-label="Tutup" onClick={() => close(false)}><X size={18} /></button>}</div>
+        <div className="dialog-h"><div><h2>Siapkan HAN Task Tracker</h2><p className="muted">{mandatory ? "Wajib diselesaikan dulu sebelum memakai aplikasi: " : ""}tiga langkah agar aplikasi mudah dibuka dan notifikasi tiba tepat waktu.</p></div>{!mandatory && <button className="rbtn" aria-label="Tutup" onClick={() => close(false)}><X size={18} /></button>}</div>
         <div className="dialog-b ob-steps">
           <section className={"ob-step" + (installed ? " ok" : "")}>
             <span className="ob-n">{installed ? <Check size={16} /> : 1}</span>

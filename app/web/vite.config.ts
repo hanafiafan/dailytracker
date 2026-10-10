@@ -14,9 +14,9 @@ export default defineConfig({
       filename: "sw.ts",
       registerType: "autoUpdate",
       manifest: {
-        name: "Tugas Harian Tim Kreatif",
-        short_name: "Tugas Harian",
-        description: "Tugas harian, bukti kerja, dan progres tim kreatif.",
+        name: "HAN Task Tracker",
+        short_name: "HAN Tasks",
+        description: "Tugas harian, bukti kerja, dan progres tim.",
         lang: "id",
         start_url: "/",
         scope: "/",

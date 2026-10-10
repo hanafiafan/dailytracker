@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCheck } from "lucide-react";
+import { Mark } from "./ui";
 import { LoginScene } from "./Illus";
 import { toast } from "sonner";
 import { api, ok } from "../lib/api";
@@ -54,7 +54,7 @@ export function Login() {
   return (
     <div className="loginwrap">
       <section className="loginart" aria-hidden="true">
-        <div className="logo"><i><CheckCheck size={18} /></i>Tugas Harian</div>
+        <div className="logo"><i><Mark /></i>HAN Task Tracker</div>
         <LoginScene />
         <div>
           <h2>Kerja tim kreatif, <em>rapi</em> dalam satu tempat.</h2>
