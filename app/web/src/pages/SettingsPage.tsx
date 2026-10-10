@@ -5,6 +5,7 @@ import { InstallCard } from "../components/Cards";
 import { ProfileForm } from "../components/ManageTeam";
 import { Onboarding } from "../components/Onboarding";
 import { PushDevices } from "../components/PushDevices";
+import { playNotif, setSoundOn, soundOn } from "../lib/sound";
 import { enablePush, pushSupported, unregisterPush } from "../lib/push";
 import { errorText } from "../lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +32,7 @@ export function SettingsPage() {
         </section>
         <div style={{ display: "grid", gap: 18, alignContent: "start" }}>
           <section className="surface"><div className="surface-h"><h2>Notifikasi</h2></div>
+            <div className="actions" style={{ justifyContent: "flex-start", marginBottom: 8 }}><label className="check"><input type="checkbox" defaultChecked={soundOn()} onChange={e => setSoundOn(e.target.checked)} />Bunyi saat notifikasi baru masuk (aplikasi sedang terbuka)</label><button className="btn small" onClick={() => playNotif(true)}>Coba bunyi</button></div>
             {perm === "unsupported" && <p className="muted">Browser ini belum mendukung notifikasi push. Di iPhone, pasang aplikasi ke layar utama dulu.</p>}
             {perm === "granted" && <><p>Notifikasi aktif di perangkat ini.</p><div className="actions" style={{ justifyContent: "flex-start", marginTop: 8 }}><button className="btn small" onClick={async () => { await unregisterPush(); toast.success("Notifikasi dimatikan di perangkat ini"); }}>Matikan di perangkat ini</button></div></>}
             {perm === "denied" && <p className="muted">Notifikasi diblokir. Izinkan lewat pengaturan situs di browser, lalu muat ulang.</p>}

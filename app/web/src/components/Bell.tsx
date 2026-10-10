@@ -5,6 +5,7 @@ import { api, ok } from "../lib/api";
 import { keys, useInbox } from "../lib/queries";
 import { useUi } from "../lib/viewer";
 import { useLocation } from "wouter";
+import { playNotif } from "../lib/sound";
 
 export function Bell_() {
   const { openTask } = useUi();
@@ -20,6 +21,14 @@ export function Bell_() {
   }, [open]);
   const read = async (ids?: string[]) => { await ok(api.inbox.notifications.read.$post({ json: { ids } })); await qc.invalidateQueries({ queryKey: keys.inbox }); };
   const unread = inbox.data?.unread ?? 0;
+  // A sound for each new unread notification that arrives while the app is open (not for the ones already there at start).
+  const heard = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!inbox.data) return;
+    const fresh = inbox.data.items.filter(n => !n.read).map(n => n.id);
+    if (heard.current && fresh.some(id => !heard.current!.has(id))) playNotif();
+    heard.current = new Set([...(heard.current ?? []), ...fresh]);
+  }, [inbox.data]);
   const ago = (ms: number) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "baru saja" : m < 60 ? `${m} mnt lalu` : m < 1440 ? `${Math.floor(m / 60)} jam lalu` : `${Math.floor(m / 1440)} hari lalu`; };
   return (
     <div ref={ref} style={{ position: "relative" }}>
