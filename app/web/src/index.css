@@ -1078,3 +1078,6 @@
 .dayb-all { background: var(--glass); } .dayb-chips { flex: 1; padding: 8px; min-width: 0; position: sticky; left: 168px; }
 .dayb-chips-in { display: flex; flex-wrap: wrap; gap: 6px; }
 .dayb .ev b { -webkit-line-clamp: 1; }
+
+.mytasks { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; cursor: pointer; border: 0; padding: 14px 18px; }
+.mytasks span { display: grid; } .mytasks small { font-size: .8rem; } .mytasks:hover { background: var(--volt); color: #101114; } .mytasks:hover small { color: inherit; opacity: .75; }

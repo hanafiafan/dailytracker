@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { Hand } from "lucide-react";
+import { ChevronRight, Hand } from "lucide-react";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
 import { InstallCard, NotifyCard } from "../components/Cards";
@@ -95,6 +95,12 @@ function ManagerDashboard() {
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
+      {tab === "orang" && self && (
+        <button className="surface mytasks" onClick={() => setTab("saya")} aria-label={`Buka tugas saya, ${myOpen} belum selesai`}>
+          <span><b>Tugas saya</b><small className="muted">{myOpen ? `${myOpen} tugas belum selesai` : "Semua tugasmu sudah selesai"}</small></span>
+          <ChevronRight size={18} />
+        </button>
+      )}
       {tab === "orang" && <><InstallCard /><NotifyCard manager /></>}
       {tab === "orang" && (mobile
         ? <MobileHome manager all={tasks.filter(t => workers.some(w => w.email === t.email))} day={shown} date={date} people={workers.filter(m => shown.some(t => t.email === m.email && t.status !== "done"))} attention={attn} onAttention={() => setTab("perhatian")} />
