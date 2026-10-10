@@ -14,10 +14,10 @@ const KARYAWAN: Sec[] = [
   { h: "Menyelesaikan tugas", items: [
     "Tugas bertanda Wajib bukti hanya bisa selesai setelah kamu melampirkan foto atau link hasil kerja. Catatan singkat boleh ditambahkan.",
     "Kalau tugas dikembalikan atasan, baca komentarnya, perbaiki, lalu tandai selesai lagi.",
-    "Tidak ada tugas? Tambah tugas sendiri lewat tombol + dan tulis dari siapa tugas itu. Admin melihat kalau kamu belum punya tugas aktif.",
+    "Semua tugas selesai? Di Dasbor ketuk Minta tugas ke admin; admin langsung mendapat pemberitahuan dan tombolnya berubah jadi jam permintaanmu. Kamu juga bisa menambah tugas sendiri lewat tombol + dan menulis dari siapa tugas itu.",
   ] },
   { h: "Berkomunikasi", items: [
-    "Tulis komentar di dalam tugas untuk bertanya atau memberi kabar. Kamu juga mendapat pengingat saat tenggat mendekati.",
+    "Tulis komentar di dalam tugas untuk bertanya atau memberi kabar. Kamu mendapat pengingat 30 menit sebelum tenggat. Kalau tugas masih belum selesai 15 menit setelah jam selesai, komentar Pengingat otomatis muncul di tugas itu dan masuk ke lonceng. Selesaikan, atau jelaskan kendalanya lewat komentar.",
     "Inbox untuk percakapan tim. Lonceng menampilkan tugas baru, komentar, dan tag untukmu.",
   ] },
   { h: "Izin dan alat", items: [
@@ -37,13 +37,14 @@ const UNIT: Sec[] = [
     "Ubah, hapus, atau kembalikan tugas yang sudah selesai kalau buktinya belum sesuai.",
   ] },
   { h: "Memantau", items: [
-    "Dasbor menampilkan progres tim dan orang yang belum punya tugas aktif.",
+    "Dasbor menampilkan progres tim dan orang yang belum punya tugas aktif. Orang yang menekan Minta tugas ditandai ikon tangan, dan kamu mendapat pemberitahuan; beri tugas lewat tombol + di namanya.",
     "Halaman Tim berisi anggota unitmu; kamu bisa menambah dan mengubah profil anggota biasa di unitmu.",
     "Laporan merangkum kinerja per orang dan per hari; salin atau cetak untuk dibagikan.",
   ] },
   { h: "Persetujuan dan komunikasi", items: [
     "Izin dan cuti anggota unitmu menunggu persetujuanmu di halaman Izin. Angka merah di menu menandakan ada yang menunggu.",
     "Beri komentar pada tugas, atau kirim pengingat dari tugas yang terlambat (maksimal satu kali per jam per tugas).",
+    "Tugas anggota unitmu yang masih belum selesai 15 menit setelah jam selesai otomatis diberi komentar pengingat, dan kamu mendapat pemberitahuan di lonceng. Kamu tidak perlu menagih satu per satu.",
   ] },
   { h: "Tugasmu sendiri", items: ["Kamu tetap punya tugas pribadi. Kerjakan dan beri bukti seperti karyawan lain (lihat tab Karyawan)."] },
 ];
@@ -57,6 +58,7 @@ const ADMIN: Sec[] = [
   { h: "Memantau", items: [
     "Filter unit di Dasbor membatasi tampilan ke satu unit.",
     "Laporan harian dan rekap tersedia untuk seluruh tim.",
+    "Permintaan tugas dan pengingat terlambat otomatis (15 menit setelah jam selesai) dari semua unit sampai kepadamu.",
     "Kelola Proyek dan label supaya tugas terkelompok dan laporannya rapi. Tutup proyek untuk melihat laporan akhirnya.",
   ] },
   { h: "Alat dan izin", items: [
@@ -67,7 +69,7 @@ const ADMIN: Sec[] = [
 
 const OWNER: Sec[] = [
   { h: "Yang hanya bisa dilakukan pemilik", items: [
-    "Akunmu adalah pemilik aplikasi: semua tugas, laporan, dan data tim terlihat olehmu tanpa batas unit.",
+    "Akunmu adalah pemilik aplikasi: semua tugas, laporan, dan data tim terlihat olehmu tanpa batas unit. Semua permintaan tugas dan pengingat terlambat otomatis juga sampai kepadamu.",
     "Menunjuk atau mencabut admin, dan menentukan unit mana yang dipantau tiap admin (halaman Tim, lalu pilih orangnya).",
     "Menghapus anggota atau alat bersifat permanen. Hapus hanya jika yakin.",
   ] },

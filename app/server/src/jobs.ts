@@ -1,12 +1,17 @@
 // Background work: create today's routine tasks and send deadline / morning reminders.
 import { and, eq } from "drizzle-orm";
-import { atMs, weekday, wib } from "@shared/time";
+import { addDays, atMs, weekday, wib } from "@shared/time";
 import type { Db } from "./db/index.js";
-import { leaves, meta, members, pushSubs, routines, tasks } from "./db/schema.js";
+import { comments, leaves, meta, members, pushSubs, routines, tasks } from "./db/schema.js";
 import { makePolicy } from "@shared/policy";
 import type { Bus } from "./events.js";
 import type { Push } from "./push.js";
 import { runBackup } from "./backup.js";
+import { deliverInbox } from "./services.js";
+import { newId } from "./context.js";
+
+/** Minutes after the end time before the automatic reminder is written on an unfinished task. */
+const AUTO_LATE_MS = 15 * 60000;
 
 /** Idempotent: a routine's task for a date has the fixed id r-<routine>-<date>. Returns how many were created. */
 export function ensureRoutines(db: Db, date: string, now = Date.now()) {
@@ -24,7 +29,7 @@ export function ensureRoutines(db: Db, date: string, now = Date.now()) {
 }
 
 /** Deadline reminders every run; the morning summary once, at 08:00-08:14 WIB. */
-export async function runReminders(db: Db, push: Push, now = Date.now()) {
+export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: Bus) {
   const { date, hour, minute } = wib(now);
   const today = db.select().from(tasks).where(eq(tasks.date, date)).all();
 
@@ -38,6 +43,25 @@ export async function runReminders(db: Db, push: Push, now = Date.now()) {
       db.update(tasks).set({ remDue: true }).where(eq(tasks.id, t.id)).run();
       await push.send([t.email], "Tenggat sebentar lagi", `${t.title} jam ${t.due}`, "due-" + t.id, `/?t=${t.id}`);
     }
+  }
+
+  // 15+ minutes past the end time: one automatic comment per task (fixed id, so reruns never repeat it),
+  // the person gets it in their bell, and so do the admins who manage them.
+  const names = new Map(db.select({ email: members.email, name: members.name }).from(members).all().map(m => [m.email, m.name]));
+  const yesterday = db.select().from(tasks).where(eq(tasks.date, addDays(date, -1))).all();
+  for (const t of [...yesterday, ...today]) {
+    if (t.status === "done" || !t.due || now - atMs(t.date, t.due) < AUTO_LATE_MS) continue;
+    const text = `Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai ${t.due}. Mohon segera diselesaikan atau beri kabar di komentar.`;
+    const res = db.insert(comments).values({ id: "auto-" + t.id, taskId: t.id, by: "Pengingat otomatis", byEmail: "", text, at: now }).onConflictDoNothing().run();
+    if (!res.changes) continue;
+    const who = names.get(t.email) ?? t.email;
+    if (bus) {
+      deliverInbox(db, bus, [t.email], "nudge", t.id, `Pengingat otomatis: ${t.title} belum selesai, lewat 15 menit dari jam ${t.due}`);
+      deliverInbox(db, bus, push.managersOf(t.email), "late", t.id, `${who}: ${t.title} belum selesai, lewat 15 menit dari jam ${t.due}`);
+      bus.emit("tasks");
+    }
+    await push.send([t.email], "Pengingat otomatis", `${t.title} belum selesai (jam selesai ${t.due})`, "auto-" + t.id, `/?t=${t.id}`);
+    await push.send(push.managersOf(t.email), `${who} terlambat`, `${t.title} belum selesai, lewat 15 menit`, "auto-m-" + t.id, `/?t=${t.id}`);
   }
 
   const done = db.select().from(meta).where(eq(meta.k, "morning")).get();
@@ -70,7 +94,7 @@ export function startJobs(db: Db, push: Push, bus: Bus, backupDir?: string) {
   const tick = () => {
     try {
       if (ensureRoutines(db, wib().date)) bus.emit("tasks");
-      runReminders(db, push).catch(e => console.error("reminders", e));
+      runReminders(db, push, Date.now(), bus).catch(e => console.error("reminders", e));
       if (backupDir) runBackup(db, backupDir).then(f => f && console.log("backup", f)).catch(e => console.error("backup", e));
     } catch (e) { console.error("jobs", e); }
   };

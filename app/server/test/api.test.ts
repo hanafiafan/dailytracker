@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ensureRoutines, runReminders } from "../src/jobs.js";
-import { members, tasks } from "../src/db/schema.js";
+import { comments, members, tasks } from "../src/db/schema.js";
 import { wib } from "@shared/time";
 import { JPEG, OWNER, setup } from "./helpers.js";
 
@@ -121,5 +121,12 @@ describe("api", () => {
     expect(t.sent.filter(s => s.title === "Tenggat sebentar lagi")).toHaveLength(1);
     await runReminders(t.db, t.push, Date.parse(`${date}T10:05:00+07:00`));
     expect(t.sent.filter(s => s.title === "Tugas terlambat")).toHaveLength(1);
+    // 15+ minutes late: one automatic comment, the person and their managers are told, and it never repeats
+    const late = Date.parse(`${date}T10:20:00+07:00`);
+    await runReminders(t.db, t.push, late);
+    await runReminders(t.db, t.push, late + 900000);
+    expect(t.db.select().from(comments).all().filter(c => c.taskId === "t1")).toHaveLength(1);
+    expect(t.sent.filter(s => s.title === "Pengingat otomatis")).toHaveLength(1);
+    expect(t.sent.find(s => s.title.endsWith(" terlambat") && s.title !== "Tugas terlambat")?.to).toContain(OWNER);
   });
 });
