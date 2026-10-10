@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ensureRoutines, runReminders } from "../src/jobs.js";
-import { comments, guideAcks, members, tasks } from "../src/db/schema.js";
+import { applyReset, planReset } from "../src/reset.js";
+import { comments, guideAcks, labels, members, messages, projects, tasks } from "../src/db/schema.js";
 import { wib } from "@shared/time";
 import { JPEG, OWNER, setup } from "./helpers.js";
 
@@ -154,6 +156,28 @@ describe("api", () => {
     expect((await t.call("out@x.id", "POST", "/guide/ack", { version: 1 })).status).toBe(403);
     await t.call(OWNER, "POST", "/guide/ack", { version: 1 });
     expect(t.db.select().from(guideAcks).all().map(r => r.role).sort()).toEqual(["karyawan", "owner"]);
+  });
+
+  it("launch reset clears tasks and projects but keeps the team, labels and sessions", async () => {
+    const date = wib().date;
+    t.db.insert(projects).values({ id: "p1", name: "Proyek", createdAt: 1 }).run();
+    t.db.insert(labels).values({ id: "l1", name: "Label" }).run();
+    t.db.insert(tasks).values({ id: "x1", email: "a@x.id", date, title: "T", projectId: "p1", createdAt: 1 }).run();
+    t.db.insert(comments).values({ id: "c1", taskId: "x1", by: "A", text: "hi", at: 1 }).run();
+    t.db.insert(messages).values([{ id: "m1", channel: "p-p1", email: "a@x.id", text: "proyek", createdAt: 1 }, { id: "m2", channel: "general", email: "a@x.id", text: "umum", createdAt: 2 }]).run();
+    t.db.update(members).set({ askAt: 5 }).where(eq(members.email, "a@x.id")).run();
+    const plan = planReset(t.db);
+    expect(plan.remove.find(r => r.label.startsWith("tugas ("))?.n).toBe(1);
+    applyReset(t.db);
+    expect(t.db.select().from(tasks).all()).toHaveLength(0);
+    expect(t.db.select().from(comments).all()).toHaveLength(0);
+    expect(t.db.select().from(projects).all()).toHaveLength(0);
+    expect(t.db.select().from(messages).all().map(m => m.id)).toEqual(["m2"]);
+    expect(t.db.select().from(labels).all()).toHaveLength(1);
+    const team = t.db.select().from(members).all();
+    expect(team).toHaveLength(4);
+    expect(team.every(m => m.askAt === null)).toBe(true);
+    expect((await t.call("a@x.id", "GET", "/me")).status).toBe(200); // everyone can still sign in
   });
 
   it("ask-for-work notifies managers", async () => {

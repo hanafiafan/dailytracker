@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/scripts/migrate-legacy.ts"],
+  entry: ["src/index.ts", "src/scripts/migrate-legacy.ts", "src/scripts/reset-launch.ts"],
   format: ["esm"],
   target: "node22",
   clean: true,
