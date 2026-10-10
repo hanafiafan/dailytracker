@@ -1062,3 +1062,19 @@
 .otree:not(.otree-root) > li::before { content: ""; position: absolute; left: -22px; top: 22px; width: 20px; height: 2px; background: var(--line-2); }
 .otree:not(.otree-root) { border-left: 2px solid var(--line-2); margin-left: 18px; padding-top: 2px; }
 .otree .onode { max-width: 340px; }
+
+/* Calendar day board: one day, one row per person, hours run left to right */
+.dayb { overflow-x: auto; }
+.dayb-in { display: grid; align-content: start; }
+.dayb-head { display: flex; position: sticky; top: 0; z-index: 3; background: var(--surface); border-bottom: 1px solid var(--line); }
+.dayb-head > div { flex: none; font-size: .68rem; color: var(--muted); padding: 10px 0 8px 6px; border-left: 1px solid var(--line); }
+.dayb-head > div:first-child { border: 0; position: sticky; left: 0; background: var(--surface); z-index: 4; }
+.dayb-row { display: flex; border-bottom: 1px solid var(--line); }
+.dayb-who { flex: none; position: sticky; left: 0; z-index: 2; background: var(--surface); display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-right: 1px solid var(--line); min-width: 0; }
+.dayb-who span { display: grid; min-width: 0; } .dayb-who b { font-size: .84rem; } .dayb-who small { color: var(--muted); font-size: .7rem; }
+.dayb-line { position: relative; flex: none; background-image: repeating-linear-gradient(to right, transparent 0 95px, var(--line) 95px 96px); }
+.dslot { position: absolute; top: 0; bottom: 0; } .dslot[data-over="true"] { background: var(--volt); opacity: .5; }
+.dnow { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); z-index: 4; pointer-events: none; }
+.dayb-all { background: var(--glass); } .dayb-chips { flex: 1; padding: 8px; min-width: 0; position: sticky; left: 168px; }
+.dayb-chips-in { display: flex; flex-wrap: wrap; gap: 6px; }
+.dayb .ev b { -webkit-line-clamp: 1; }

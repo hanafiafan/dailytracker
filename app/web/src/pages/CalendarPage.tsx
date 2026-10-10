@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -6,88 +6,104 @@ import type { TaskDTO } from "@shared/schemas";
 import { addDays, parseYmd, ymd } from "@shared/time";
 import { Agenda } from "../components/Agenda";
 import { Page } from "../components/Page";
+import { Avatar } from "../components/ui";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
-import { DAYN, today } from "../lib/format";
+import { fmtLong, today } from "../lib/format";
 import { keys, patchTaskLocally, useAction, useTasks, windowFrom } from "../lib/queries";
 import { weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 
-const H0 = 6, H1 = 22, ROW = 56;
+const H0 = 6, H1 = 22;
 const mins = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-const MAX_LANES = 2;
-interface Ev { t: TaskDTO; s: number; e: number; lane: number; lanes: number; cluster: number }
-interface Overflow { top: number; items: Ev[] }
-/** Places a day's timed tasks side by side when they overlap. */
-function layout(tasks: TaskDTO[]): { shown: Ev[]; overflow: Overflow[] } {
+const HW = 96, LW = 168, LANE = 50; // hour width, name column width, lane height (px)
+interface Ev { t: TaskDTO; s: number; e: number; lane: number }
+/** One person's timed tasks on a horizontal time axis: overlapping tasks go in their own lane under each other. */
+function pack(tasks: TaskDTO[]): { evs: Ev[]; lanes: number } {
   const evs = tasks.map(t => {
-    const s = t.start ? mins(t.start) : mins(t.due!) - 45;
-    const e = t.start && t.due ? mins(t.due) : t.start ? s + 60 : mins(t.due!);
-    return { t, s: Math.max(H0 * 60, s), e: Math.max(Math.max(H0 * 60, s) + 30, e), lane: 0, lanes: 1, cluster: 0 };
-  }).sort((a, b) => a.s - b.s || b.e - a.e);
-  let cluster: Ev[] = [], end = 0, id = 0;
-  const flush = () => { const n = Math.max(1, ...cluster.map(c => c.lane + 1)); cluster.forEach(c => (c.lanes = Math.min(n, MAX_LANES))); cluster = []; id++; };
-  for (const ev of evs) {
-    if (cluster.length && ev.s >= end) flush();
-    const used = new Set(cluster.filter(c => c.e > ev.s).map(c => c.lane));
-    while (used.has(ev.lane)) ev.lane++;
-    ev.cluster = id; cluster.push(ev); end = Math.max(end, ev.e);
-  }
-  flush();
-  // Anything beyond the lane limit is tucked into a "+N" chip so the grid stays readable.
-  const hidden = evs.filter(e => e.lane >= MAX_LANES), overflow = new Map<number, Overflow>();
-  for (const h of hidden) { const o = overflow.get(h.cluster) ?? { top: Math.min(...evs.filter(e => e.cluster === h.cluster).map(e => (e.s - H0 * 60) / 60 * ROW)), items: [] }; o.items.push(h); overflow.set(h.cluster, o); }
-  return { shown: evs.filter(e => e.lane < MAX_LANES), overflow: [...overflow.values()] };
+    const s = Math.max(H0 * 60, t.start ? mins(t.start) : mins(t.due!) - 45);
+    const e = Math.min(H1 * 60, Math.max(s + 30, t.start && t.due ? mins(t.due) : t.start ? s + 60 : mins(t.due!)));
+    return { t, s, e, lane: 0 };
+  }).sort((x, y) => x.s - y.s || y.e - x.e);
+  const ends: number[] = [];
+  for (const ev of evs) { let i = ends.findIndex(end => end <= ev.s); if (i < 0) i = ends.length; ends[i] = ev.e; ev.lane = i; }
+  return { evs, lanes: Math.max(1, ends.length) };
 }
 
 function Event({ ev, canDrag }: { ev: Ev; canDrag: boolean }) {
   const { openTask } = useUi();
-  const { project, member } = useViewer();
+  const { project } = useViewer();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: ev.t.id, disabled: !canDrag });
   const p = project(ev.t.projectId);
-  const top = (ev.s - H0 * 60) / 60 * ROW, height = Math.max(26, (ev.e - ev.s) / 60 * ROW - 3);
+  const left = (ev.s - H0 * 60) / 60 * HW, width = Math.max(72, (ev.e - ev.s) / 60 * HW - 4);
   return (
     <button ref={setNodeRef} className={"ev" + (ev.t.status === "done" ? " done" : ev.t.status === "doing" ? " doing" : "")} data-c={p?.color ?? "lilac"}
-      style={{ top, height, left: `calc(${(ev.lane / ev.lanes) * 100}% + 3px)`, width: `calc(${100 / ev.lanes}% - 6px)`, right: "auto", opacity: isDragging ? 0.35 : 1 }}
-      onClick={() => openTask(ev.t.id)} title={`${ev.t.title} · ${hm(ev.s)}–${hm(ev.e)}`} {...attributes} {...listeners}>
-      <b>{ev.t.title}</b><small>{hm(ev.s)}–{hm(ev.e)} · {member(ev.t.email)?.name}</small>
+      style={{ left: left + 2, width, top: 4 + ev.lane * LANE, height: LANE - 4, right: "auto", opacity: isDragging ? 0.35 : 1 }}
+      onClick={() => openTask(ev.t.id)} title={`${ev.t.title} · ${hm(ev.s)}–${hm(ev.e)}${p ? " · " + p.name : ""}`} {...attributes} {...listeners}>
+      <b style={{ WebkitLineClamp: 1 }}>{ev.t.title}</b><small>{hm(ev.s)}–{hm(ev.e)}{p ? " · " + p.name : ""}</small>
     </button>
   );
 }
 
-function MoreChip({ o }: { o: Overflow }) {
-  const [open, setOpen] = useState(false);
-  const { openTask } = useUi();
-  const { member } = useViewer();
+function Slot({ id, h, onNew }: { id: string; h: number; onNew: () => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return <div ref={setNodeRef} className="dslot" data-over={isOver} style={{ left: (h - H0) * HW, width: HW }} onDoubleClick={onNew} />;
+}
+
+/** The selected day on one horizontal timeline, one row per person. */
+function DayBoard({ date, tasks, canEdit }: { date: string; tasks: TaskDTO[]; canEdit: (t: TaskDTO) => boolean }) {
+  const { team, policy, project, member } = useViewer();
+  const { newTask } = useUi();
+  const day = tasks.filter(t => t.date === date);
+  const rows = team.filter(m => day.some(t => t.email === m.email));
+  const untimed = day.filter(t => !t.start && !t.due);
+  const t0 = today(), nowMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
+  const width = (H1 - H0) * HW;
   return (
-    <div className="morechip" style={{ top: o.top + 2 }}>
-      <button onClick={() => setOpen(v => !v)} aria-expanded={open} aria-label={`${o.items.length} tugas lainnya`}>+{o.items.length}</button>
-      {open && <ul className="evpop">{o.items.map(ev => <li key={ev.t.id}><button onClick={() => { setOpen(false); openTask(ev.t.id); }}><b className="clamp1">{ev.t.title}</b><small>{hm(ev.s)}–{hm(ev.e)} · {member(ev.t.email)?.name}</small></button></li>)}</ul>}
+    <div className="week dayb">
+      <div className="dayb-in" style={{ minWidth: LW + width }}>
+        <div className="dayb-head"><div style={{ width: LW }} />{Array.from({ length: H1 - H0 }, (_, i) => <div key={i} style={{ width: HW }}>{String(H0 + i).padStart(2, "0")}:00</div>)}</div>
+        {untimed.length > 0 && (
+          <div className="dayb-row dayb-all"><div className="dayb-who" style={{ width: LW }}><small>SEHARI</small></div>
+            <div className="dayb-chips"><AllDay date={date} tasks={untimed} label={t => `${member(t.email)?.name ?? ""}: ${t.title}`} /></div></div>
+        )}
+        {rows.map(m => {
+          const { evs, lanes } = pack(day.filter(t => t.email === m.email && (t.start || t.due)));
+          const mine = day.filter(t => t.email === m.email);
+          return (
+            <div key={m.email} className="dayb-row">
+              <div className="dayb-who" style={{ width: LW }}><Avatar m={m} /><span><b className="clamp1">{m.name}</b><small>{mine.filter(t => t.status === "done").length}/{mine.length} selesai</small></span></div>
+              <div className="dayb-line" style={{ width, height: Math.max(1, lanes) * LANE + 4 }}>
+                {Array.from({ length: H1 - H0 }, (_, i) => <Slot key={i} id={`slot:${date}:${H0 + i}:${m.email}`} h={H0 + i} onNew={() => policy.canManage(m.email) || policy.me === m.email ? newTask({ date, emails: [m.email], start: hm((H0 + i) * 60), due: hm((H0 + i + 1) * 60) }) : undefined} />)}
+                {evs.map(ev => <Event key={ev.t.id} ev={ev} canDrag={canEdit(ev.t)} />)}
+                {date === t0 && nowMin >= H0 * 60 && nowMin < H1 * 60 && <div className="dnow" style={{ left: (nowMin - H0 * 60) / 60 * HW }} />}
+              </div>
+            </div>
+          );
+        })}
+        {!rows.length && <p className="empty" style={{ padding: 18 }}>Tidak ada tugas di tanggal ini. Klik dua kali di jadwal untuk membuat tugas.</p>}
+      </div>
     </div>
   );
 }
 
-function Slot({ id, onNew }: { id: string; onNew: () => void }) {
-  const { setNodeRef, isOver } = useDroppable({ id });
-  return <div ref={setNodeRef} className="slot" data-over={isOver} onDoubleClick={onNew} />;
-}
-function AllDay({ date, tasks }: { date: string; tasks: TaskDTO[] }) {
+function AllDay({ date, tasks, label }: { date: string; tasks: TaskDTO[]; label?: (t: TaskDTO) => string }) {
   const { setNodeRef, isOver } = useDroppable({ id: "day:" + date });
   const { openTask } = useUi();
   const { project } = useViewer();
   return (
-    <div ref={setNodeRef} style={isOver ? { background: "var(--lime)", opacity: .6 } : undefined}>
-      {tasks.map(t => <AllDayChip key={t.id} t={t} tint={project(t.projectId)?.color} onOpen={() => openTask(t.id)} />)}
+    <div ref={setNodeRef} className="dayb-chips-in" style={isOver ? { background: "var(--lime)", opacity: .6 } : undefined}>
+      {tasks.map(t => <AllDayChip key={t.id} t={t} label={label?.(t)} tint={project(t.projectId)?.color} onOpen={() => openTask(t.id)} />)}
     </div>
   );
 }
-function AllDayChip({ t, tint, onOpen }: { t: TaskDTO; tint?: string; onOpen: () => void }) {
+function AllDayChip({ t, tint, label, onOpen }: { t: TaskDTO; tint?: string; label?: string; onOpen: () => void }) {
   const { policy, me } = useViewer();
   const canDrag = policy.canManage(t.email) || (me.email === t.email && t.by === "self");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: t.id, disabled: !canDrag });
-  return <button ref={setNodeRef} className="evchip" data-c={tint ?? "lilac"} style={{ opacity: isDragging ? 0.35 : t.status === "done" ? 0.75 : 1 }} onClick={onOpen} title={t.title} {...attributes} {...listeners}>{t.title}</button>;
+  return <button ref={setNodeRef} className="evchip" data-c={tint ?? "lilac"} style={{ opacity: isDragging ? 0.35 : t.status === "done" ? 0.75 : 1 }} onClick={onOpen} title={t.title} {...attributes} {...listeners}>{label ?? t.title}</button>;
 }
 
 export function CalendarPage() {
@@ -98,9 +114,7 @@ export function CalendarPage() {
   const tq = useTasks(windowFrom(wk, today()), true);
   const [who, setWho] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
-  const body = useRef<HTMLDivElement>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }));
-  useEffect(() => { if (body.current) body.current.scrollTop = ROW * 1.5; }, [wk]);
 
   const tasks = (tq.data ?? []).filter(t => !who || t.email === who);
   const move = useAction((v: { id: string; date: string; start: string | null; due: string | null }) =>
@@ -138,10 +152,9 @@ export function CalendarPage() {
   const title = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
 
   return (
-    <Page title="Kalender" sub={mobile ? undefined : `${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(parseYmd(days[0]!))} – ${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(parseYmd(days[6]!))}`}
+    <Page title="Kalender" sub={mobile ? undefined : fmtLong(date)} dateNav={!mobile}
       actions={<>
         {policy.isManager && <select className="input" style={{ width: "auto" }} value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
-        {!mobile && <div className="seg"><button onClick={() => setDate(addDays(wk, -7))} aria-label="Minggu lalu"><ChevronLeft size={16} /></button><button onClick={() => setDate(t0)}>Minggu ini</button><button onClick={() => setDate(addDays(wk, 7))} aria-label="Minggu depan"><ChevronRight size={16} /></button></div>}
       </>}>
       {mobile ? <Agenda days={days} tasks={tasks} /> : <>
       <button className="btn small calbtn" onClick={() => setSide(s => !s)} aria-expanded={side}>{side ? "Sembunyikan kalender bulan" : "Pilih tanggal"}</button>
@@ -164,24 +177,7 @@ export function CalendarPage() {
           </div>
         </div>
         <DndContext sensors={sensors} onDragStart={e => setDragId(String(e.active.id))} onDragEnd={onEnd} onDragCancel={() => setDragId(null)}>
-          <div className="week">
-            <div className="week-head"><div />{days.map((d, i) => <div key={d} className={d === t0 ? "today" : ""}>{DAYN[(i + 1) % 7]}<b>{Number(d.slice(8))}</b></div>)}</div>
-            <div className="week-allday"><div>SEHARI</div>{days.map(d => <AllDay key={d} date={d} tasks={tasks.filter(t => t.date === d && !t.start && !t.due)} />)}</div>
-            <div className="week-body" ref={body}>
-              <div className="hours">{Array.from({ length: H1 - H0 }, (_, i) => <div key={i}>{String(H0 + i).padStart(2, "0")}:00</div>)}</div>
-              {days.map(d => {
-                const { shown: evs, overflow } = layout(tasks.filter(t => t.date === d && (t.start || t.due)));
-                return (
-                  <div key={d} className={"daycol" + (d === t0 ? " today" : "")}>
-                    {Array.from({ length: H1 - H0 }, (_, i) => <Slot key={i} id={`slot:${d}:${H0 + i}`} onNew={() => newTask({ date: d, start: hm((H0 + i) * 60), due: hm((H0 + i + 1) * 60) })} />)}
-                    {evs.map(ev => <Event key={ev.t.id} ev={ev} canDrag={canEdit(ev.t)} />)}
-                    {overflow.map((o, i) => <MoreChip key={i} o={o} />)}
-                    {d === t0 && nowMin >= H0 * 60 && nowMin < H1 * 60 && <div className="nowline" style={{ top: (nowMin - H0 * 60) / 60 * ROW }} />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <DayBoard date={date} tasks={tasks} canEdit={canEdit} />
           <DragOverlay>{dragged ? <div className="ev drag" data-c={project(dragged.projectId)?.color ?? "lilac"} style={{ position: "relative", height: 52 }}><b>{dragged.title}</b></div> : null}</DragOverlay>
         </DndContext>
       </div>
