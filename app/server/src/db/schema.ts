@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, blob, index, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, blob, index, primaryKey, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 
 const bool = (name: string) => integer(name, { mode: "boolean" });
 
@@ -14,6 +14,8 @@ export const members = sqliteTable("members", {
   photoV: integer("photo_v").notNull().default(0),
   seenAt: integer("seen_at"),
   askAt: integer("ask_at"),
+  /** Direct manager in the org chart (separate from admin rights); null = the unit head, else the owner. */
+  managerEmail: text("manager_email").references((): AnySQLiteColumn => members.email, { onDelete: "set null", onUpdate: "cascade" }),
 });
 
 export const projects = sqliteTable("projects", {

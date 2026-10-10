@@ -28,15 +28,15 @@ function UnitField({ name, defaultValue }: { name: string; defaultValue?: string
 }
 
 export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void }) {
-  const { me, policy } = useViewer();
+  const { me, team, policy } = useViewer();
   const qc = useQueryClient();
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null | undefined>(undefined); // undefined = unchanged, null = remove
   const self = m.email === me.email;
   const canAdmin = policy.isSuper && !self; // unit and email changes belong to the superadmin
   const save = useAction(async (f: FormData) => {
     const email = String(f.get("email") ?? m.email).trim().toLowerCase();
-    const body: { name: string; role: string; group?: string } = { name: String(f.get("name")), role: String(f.get("role")) };
-    if (canAdmin) body.group = String(f.get("group") ?? "").trim().toUpperCase();
+    const body: { name: string; role: string; group?: string; managerEmail?: string | null } = { name: String(f.get("name")), role: String(f.get("role")) };
+    if (canAdmin) { body.group = String(f.get("group") ?? "").trim().toUpperCase(); body.managerEmail = String(f.get("manager") ?? "") || null; }
     await ok(api.team[":email"].$patch({ param: { email: m.email }, json: body }));
     if (photo === null) await ok(api.team[":email"].photo.$delete({ param: { email: m.email } }));
     else if (photo) await putImage(`/api/team/${encodeURIComponent(m.email)}/photo`, photo.blob);
@@ -66,6 +66,7 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
         <label className="field"><span>Divisi</span><input className="input" name="role" defaultValue={m.role} maxLength={60} /></label>
         {canAdmin && <label className="field"><span>Email Google</span><input className="input" name="email" type="email" defaultValue={m.email} maxLength={120} /></label>}
         {canAdmin && <UnitField name="group" defaultValue={m.group} />}
+        {canAdmin && <label className="field"><span>Atasan langsung (untuk bagan)</span><select className="input" name="manager" defaultValue={m.managerEmail ?? ""}><option value="">Otomatis (kepala unit, atau Superadmin)</option>{team.filter(x => x.email !== m.email).map(x => <option key={x.email} value={x.email}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}</select></label>}
       </div>
       <div className="actions"><button type="button" className="btn small ghost" onClick={onClose}>Batal</button><button type="submit" className="btn small primary" disabled={save.isPending}>Simpan profil</button></div>
     </form>

@@ -1,0 +1,1 @@
+ALTER TABLE `members` ADD `manager_email` text REFERENCES members(email) ON DELETE SET NULL ON UPDATE CASCADE;

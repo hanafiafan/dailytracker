@@ -71,6 +71,7 @@ const ADMIN: Sec[] = [
 const OWNER: Sec[] = [
   { h: "Yang hanya bisa dilakukan Superadmin", items: [
     "Akunmu adalah Superadmin (pemilik aplikasi): semua tugas, laporan, dan data tim terlihat olehmu tanpa batas unit. Semua permintaan tugas dan pengingat terlambat otomatis juga sampai kepadamu.",
+    "Mengisi Atasan langsung tiap orang (Tim, Ubah) agar bagan organisasi sesuai kenyataan. Tanpa itu, anggota otomatis melapor ke kepala unitnya atau ke Superadmin.",
     "Menambah anggota baru, menghapus atau memindahkan email, mengatur urutan dan unit, menunjuk atau mencabut admin, dan menentukan unit mana yang dipantau tiap admin (halaman Tim). Admin lain tidak bisa melakukan ini.",
     "Menghapus anggota atau alat bersifat permanen. Hapus hanya jika yakin.",
   ] },

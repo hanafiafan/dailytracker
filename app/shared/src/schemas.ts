@@ -18,7 +18,7 @@ export const memberCreate = z.object({
 });
 export const memberPatch = z.object({
   name: z.string().trim().min(1).max(40), role: z.string().trim().max(60), group: unit,
-  isAdmin: z.boolean(), adminGroups: z.array(unit).max(20),
+  isAdmin: z.boolean(), adminGroups: z.array(unit).max(20), managerEmail: email.nullable(),
 }).partial();
 export const memberMove = z.object({ email });
 export const memberOrder = z.object({ emails: z.array(z.string()).max(200) });
@@ -78,7 +78,7 @@ export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p
 // ---- shapes returned by the API ----
 export interface MemberDTO {
   email: string; name: string; role: string; group: string; isAdmin: boolean; adminGroups: string[];
-  sortOrder: number; hasPhoto: boolean; photoV: number; seenAt: number | null; askAt: number | null;
+  sortOrder: number; hasPhoto: boolean; photoV: number; seenAt: number | null; askAt: number | null; managerEmail: string | null;
 }
 export interface CommentDTO { id: string; by: string; byEmail: string; text: string; at: number }
 export interface SubtaskDTO { id: string; title: string; done: boolean }

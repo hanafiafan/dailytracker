@@ -3,44 +3,46 @@ import type { MemberDTO } from "@shared/schemas";
 import { Avatar, PersonLink } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
 import { awayOn } from "../lib/leaves";
-import { useIsMobile } from "../lib/useMedia";
 import { useLeaves, useMeta, useTasks } from "../lib/queries";
 import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
 
-type Level = "owner" | "boss" | "head" | "member";
-const LEVEL: Record<Level, string> = { owner: "Superadmin", boss: "Admin penuh", head: "Kepala unit", member: "Anggota" };
-const NOUNIT = "Tanpa unit";
+type Level = "owner" | "head" | "member";
+const LEVEL: Record<Level, string> = { owner: "Superadmin", head: "Atasan", member: "Anggota" };
 
-interface Person { key: string; name: string; role: string; level: Level; unit: string; m?: MemberDTO; reports: string }
+interface Person { key: string; name: string; role: string; level: Level; unit: string; m?: MemberDTO; reports: string; kids: Person[] }
 
-/** Owner → full admins → unit heads → members. Built only from the team list: who administers which unit, and who belongs to it. */
+/** The chart follows each person's "atasan langsung". Without one, a person reports to the head of their unit, otherwise to the owner (the only root). */
 function useOrg() {
   const { team, me } = useViewer();
   const owner = useMeta(true).data?.owner;
   return useMemo(() => {
     const ownerM = owner ? team.find(m => m.email === owner.email) : undefined;
-    const top: Person[] = owner ? [{ key: owner.email, name: ownerM?.name ?? owner.name, role: ownerM?.role || "Superadmin aplikasi", level: "owner", unit: "", m: ownerM, reports: "—" }] : [];
-    const bosses = team.filter(m => m.isAdmin && !m.adminGroups.length && m.email !== owner?.email);
-    const topNames = [...top, ...bosses.map(b => ({ name: b.name }))].map(p => p.name).join(", ") || "—";
-    const bossP: Person[] = bosses.map(b => ({ key: b.email, name: b.name, role: b.role || "Admin", level: "boss", unit: "", m: b, reports: top[0]?.name ?? "—" }));
-    const units = [...new Set(team.map(m => m.group).filter(Boolean))].sort();
-    const byUnit = units.map(u => {
-      const heads = team.filter(m => m.isAdmin && m.adminGroups.includes(u));
-      const headNames = heads.map(h => h.name).join(", ");
-      const members = team.filter(m => !m.isAdmin && m.group === u);
-      return {
-        unit: u,
-        heads: heads.map<Person>(h => ({ key: h.email, name: h.name, role: h.role || "Admin unit", level: "head", unit: u, m: h, reports: topNames })),
-        members: members.map<Person>(x => ({ key: x.email, name: x.name, role: x.role, level: "member", unit: u, m: x, reports: headNames || topNames })),
-      };
-    });
-    const loose = team.filter(m => !m.isAdmin && !m.group).map<Person>(x => ({ key: x.email, name: x.name, role: x.role, level: "member", unit: NOUNIT, m: x, reports: topNames }));
-    const looseHeads = team.filter(m => m.isAdmin && m.adminGroups.length && !m.adminGroups.some(g => units.includes(g)));
-    const all = [...top, ...bossP, ...byUnit.flatMap(u => [...u.heads, ...u.members]), ...looseHeads.map<Person>(h => ({ key: h.email, name: h.name, role: h.role || "Admin unit", level: "head", unit: h.adminGroups.join(", "), m: h, reports: topNames })), ...loose];
-    // an admin who heads several units appears under each one; the table lists them once
-    const uniq = [...new Map(all.map(p => [p.key, p])).values()];
-    return { top, bossP, byUnit, loose, uniq, me: me.email };
+    const root: Person = { key: owner?.email ?? "root", name: ownerM?.name ?? owner?.name ?? "Superadmin", role: ownerM?.role || "Superadmin aplikasi", level: "owner", unit: "", m: ownerM, reports: "—", kids: [] };
+    const nodes = new Map<string, Person>(team.filter(m => m.email !== ownerM?.email).map(m => [m.email, { key: m.email, name: m.name, role: m.role, level: "member", unit: m.group, m, reports: root.name, kids: [] }]));
+    const parentOf = (m: MemberDTO): string | null => {
+      if (m.managerEmail && m.managerEmail !== m.email && (nodes.has(m.managerEmail) || m.managerEmail === ownerM?.email)) return m.managerEmail;
+      const head = m.group ? team.find(h => h.email !== m.email && h.isAdmin && h.adminGroups.includes(m.group)) : undefined;
+      return head && head.email !== ownerM?.email ? head.email : null;
+    };
+    const direct = new Map(team.filter(m => m.email !== ownerM?.email).map(m => [m.email, parentOf(m)]));
+    const parents = new Map<string, string | null>();
+    for (const [email, p] of direct) {
+      let cur = p, hops = 0;
+      while (cur && cur !== email && hops++ < 60) cur = direct.get(cur) ?? null;
+      parents.set(email, cur === email || hops >= 60 ? null : p); // a reporting loop falls back to the root
+    }
+    for (const [email, node] of nodes) {
+      const p = parents.get(email) ?? null, up = p ? nodes.get(p) : undefined;
+      node.reports = up?.name ?? root.name;
+      (up ?? root).kids.push(node);
+    }
+    const mark = (p: Person) => { p.kids.sort((a, b) => (a.m?.sortOrder ?? 999) - (b.m?.sortOrder ?? 999)); p.kids.forEach(mark); if (p.level !== "owner" && p.kids.length) p.level = "head"; };
+    mark(root);
+    const flat: Person[] = [];
+    const walk = (p: Person) => { flat.push(p); p.kids.forEach(walk); };
+    walk(root);
+    return { root, flat, me: me.email };
   }, [team, owner, me.email]);
 }
 
@@ -56,44 +58,30 @@ function Node({ p, open }: { p: Person; open?: number }) {
   );
 }
 
+function Branch({ p, openOf, top }: { p: Person; openOf: (e?: string) => number | undefined; top?: boolean }) {
+  return (
+    <li className={top ? "otree-top" : undefined}>
+      <Node p={p} open={openOf(p.m?.email)} />
+      {p.kids.length > 0 && <ul className="otree">{p.kids.map(k => <Branch key={k.key} p={k} openOf={openOf} />)}</ul>}
+    </li>
+  );
+}
+
 export function OrgView() {
   const { policy } = useViewer();
   const org = useOrg();
-  const mobile = useIsMobile();
   const [tab, setTab] = useState("bagan"), [unit, setUnit] = useState(""), [q, setQ] = useState("");
   const tq = useTasks(addDays(today(), -30), policy.isManager);
   const openOf = (email?: string) => policy.isManager && email ? (tq.data ?? []).filter(t => t.email === email && t.status !== "done").length : undefined;
-  const units = org.byUnit.map(u => u.unit);
-  const rows = org.uniq.filter(p => (!unit || p.unit === unit || (unit === NOUNIT && !p.unit)) && (!q.trim() || (p.name + " " + p.role).toLowerCase().includes(q.trim().toLowerCase())));
+  const units = [...new Set(org.flat.map(p => p.unit).filter(Boolean))].sort();
+  const rows = org.flat.filter(p => (!unit || p.unit === unit) && (!q.trim() || (p.name + " " + p.role).toLowerCase().includes(q.trim().toLowerCase())));
   return (
     <>
       <div className="seg" role="group" aria-label="Tampilan struktur" style={{ justifySelf: "start" }}>
         <button aria-pressed={tab === "bagan"} onClick={() => setTab("bagan")}>Bagan</button><button aria-pressed={tab === "tabel"} onClick={() => setTab("tabel")}>Tabel</button>
       </div>
-      {tab === "bagan" && mobile ? (
-        <div className="morg">
-          <div className="morg-top">{[...org.top, ...org.bossP].map(p => <Node key={p.key} p={p} open={openOf(p.m?.email)} />)}</div>
-          {org.byUnit.map(u => (
-            <section key={u.unit} className="bc"><div className="bc-h"><span className="ulabel">{u.unit}<span>{u.members.length + u.heads.length}</span></span></div>
-              {u.heads.map(h => <Node key={h.key} p={h} open={openOf(h.m?.email)} />)}
-              <div className="morg-list">{u.members.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}{!u.members.length && <small className="muted">Belum ada anggota</small>}</div>
-            </section>))}
-          {org.loose.length > 0 && <section className="bc"><div className="bc-h"><span className="ulabel">{NOUNIT}<span>{org.loose.length}</span></span></div><div className="morg-list">{org.loose.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}</div></section>}
-        </div>
-      ) : tab === "bagan" ? (
-        <section className="bc"><div className="heatwrap"><div className="org">
-          <div className="otop">{[...org.top, ...org.bossP].map(p => <Node key={p.key} p={p} open={openOf(p.m?.email)} />)}</div>
-          <div className="ostem" />
-          <div className="ounits">
-            {org.byUnit.map(u => (
-              <div key={u.unit} className="ounit">
-                <div className="ulabel">{u.unit}<span>{u.members.length}</span></div>
-                {u.heads.map(h => <Node key={h.key} p={h} open={openOf(h.m?.email)} />)}
-                <div className="omembers">{u.members.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}{!u.members.length && <small className="muted">Belum ada anggota</small>}</div>
-              </div>))}
-            {org.loose.length > 0 && <div className="ounit"><div className="ulabel">{NOUNIT}<span>{org.loose.length}</span></div><div className="omembers">{org.loose.map(m => <Node key={m.key} p={m} open={openOf(m.m?.email)} />)}</div></div>}
-          </div>
-        </div></div></section>
+      {tab === "bagan" ? (
+        <section className="bc"><div className="heatwrap"><ul className="otree otree-root"><Branch p={org.root} openOf={openOf} top /></ul></div></section>
       ) : (
         <section className="bc">
           <div className="bc-h"><h2>Daftar anggota</h2>

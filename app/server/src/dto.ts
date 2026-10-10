@@ -8,12 +8,12 @@ type RoutineRow = typeof routines.$inferSelect;
 
 export const toMember = (m: MemberRow): MemberDTO => ({
   email: m.email, name: m.name, role: m.role, group: m.group, isAdmin: m.isAdmin, adminGroups: m.adminGroups,
-  sortOrder: m.sortOrder, hasPhoto: m.photo !== null && m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt,
+  sortOrder: m.sortOrder, hasPhoto: m.photo !== null && m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt, managerEmail: m.managerEmail,
 });
 // Member rows are selected without the photo bytes in lists; this keeps the flag correct there.
 export const toMemberLite = (m: Omit<MemberRow, "photo">): MemberDTO => ({
   email: m.email, name: m.name, role: m.role, group: m.group, isAdmin: m.isAdmin, adminGroups: m.adminGroups,
-  sortOrder: m.sortOrder, hasPhoto: m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt,
+  sortOrder: m.sortOrder, hasPhoto: m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt, managerEmail: m.managerEmail,
 });
 export const toComment = (c: CommentRow): CommentDTO => ({ id: c.id, by: c.by, byEmail: c.byEmail, text: c.text, at: c.at });
 export interface TaskExtras { comments?: CommentRow[]; labelIds?: string[]; subtasks?: SubtaskDTO[] }

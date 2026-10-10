@@ -71,6 +71,13 @@
       "when": 1791612651241,
       "tag": "0009_closed_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791614718261,
+      "tag": "0010_flowery_pixie",
+      "breakpoints": true
     }
   ]
 }

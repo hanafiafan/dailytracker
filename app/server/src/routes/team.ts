@@ -42,6 +42,15 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     const selfFields = Object.keys(b).every(k => k === "name" || k === "role");
     if (!(self && selfFields) && !u.policy.canEditMember(email, b)) return c.json({ error: "forbidden" }, 403);
     if (self && (b.isAdmin !== undefined || b.adminGroups !== undefined) && !u.policy.isSuper) return c.json({ error: "forbidden" }, 403);
+    if (b.managerEmail) {
+      // the manager must be on the team and must not already report (directly or not) to this person
+      const all = loadTeam(db), seen = new Set<string>([email]);
+      if (!all.some(m => m.email === b.managerEmail)) return c.json({ error: "Atasan tidak ditemukan" }, 404);
+      for (let cur: string | null | undefined = b.managerEmail; cur; cur = all.find(m => m.email === cur)?.managerEmail) {
+        if (seen.has(cur)) return c.json({ error: "Atasan itu sendiri melapor ke orang ini (lingkaran)." }, 400);
+        seen.add(cur);
+      }
+    }
     const patch: Partial<typeof members.$inferInsert> = { ...b };
     if (b.isAdmin === false) patch.adminGroups = [];
     if (b.isAdmin === true && b.adminGroups === undefined) patch.adminGroups = target.group ? [target.group] : []; // a new admin starts limited to their own unit

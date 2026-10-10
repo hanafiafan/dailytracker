@@ -136,6 +136,14 @@ describe("api", () => {
     expect(await list("a@x.id")).not.toContain(ch);
   });
 
+  it("org chart: only the superadmin sets a manager, and loops are refused", async () => {
+    expect((await t.call("hcs@x.id", "PATCH", "/team/a@x.id", { managerEmail: "b@x.id" })).status).toBe(403);
+    expect((await t.call(OWNER, "PATCH", "/team/a@x.id", { managerEmail: "b@x.id" })).status).toBe(200);
+    expect((await t.call(OWNER, "PATCH", "/team/b@x.id", { managerEmail: "a@x.id" })).status).toBe(400);
+    expect((await t.call(OWNER, "PATCH", "/team/b@x.id", { managerEmail: "nobody@x.id" })).status).toBe(404);
+    expect((await t.call(OWNER, "PATCH", "/team/a@x.id", { managerEmail: null })).status).toBe(200);
+  });
+
   it("ask-for-work notifies managers", async () => {
     expect((await t.call("a@x.id", "POST", "/ask")).status).toBe(200);
     const s = t.sent.find(x => x.title.includes("minta tugas"));
