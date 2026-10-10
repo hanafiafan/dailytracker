@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellRing, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, ok } from "../lib/api";
-import { pushSupported } from "../lib/push";
+import { localTest, pushSupported } from "../lib/push";
 import { errorText } from "../lib/queries";
 
 const KEY = ["push-devices"] as const;
@@ -41,6 +41,13 @@ export function PushDevices() {
           <div><b className="clamp1">{label(d.service)}</b><small className="muted">{d.id === here ? "Perangkat ini" : "Perangkat lain"}</small></div>
           <button className="iconbtn" aria-label="Hapus perangkat" onClick={() => remove(d.id)}><Trash2 size={13} /></button>
         </li>))}</ul>}
+      <div className="actions" style={{ justifyContent: "flex-start" }}><button className="btn small" onClick={() => localTest().then(() => toast.message("Tes dikirim. Kalau tidak ada yang muncul, lihat panduan di bawah.")).catch(e => toast.error(errorText(e)))}>Tes tampil di perangkat ini</button></div>
+      {/Mac/i.test(navigator.platform) && <details className="muted" style={{ fontSize: ".82rem" }}><summary>Notifikasi tidak muncul di Mac?</summary><ol style={{ margin: "6px 0 0", paddingLeft: 18, display: "grid", gap: 3 }}>
+        <li>Buka Pengaturan Sistem, Notifikasi, lalu pilih browsermu (Chrome, Safari, atau Edge) dan nyalakan Izinkan Notifikasi.</li>
+        <li>Matikan mode Fokus atau Jangan Ganggu di Pusat Kontrol.</li>
+        <li>Di Chrome: alamat situs, ikon gembok, lalu pastikan Notifikasi diset Izinkan.</li>
+        <li>Kalau "Tes tampil di perangkat ini" juga tidak muncul, penyebabnya ada di pengaturan Mac. Kalau muncul tapi notifikasi uji dari server tidak, hapus perangkat ini di atas lalu aktifkan ulang notifikasi.</li>
+      </ol></details>}
       {!list.length && <p className="muted" style={{ fontSize: ".8rem" }}>Belum ada perangkat. Tekan "Aktifkan notifikasi" di perangkat yang ingin dipakai (satu per satu).</p>}
     </div>
   );

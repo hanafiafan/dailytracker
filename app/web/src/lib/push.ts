@@ -19,6 +19,11 @@ export async function enablePush() {
   await registerPush();
   return true;
 }
+/** Shows a notification straight from this browser, without the push server: tells "the system hides it" apart from "delivery failed". */
+export async function localTest() {
+  const reg = await navigator.serviceWorker.ready;
+  await reg.showNotification("Tes tampil di perangkat ini", { body: "Kalau ini muncul, izin dan pengaturan sistemmu benar.", icon: "/icons/icon-192.png", tag: "local-test" });
+}
 export async function unregisterPush() {
   try {
     const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();

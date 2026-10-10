@@ -11,10 +11,11 @@ const standalone = () => window.matchMedia("(display-mode: standalone)").matches
 const ua = () => navigator.userAgent;
 const isIOS = () => /iphone|ipad|ipod/i.test(ua()) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = () => /android/i.test(ua());
+const isPhone = () => isIOS() && !/macintosh/i.test(ua()) || isAndroid();
 const key = (email: string) => "th-setup-" + email;
 const done = (email: string) => { if (navigator.webdriver) return true; /* automated test browsers skip the first-run guide */ try { return localStorage.getItem(key(email)) === "1"; } catch { return true; } };
 /** Setup is required on every device: until it is finished, or again if notification permission is later taken away. */
-const needsSetup = (email: string) => !done(email) || (!navigator.webdriver && pushSupported() && Notification.permission !== "granted");
+const needsSetup = (email: string) => !done(email) || (!navigator.webdriver && ((pushSupported() && Notification.permission !== "granted") || (isPhone() && !standalone())));
 
 /** What to do to put the app on the home screen, written for this device. */
 function installHelp(canPrompt: boolean) {
@@ -49,9 +50,9 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
   };
   const iosNeedsInstall = isIOS() && !installed && perm === "default";
   const granted = perm === "granted";
-  const ready = (installed || !isIOS()) && granted && tested === "ok";
+  const ready = (installed || !isPhone()) && granted && tested === "ok"; // on phones the app must be installed (opened from its icon)
   // A browser with no notification support at all can never finish, so it may continue; iPhone must install first since that is what unlocks them.
-  const canFinish = ready || (perm === "unsupported" && !isIOS());
+  const canFinish = ready || (perm === "unsupported" && !isPhone());
   return (
     <>
       <div className="scrim" onClick={mandatory ? undefined : () => close(false)} />
@@ -60,7 +61,7 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
         <div className="dialog-b ob-steps">
           <section className={"ob-step" + (installed ? " ok" : "")}>
             <span className="ob-n">{installed ? <Check size={16} /> : 1}</span>
-            <div><b>Taruh di layar utama</b><p className="muted">{installHelp(!!evt)}</p>
+            <div><b>Taruh di layar utama{isPhone() ? " (wajib di HP)" : ""}</b><p className="muted">{installHelp(!!evt)}</p>{isPhone() && !installed && <p className="muted" style={{ fontSize: ".78rem" }}>Setelah terpasang, tutup halaman ini lalu buka aplikasi dari ikon barunya di layar utama.</p>}
               {evt && <button className="btn small primary" onClick={install}><MonitorSmartphone size={14} />Pasang sekarang</button>}</div>
           </section>
           <section className={"ob-step" + (granted ? " ok" : "")}>
