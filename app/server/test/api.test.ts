@@ -112,6 +112,15 @@ describe("api", () => {
     expect(s?.to).not.toContain("a@x.id");
   });
 
+  it("deadline reminder honours the lead time chosen by the task giver", async () => {
+    const date = wib().date;
+    t.db.insert(tasks).values({ id: "t2", email: "a@x.id", date, title: "Early", due: "12:00", warnMin: 120, createdAt: 1 }).run();
+    await runReminders(t.db, t.push, Date.parse(`${date}T09:30:00+07:00`));
+    expect(t.sent.filter(s => s.title === "Tenggat sebentar lagi")).toHaveLength(0);
+    await runReminders(t.db, t.push, Date.parse(`${date}T10:05:00+07:00`));
+    expect(t.sent.filter(s => s.title === "Tenggat sebentar lagi" && s.path === "/?t=t2")).toHaveLength(1);
+  });
+
   it("deadline reminder fires once, 30 minutes before", async () => {
     const date = wib().date;
     t.db.insert(tasks).values({ id: "t1", email: "a@x.id", date, title: "Deadline", due: "10:00", createdAt: 1 }).run();

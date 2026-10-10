@@ -35,6 +35,7 @@ export const taskCreate = z.object({
   labelIds: z.array(z.string()).max(10).default([]),
   subtasks: z.array(z.string().trim().min(1).max(160)).max(30).default([]),
   needProof: z.boolean().default(true),
+  warnMin: z.number().int().min(15).max(1440).nullish(),
   // Routine: appears automatically on the chosen weekdays (0 = Sunday).
   routineDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
 }).refine(t => !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
@@ -43,7 +44,7 @@ export const taskPatch = z.object({
   title: z.string().trim().min(1).max(120), note: z.string().trim().max(600),
   date, start: hm.nullable(), due: hm.nullable(),
   priority: z.enum(PRIORITIES), projectId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
-  needProof: z.boolean(), email,
+  needProof: z.boolean(), email, warnMin: z.number().int().min(15).max(1440).nullable(),
 }).partial();
 export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
@@ -95,7 +96,7 @@ export interface AnalyticsDTO {
 }
 export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
-  status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
+  status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];

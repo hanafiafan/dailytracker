@@ -4,7 +4,7 @@ import type { tasks } from "./db/schema.js";
 import type { Bus } from "./events.js";
 import type { Push } from "./push.js";
 import { deliverInbox } from "./services.js";
-import { wib } from "@shared/time";
+import { atMs, wib } from "@shared/time";
 
 type TaskRow = typeof tasks.$inferSelect;
 
@@ -14,8 +14,9 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
     return push.send(to, title, body, tag, path ?? (taskId ? `/?t=${taskId}` : ""));
   };
   return {
+    // A deadline already inside its own warning window is flagged right away instead of waiting for the next reminder run.
     newTask: (t: TaskRow) =>
-      deliver([t.email], "task_new", t.id, "Tugas baru", t.title + (t.date === wib().date ? "" : ` (${t.date})`), "new-" + t.id),
+      deliver([t.email], "task_new", t.id, t.due && t.date === wib().date && atMs(t.date, t.due) - Date.now() <= (t.warnMin ?? 30) * 60000 ? "Tugas baru, tenggat mepet" : "Tugas baru", t.title + (t.date === wib().date ? "" : ` (${t.date})`), "new-" + t.id),
     assigned: (t: TaskRow, by: string) =>
       deliver([t.email], "assigned", t.id, "Tugas dialihkan ke kamu", `${t.title} (oleh ${by})`, "assign-" + t.id),
     returned: (t: TaskRow) =>

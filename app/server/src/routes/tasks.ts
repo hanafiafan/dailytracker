@@ -62,7 +62,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         for (const email of emails) {
           const base = {
             email, title: b.title, note: self ? "" : b.note, start: b.start ?? null, due: b.due ?? null, hot: isHot(priority), priority,
-            projectId: b.projectId ?? null, needProof: self ? false : b.needProof, by: self ? "self" as const : "owner" as const,
+            projectId: b.projectId ?? null, needProof: self ? false : b.needProof, warnMin: self ? null : b.warnMin ?? null, by: self ? "self" as const : "owner" as const,
             fromAdmin: self ? null : u.member?.name ?? u.name, createdAt: now,
           };
           if (b.routineDays?.length) {
@@ -95,14 +95,14 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (!canEdit(u, t)) return c.json({ error: "forbidden" }, 403);
       if (b.projectId !== undefined && !projectOk(b.projectId)) return c.json({ error: "Proyek tidak ditemukan" }, 404);
       const manager = u.policy.canManage(t.email);
-      if (!manager && (b.email !== undefined || b.needProof !== undefined)) return c.json({ error: "forbidden" }, 403);
+      if (!manager && (b.email !== undefined || b.needProof !== undefined || b.warnMin !== undefined)) return c.json({ error: "forbidden" }, 403);
       if (b.email !== undefined && b.email !== t.email) {
         if (!loadTeam(db).some(m => m.email === b.email) || !u.policy.canManage(b.email)) return c.json({ error: "forbidden" }, 403);
       }
       const { labelIds, ...cols } = b;
       const patch: Partial<typeof tasks.$inferInsert> = { ...cols };
       if (b.priority) patch.hot = isHot(b.priority);
-      if (b.date !== undefined || b.start !== undefined || b.due !== undefined) { patch.remDue = false; patch.remLate = false; }
+      if (b.date !== undefined || b.start !== undefined || b.due !== undefined || b.warnMin !== undefined) { patch.remDue = false; patch.remLate = false; }
       const start = b.start === undefined ? t.start : b.start, due = b.due === undefined ? t.due : b.due;
       if (start && due && start >= due) return c.json({ error: "Jam selesai harus setelah jam mulai" }, 400);
 

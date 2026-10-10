@@ -6,7 +6,7 @@ import { PRIORITIES, type Priority } from "@shared/schemas";
 import { api, ok } from "../lib/api";
 import { DAYN } from "../lib/format";
 import { keys, useAction } from "../lib/queries";
-import { PRIORITY_LABEL } from "../lib/tasks";
+import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
 import { useViewer, type NewTaskPrefill } from "../lib/viewer";
 
 const PRESETS: [string, string, string][] = [["Pagi", "08:00", "12:00"], ["Siang", "13:00", "17:00"], ["Sore", "15:00", "17:00"], ["Malam", "19:00", "21:00"], ["Tanpa jam", "", ""]];
@@ -22,7 +22,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const people = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email));
   const [sel, setSel] = useState(new Set(manager ? prefill.emails ?? [] : [me.email]));
   const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
-  const [proof, setProof] = useState(true), [routine, setRoutine] = useState(false);
+  const [proof, setProof] = useState(true), [warn, setWarn] = useState(30), [routine, setRoutine] = useState(false);
   const [days, setDays] = useState(new Set([1, 2, 3, 4, 5, 6]));
   const [lab, setLab] = useState(new Set<string>(prefill.labelIds ?? []));
   const [start, setStart] = useState(prefill.start ?? ""), [due, setDue] = useState(prefill.due ?? "");
@@ -31,7 +31,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     emails: [...sel], title: String(f.get("title")), note: String(f.get("note") ?? ""), date: routine ? undefined : String(f.get("date") || date),
     start: start || null, due: due || null, priority, projectId: String(f.get("project") || "") || null, labelIds: [...lab],
     subtasks: String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean),
-    needProof: proof, routineDays: routine ? [...days].sort() : undefined,
+    needProof: proof, warnMin: manager && due ? warn : null, routineDays: routine ? [...days].sort() : undefined,
   } })), { done: routine ? "Tugas rutin disimpan" : sel.size > 1 ? `Tugas dibagikan ke ${sel.size} orang` : "Tugas dibuat", refresh: [keys.tasks, keys.team, keys.routines, keys.activity] });
 
   const submit = (f: FormData) => {
@@ -84,6 +84,12 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
             </div>}
             {routine && <div className="field"><span>Muncul otomatis setiap</span><div className="chips">{[1, 2, 3, 4, 5, 6, 0].map(d => <button type="button" key={d} className="chip" aria-pressed={days.has(d)} onClick={() => setDays(toggle(days, d))}>{DAYN[d]}</button>)}</div></div>}
           </section>
+          {manager && due && (
+            <section className="dsec"><h3>Peringatan tenggat</h3>
+              <label className="field"><span>Ingatkan penerima sebelum jam {due}</span><select className="input" value={warn} onChange={e => setWarn(Number(e.target.value))}>{WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelumnya</option>)}</select></label>
+              <p className="muted" style={{ fontSize: ".8rem" }}>Pengingat dikirim ke notifikasi dan lonceng penerima. Kalau tenggat sudah lebih dekat dari ini, tugas langsung ditandai mepet.</p>
+            </section>
+          )}
           {!routine && (
             <section className="dsec"><h3>Checklist &amp; bukti</h3>
               <label className="field"><span>Langkah <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu per baris)</em></span><textarea className="input" name="subtasks" rows={3} defaultValue={(prefill.steps ?? []).join("\n")} placeholder={"Ambil foto\nEdit warna\nUpload ke Drive"} /></label>

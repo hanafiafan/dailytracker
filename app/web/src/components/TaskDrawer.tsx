@@ -7,7 +7,7 @@ import { PRIORITIES, type ActivityDTO, type TaskDTO } from "@shared/schemas";
 import { useTaskActions } from "../lib/actions";
 import { NEXT, STATUS, fmtShort, fmtTime, host } from "../lib/format";
 import { patchTaskLocally, useMeta, useTask, useTaskActivity } from "../lib/queries";
-import { PRIORITY_LABEL } from "../lib/tasks";
+import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Comments } from "./Comments";
 import { TaskTimer } from "./TimeTracker";
@@ -101,6 +101,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
               return canEdit || on ? <button key={l.id} className="chip" data-c={l.color} aria-pressed={on} disabled={!canEdit} onClick={() => a.patch.mutate({ labelIds: on ? t.labelIds.filter(x => x !== l.id) : [...t.labelIds, l.id] })}><i className="sw" />{l.name}</button> : null;
             })}
           </div>
+          {manager && t.due && t.status !== "done" && <><span>Peringatan</span><select className="input" value={t.warnMin ?? 30} onChange={e => a.patch.mutate({ warnMin: Number(e.target.value) })}>{WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelum tenggat</option>)}</select></>}
           {manager && <><span>Wajib bukti</span><label className="check"><input type="checkbox" checked={t.needProof} onChange={e => a.patch.mutate({ needProof: e.target.checked })} />Karyawan harus melampirkan bukti</label></>}
         </section>
 

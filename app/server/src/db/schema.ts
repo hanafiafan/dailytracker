@@ -65,6 +65,8 @@ export const tasks = sqliteTable("tasks", {
   reportAt: integer("report_at"),
   remDue: bool("rem_due").notNull().default(false),
   remLate: bool("rem_late").notNull().default(false),
+  /** Minutes before the end time to send the "deadline soon" reminder; chosen by whoever gave the task (null = 30). */
+  warnMin: integer("warn_min"),
 }, t => [index("tasks_email_date").on(t.email, t.date), index("tasks_date").on(t.date), index("tasks_project").on(t.projectId)]);
 
 export const proofs = sqliteTable("proofs", {

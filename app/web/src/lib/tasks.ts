@@ -2,6 +2,9 @@ import type { Color, Priority, TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { today } from "./format";
 
+/** "Remind before the end time" choices a task giver can pick (minutes). */
+export const WARN_OPTIONS: [number, string][] = [[15, "15 menit"], [30, "30 menit (standar)"], [60, "1 jam"], [120, "2 jam"], [240, "4 jam"], [1440, "1 hari"]];
+
 export const PRIORITY_LABEL: Record<Priority, string> = { low: "Rendah", normal: "Normal", high: "Tinggi", urgent: "Mendesak" };
 export const PRIORITY_RANK: Record<Priority, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
 export const COLOR_LABEL: Record<Color, string> = { lilac: "Ungu", pink: "Merah muda", yellow: "Kuning", lime: "Lime", mint: "Mint", sky: "Biru muda", peach: "Peach", gray: "Abu" };

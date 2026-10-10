@@ -13,6 +13,8 @@ const isIOS = () => /iphone|ipad|ipod/i.test(ua()) || (navigator.platform === "M
 const isAndroid = () => /android/i.test(ua());
 const key = (email: string) => "th-setup-" + email;
 const done = (email: string) => { if (navigator.webdriver) return true; /* automated test browsers skip the first-run guide */ try { return localStorage.getItem(key(email)) === "1"; } catch { return true; } };
+/** Setup is required on every device: until it is finished, or again if notification permission is later taken away. */
+const needsSetup = (email: string) => !done(email) || (!navigator.webdriver && pushSupported() && Notification.permission !== "granted");
 
 /** What to do to put the app on the home screen, written for this device. */
 function installHelp(canPrompt: boolean) {
@@ -26,7 +28,8 @@ function installHelp(canPrompt: boolean) {
 /** First sign-in on a device: three short steps (install, allow notifications, test them), then "Selesai" so it never shows again. */
 export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClose?: () => void }) {
   const { me } = useViewer();
-  const [open, setOpen] = useState(() => !!forceOpen || !done(me.email));
+  const mandatory = !forceOpen; // first-run setup cannot be skipped; the copy opened from Pengaturan can
+  const [open, setOpen] = useState(() => !!forceOpen || needsSetup(me.email));
   const evt = useInstallPrompt();
   const [accepted, setAccepted] = useState(false);
   const justInstalled = useJustInstalled();
@@ -47,11 +50,13 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
   const iosNeedsInstall = isIOS() && !installed && perm === "default";
   const granted = perm === "granted";
   const ready = (installed || !isIOS()) && granted && tested === "ok";
+  // A browser with no notification support at all can never finish, so it may continue; iPhone must install first since that is what unlocks them.
+  const canFinish = ready || (perm === "unsupported" && !isIOS());
   return (
     <>
-      <div className="scrim" onClick={() => close(false)} />
-      <div className="dialog onboard" role="dialog" aria-label="Siapkan aplikasi">
-        <div className="dialog-h"><div><h2>Siapkan Tugas Harian</h2><p className="muted">Tiga langkah agar aplikasi mudah dibuka dan notifikasi tiba tepat waktu.</p></div><button className="rbtn" aria-label="Tutup" onClick={() => close(false)}><X size={18} /></button></div>
+      <div className="scrim" onClick={mandatory ? undefined : () => close(false)} />
+      <div className="dialog onboard" role="dialog" aria-modal="true" aria-label="Siapkan aplikasi">
+        <div className="dialog-h"><div><h2>Siapkan Tugas Harian</h2><p className="muted">{mandatory ? "Wajib diselesaikan dulu sebelum memakai aplikasi: " : ""}tiga langkah agar aplikasi mudah dibuka dan notifikasi tiba tepat waktu.</p></div>{!mandatory && <button className="rbtn" aria-label="Tutup" onClick={() => close(false)}><X size={18} /></button>}</div>
         <div className="dialog-b ob-steps">
           <section className={"ob-step" + (installed ? " ok" : "")}>
             <span className="ob-n">{installed ? <Check size={16} /> : 1}</span>
@@ -72,7 +77,11 @@ export function Onboarding({ forceOpen, onClose }: { forceOpen?: boolean; onClos
               <button className="btn small" disabled={!granted || tested === "busy"} onClick={test}><BellRing size={14} />{tested === "ok" ? "Kirim lagi" : "Kirim notifikasi uji"}</button></div>
           </section>
         </div>
-        <div className="dialog-f"><button className="btn ghost" onClick={() => close(false)}>Nanti saja</button><button className={"btn " + (ready ? "primary" : "")} onClick={() => close(true)}>{ready ? "Selesai" : "Selesai, jangan tampilkan lagi"}</button></div>
+        <div className="dialog-f">
+          {mandatory
+            ? <><span className="muted" style={{ fontSize: ".8rem", marginRight: "auto" }}>{canFinish ? "" : "Selesaikan ketiga langkah untuk melanjutkan."}</span><button className="btn primary" disabled={!canFinish} onClick={() => close(true)}>Selesai</button></>
+            : <><button className="btn ghost" onClick={() => close(false)}>Tutup</button><button className={"btn " + (ready ? "primary" : "")} onClick={() => close(true)}>{ready ? "Selesai" : "Selesai, jangan tampilkan lagi"}</button></>}
+        </div>
       </div>
     </>
   );
