@@ -14,6 +14,6 @@ Aplikasi tugas harian karyawan (HAN Creative / Mamoa).
 
 ## Catatan
 
-- Snapshot database per 8 Okt 2026 ada di `database/`; data live tetap di claude.ai.
+- Snapshot database per 10 Okt 2026 ada di `database/`; data live tetap di claude.ai.
 - Versi claude.ai butuh kemampuan artifact `db`, `user` (profile) dan `assets`; hanya berjalan sebagai artifact claude.ai.
 - Versi PWA: proyek Firebase `dailytask-a8327` sudah terpasang; ikuti `pwa/BACA-DULU.txt`.

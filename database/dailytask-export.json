@@ -1,6 +1,6 @@
 {
   "format": "dailytask-export/1",
-  "exportedAt": "2026-10-08T14:39:12+07:00",
+  "exportedAt": "2026-10-10T11:51:21+07:00",
   "source": "claude.ai artifact 'Daily Task' (https://claude.ai/artifact/JhDWJVj6NyQNBw5YuZwwcv)",
   "notes": [
     "Waktu (createdAt, startedAt, doneAt, at, askAt) dalam milidetik sejak 1970 (Unix ms). date = YYYY-MM-DD, start/due = HH:MM (WIB).",
@@ -30,7 +30,7 @@
       "photo": null,
       "claudeUid": "u_fb05Hm8saC9b0qEoZnLsNg",
       "email": null,
-      "taskCount": 5
+      "taskCount": 6
     },
     {
       "id": "vero-itam",
@@ -43,7 +43,7 @@
       "photo": null,
       "claudeUid": "u_BcRizTwV0BAUQ_J9bCVWng",
       "email": null,
-      "taskCount": 9
+      "taskCount": 16
     },
     {
       "id": "fahru",
@@ -58,7 +58,7 @@
       "photo": null,
       "claudeUid": "u_3Tkia0Fdpo5UTEJpZu_k3g",
       "email": null,
-      "taskCount": 4
+      "taskCount": 9
     },
     {
       "id": "rizky",
@@ -71,7 +71,7 @@
       "photo": null,
       "claudeUid": "u_a_9kLRPu01EosNOUyCxUFw",
       "email": null,
-      "taskCount": 4
+      "taskCount": 8
     },
     {
       "id": "abied",
@@ -84,7 +84,7 @@
       "photo": null,
       "claudeUid": "u_3EGqlX81KN_aTbCO2oUNgA",
       "email": null,
-      "taskCount": 5
+      "taskCount": 12
     },
     {
       "id": "nabiel",
@@ -97,7 +97,7 @@
       "photo": null,
       "claudeUid": "u_3_9yqfQQBdS3XEsfmpbZDQ",
       "email": null,
-      "taskCount": 2
+      "taskCount": 3
     },
     {
       "id": "cece",
@@ -112,7 +112,7 @@
       "photo": null,
       "claudeUid": "u_s8KFDlrsO_AeIZZ7hXzJNg",
       "email": null,
-      "taskCount": 3
+      "taskCount": 6
     },
     {
       "id": "hasan",
@@ -125,7 +125,7 @@
       "photo": null,
       "claudeUid": "u_BdNvfnXDZsrpXPZR6079Mg",
       "email": null,
-      "taskCount": 2
+      "taskCount": 5
     },
     {
       "id": "yoga-79ym",
@@ -133,14 +133,12 @@
       "role": "Lead",
       "group": "HCM",
       "isAdmin": true,
-      "adminGroups": [
-        "HCM"
-      ],
+      "adminGroups": [],
       "order": 9,
       "photo": null,
       "claudeUid": "u_H64HvhGKb7E30cM1V3TZPg",
       "email": null,
-      "taskCount": 2
+      "taskCount": 6
     },
     {
       "id": "rifqi",
@@ -153,7 +151,7 @@
       "photo": null,
       "claudeUid": "u_p1ZaAGPxNph44yRRDx5N2w",
       "email": null,
-      "taskCount": 7
+      "taskCount": 13
     },
     {
       "id": "nayla",
@@ -166,7 +164,7 @@
       "photo": null,
       "claudeUid": "u_xpBd7xABi0OT6qTrar_gLA",
       "email": null,
-      "taskCount": 4
+      "taskCount": 7
     },
     {
       "id": "dian",
@@ -179,7 +177,7 @@
       "photo": null,
       "claudeUid": "u_XbHT4jf3QNBqoRCJ6ZME7Q",
       "email": null,
-      "taskCount": 2
+      "taskCount": 6
     },
     {
       "id": "niswa",
@@ -192,7 +190,7 @@
       "photo": null,
       "claudeUid": "u_q82MNHed50V027sQ133JjQ",
       "email": null,
-      "taskCount": 6
+      "taskCount": 25
     },
     {
       "id": "albi",
@@ -205,7 +203,7 @@
       "photo": null,
       "claudeUid": "u_sMsF4pv3bJofWr0lzaubaA",
       "email": null,
-      "taskCount": 5
+      "taskCount": 16
     },
     {
       "id": "hanief-3432",
@@ -244,7 +242,7 @@
       "photo": null,
       "claudeUid": "u_xkyHCrHAHvQB6mYBaWQqKQ",
       "email": null,
-      "taskCount": 3
+      "taskCount": 10
     },
     {
       "id": "tutik-a5pu",
@@ -270,7 +268,7 @@
       "photo": null,
       "claudeUid": "u_1_jb8HPlHjPJimT6HSGmSQ",
       "email": null,
-      "taskCount": 4
+      "taskCount": 12
     },
     {
       "id": "krisna-qv0j",
@@ -357,13 +355,23 @@
           ],
           "createdAt": 1791409450020,
           "date": "2026-10-08",
+          "doneAt": 1791450188892,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "874a6a83d913aaf5e34af702fddb3d8b",
+            "at": 1791450187538,
+            "photoFile": "proof-photos/874a6a83d913aaf5e34af702fddb3d8b.jpg"
+          },
+          "report": "Tiktok stok merah\nShopee mau diganti harga nyangkut promo",
+          "reportAt": 1791450090577,
+          "returnedAt": null,
           "start": null,
-          "status": "todo",
+          "startedAt": 1791450042735,
+          "status": "done",
           "title": "Loive - Gambar etalase Velora (Shopee & TikTok)",
           "id": "cmuykxw0awavusy"
         },
@@ -379,13 +387,21 @@
           ],
           "createdAt": 1791409450117,
           "date": "2026-10-08",
+          "doneAt": 1791470609982,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "8bff75236a9b8b994cc1af48490750f1",
+            "at": 1791470608992,
+            "photoFile": "proof-photos/8bff75236a9b8b994cc1af48490750f1.jpg"
+          },
+          "returnedAt": null,
           "start": null,
-          "status": "todo",
+          "startedAt": 1791454916619,
+          "status": "done",
           "title": "Content carousel renference \"BUTTONSCRAFT\"",
           "id": "cmuykypqioqhmj5"
         },
@@ -418,6 +434,180 @@
           "status": "done",
           "title": "ambil dan bawa sample hijab",
           "id": "ys60eh333qjer17sxvnw"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791452551858,
+          "date": "2026-10-08",
+          "doneAt": 1791452640587,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "3ae9480f5614b14de9affa919c1b92cb",
+            "at": 1791452639051,
+            "photoFile": "proof-photos/3ae9480f5614b14de9affa919c1b92cb.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791452578926,
+          "status": "done",
+          "title": "5 video",
+          "id": "4hjkaupvo91iilpdwgko"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791531792914,
+              "by": "Asep",
+              "id": "kmv0nruhecxef",
+              "text": "Belum bisa login karna blm tau aksesnya\nSama masih benerin talang rumah pak hanip"
+            }
+          ],
+          "createdAt": 1791510040758,
+          "date": "2026-10-09",
+          "doneAt": 1791539618231,
+          "due": null,
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "e381ed9fd0d2ac5f8dd4e1c7ba6bf103",
+            "at": 1791539616959,
+            "photoFile": "proof-photos/e381ed9fd0d2ac5f8dd4e1c7ba6bf103.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791525354608,
+          "status": "done",
+          "title": "Kunir Putih - login akses seller center Shopee & TikTok Shop",
+          "id": "cmv00acw1n32kqe"
+        },
+        {
+          "autoRemindAt": 1791537972709,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791525365222,
+              "by": "Asep",
+              "id": "kmv0jy2ueunoq",
+              "text": "Minta email"
+            },
+            {
+              "at": 1791537974106,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmv00bckm15s047",
+              "text": "Tugas ini belum selesai, sudah lewat 26 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791510040803,
+          "date": "2026-10-09",
+          "doneAt": 1791539604166,
+          "due": "16:00",
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "97970507887b31be976725a08e9d8e46",
+            "at": 1791539602970,
+            "photoFile": "proof-photos/97970507887b31be976725a08e9d8e46.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791525346632,
+          "status": "done",
+          "title": "Kunir Putih - login akses seller center Shopee & TikTok Shop",
+          "id": "cmv00bckm15s047"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791535582623,
+          "date": "2026-10-09",
+          "doneAt": 1791535605195,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "deb706161d2f6e3058132f9d9a128bbf",
+            "at": 1791535603936,
+            "photoFile": "proof-photos/deb706161d2f6e3058132f9d9a128bbf.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791535591349,
+          "status": "done",
+          "title": "Kecepogo bantuin renov rumh pah hanif",
+          "id": "28ilxfi9c1iuee8qatwo"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791535651113,
+          "date": "2026-10-09",
+          "doneAt": 1791535780585,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "0ca4d8e46fb75c53d7c37e98df9553db",
+            "at": 1791535779370,
+            "photoFile": "proof-photos/0ca4d8e46fb75c53d7c37e98df9553db.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791535668271,
+          "status": "done",
+          "title": "Ambil sampel yg di Hold ( Musuk )",
+          "id": "06sr9l44xfir8sfgw1am"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791599495275,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "start": null,
+          "startedAt": 1791600274275,
+          "status": "doing",
+          "title": "Set up PC",
+          "id": "27lx7vj207yjrz0d00a1"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791605292717,
+          "date": "2026-10-10",
+          "due": null,
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "status": "todo",
+          "title": "Kunir Putih -  Nominasi produk campaign Shopee",
+          "id": "cmv1vj5h26zxm12"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791606355643,
+          "date": "2026-10-10",
+          "due": "16:00",
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": "11:30",
+          "status": "todo",
+          "title": "Loive - 2 konten carousel (Arabell)",
+          "id": "cmv1w5xsnpkfvli"
         }
       ]
     },
@@ -430,29 +620,54 @@
           "by": "owner",
           "createdAt": 1791383103820,
           "date": "2026-10-08",
+          "doneAt": 1791449626662,
           "due": "16:00",
           "fromAdmin": "FAHRU",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "09af7509e1377da80f8c1d9be57d673e",
+            "at": 1791449625540,
+            "photoFile": "proof-photos/09af7509e1377da80f8c1d9be57d673e.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
-          "status": "todo",
+          "startedAt": 1791449416818,
+          "status": "done",
           "title": "Take konten SMM Axello 15 konten",
           "id": "cmuy78vg2va3ece"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791450927139,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuy7aou51a4cre",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791383188416,
           "date": "2026-10-08",
+          "doneAt": 1791514696584,
           "due": "16:00",
           "fromAdmin": "FAHRU",
           "hot": false,
           "needProof": true,
           "note": "",
-          "report": "SSD dibawa mas hasan",
-          "reportAt": 1791429995746,
+          "proof": {
+            "at": 1791514696584,
+            "link": "https://drive.google.com/file/d/1lFRgLFnHqM9CR-mdzFKk-FdTWtJaZTgi/view?usp=drive_link"
+          },
+          "report": "file di SSD. SSD dibawa mas hasan",
+          "reportAt": 1791449787839,
+          "returnedAt": null,
           "start": "08:00",
-          "status": "todo",
+          "startedAt": 1791514666033,
+          "status": "done",
           "title": "revisi video sambel pecel",
           "id": "cmuy7aou51a4cre"
         },
@@ -460,14 +675,19 @@
           "by": "self",
           "createdAt": 1791429959401,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791449969096,
           "due": null,
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "at": 1791449683753,
+            "link": "https://drive.google.com/drive/folders/1LeUWFo60x1LooXAvAU0YVE85gxFpOdxk?usp=drive_link"
+          },
+          "returnedAt": null,
           "start": null,
           "startedAt": 1791429973158,
-          "status": "doing",
+          "status": "done",
           "title": "Revisi Video Matera",
           "id": "slek9v8qt7ddarc24an5"
         },
@@ -475,28 +695,215 @@
           "by": "self",
           "createdAt": 1791433816170,
           "date": "2026-10-08",
+          "doneAt": 1791449956946,
           "due": null,
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "5c231c33dcba44d2f875f40685bfaf85",
+            "at": 1791449745967,
+            "photoFile": "proof-photos/5c231c33dcba44d2f875f40685bfaf85.jpg"
+          },
+          "returnedAt": null,
           "start": null,
-          "status": "todo",
+          "startedAt": 1791449410265,
+          "status": "done",
           "title": "buat VO konten Axelo",
           "id": "rooqa8nm1tavh3ioxkp4"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791449822860,
+          "date": "2026-10-08",
+          "doneAt": 1791449949915,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791449949915,
+            "link": "https://drive.google.com/drive/folders/1Xhxbc4IZThEVZIS195oHQuh2jyM7nIJx?usp=drive_link"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791449879013,
+          "status": "done",
+          "title": "Edit konten bina max 1",
+          "id": "r7kqo509e5lyrefjveqh"
         },
         {
           "by": "owner",
           "createdAt": 1791441658682,
           "date": "2026-10-09",
+          "doneAt": 1791532270155,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "48c073dac479c75c54186547abbb0e96",
+            "at": 1791532268872,
+            "photoFile": "proof-photos/48c073dac479c75c54186547abbb0e96.jpg"
+          },
+          "returnedAt": null,
           "start": "08:10",
-          "status": "todo",
+          "startedAt": 1791532165984,
+          "status": "done",
           "title": "take konten Axelo ( 10 - 15 )",
           "id": "cmuz63v9q9wwgra"
+        },
+        {
+          "autoRemindAt": 1791521630149,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791510041075,
+              "by": "Aziz",
+              "id": "cmuzzyz85qgv92k",
+              "text": "https://docs.google.com/spreadsheets/d/1S_oUURviVQ1pWrYNujkjqe_d5h5mHuthEZkastyU0ZE/edit?usp=drivesdk"
+            },
+            {
+              "at": 1791521630966,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuzl44ugtxgwv8",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:38. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791467153368,
+          "date": "2026-10-09",
+          "doneAt": 1791536940879,
+          "due": "11:38",
+          "fromAdmin": "FAHRU",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "62717a5dc2631adc32b0353410a450c7",
+            "at": 1791536939892,
+            "photoFile": "proof-photos/62717a5dc2631adc32b0353410a450c7.jpg"
+          },
+          "report": "baru dapat 3 video",
+          "reportAt": 1791536940879,
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791536830292,
+          "status": "done",
+          "title": "Take Video Mbak Niswa (3)",
+          "id": "cmuzl44ugtxgwv8"
+        },
+        {
+          "autoRemindAt": 1791521133784,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791521136853,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmv09ixc1zp01pq",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:30. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791510040594,
+          "date": "2026-10-09",
+          "doneAt": 1791533031157,
+          "due": "11:30",
+          "fromAdmin": "FAHRU",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791533031157,
+            "link": "https://drive.google.com/drive/folders/1Xhxbc4IZThEVZIS195oHQuh2jyM7nIJx?usp=drive_link"
+          },
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791533019623,
+          "status": "done",
+          "title": "Edit binamax 2 konten",
+          "id": "cmv09ixc1zp01pq"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791532293790,
+          "date": "2026-10-09",
+          "doneAt": 1791532315027,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "4483659a61a1793e6883950742d156b8",
+            "at": 1791532314077,
+            "photoFile": "proof-photos/4483659a61a1793e6883950742d156b8.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791532301017,
+          "status": "done",
+          "title": "buat vo konten axelo",
+          "id": "uocpuxg6xmxuozoqlqyj"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791536266057,
+          "date": "2026-10-09",
+          "doneAt": 1791536284326,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791536284326,
+            "link": "https://drive.google.com/drive/folders/1-UYuLFivIY-6hWjC1rnlGTKrhVnwx6Sq?usp=drive_link"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791536271237,
+          "status": "done",
+          "title": "Revisi foto Onmee",
+          "id": "dl5m0tm86877wc2j11rx"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791606774020,
+              "by": "ABIED",
+              "id": "kmv1wey9wvnqx",
+              "text": "produksi konten dapat 10 konten"
+            }
+          ],
+          "createdAt": 1791533822689,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791606796079,
+          "status": "doing",
+          "title": "produksi Axelo 10-15 konten",
+          "id": "cmv0oyd18b93q7n"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791606786539,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "start": null,
+          "startedAt": 1791606789867,
+          "status": "doing",
+          "title": "buat vo konten axelo",
+          "id": "a0u7tsb6tbvjcxmcp01u"
         }
       ]
     },
@@ -523,63 +930,249 @@
           ],
           "createdAt": 1791422957758,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791446818703,
           "due": "16:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "at": 1791446818703,
+            "link": "https://drive.google.com/drive/folders/1cABPqX1zX-lIR9dk7bU0djfEfiVt79IR?usp=sharing"
+          },
+          "report": "Video 1 \nhttps://drive.google.com/file/d/1pT8Fzqlhep1Ueij0kRS-hRnIDHCJmwXQ/view?usp=drive_link\n\nVideo 2 \nhttps://drive.google.com/file/d/1Tc5aAZqDZa7ebrVBgaKi7D7xDPu9jA_R/view?usp=drive_link",
+          "reportAt": 1791446723388,
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791422963791,
-          "status": "doing",
+          "status": "done",
           "title": "Materi Iklan Hcs 3",
           "id": "rgmiedzrt73bic6blb1j"
         },
         {
           "by": "self",
+          "comments": [
+            {
+              "at": 1791532995283,
+              "by": "FAHRU",
+              "id": "kmv0ohm8jlipc",
+              "text": "Link Hasil https://drive.google.com/drive/folders/1Xhxbc4IZThEVZIS195oHQuh2jyM7nIJx?usp=sharing"
+            }
+          ],
           "createdAt": 1791423063985,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791449184677,
           "due": "16:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "c72a6114dba913c167490b6046da6704",
+            "at": 1791449183200,
+            "photoFile": "proof-photos/c72a6114dba913c167490b6046da6704.jpg"
+          },
+          "report": "75-90",
+          "reportAt": 1791449184677,
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791439429338,
-          "status": "doing",
+          "status": "done",
           "title": "Konten SMM Axello 15",
           "id": "8e08wqb9ih2ghuzims0y"
         },
         {
+          "autoRemindAt": 1791532999776,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791533000689,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuyydlu6b6c7wn",
+              "text": "Tugas ini belum selesai, sudah lewat 23 jam 3 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791428676058,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791533133805,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "3b24d5c40a91c6a6dcbad01a26494f06",
+            "at": 1791533133805,
+            "link": "https://drive.google.com/drive/folders/1Xhxbc4IZThEVZIS195oHQuh2jyM7nIJx?usp=sharing",
+            "photoFile": "proof-photos/3b24d5c40a91c6a6dcbad01a26494f06.jpg"
+          },
           "report": "Sudah ditake",
           "reportAt": 1791439421590,
+          "returnedAt": null,
           "start": "11:00",
           "startedAt": 1791439405565,
-          "status": "doing",
+          "status": "done",
           "title": "Lead pembuatan 2 video etalase HBU ( kalau bisa )",
           "id": "cmuyydlu6b6c7wn"
         },
         {
+          "autoRemindAt": 1791519336444,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791519345561,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz61bbydvvaec",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791441539575,
           "date": "2026-10-09",
+          "doneAt": 1791533102821,
           "due": "11:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "ca4e11264aec357db8cd09d71773d485",
+            "at": 1791533101775,
+            "photoFile": "proof-photos/ca4e11264aec357db8cd09d71773d485.jpg"
+          },
+          "returnedAt": null,
           "start": "10:00",
-          "status": "todo",
+          "startedAt": 1791525624307,
+          "status": "done",
           "title": "meeting with TBS Food",
           "id": "cmuz61bbydvvaec"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791447592970,
+          "date": "2026-10-09",
+          "doneAt": 1791536868472,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "1c9d115f13d220970b8e3f5753d3ff18",
+            "at": 1791536867487,
+            "photoFile": "proof-photos/1c9d115f13d220970b8e3f5753d3ff18.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791536818155,
+          "status": "done",
+          "title": "pembuatan moodboard Starbloom",
+          "id": "cmuz9n1zgc8sml1"
+        },
+        {
+          "autoRemindAt": 1791542426230,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791542433848,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz9nmbsih9n6q",
+              "text": "Tugas ini belum selesai, sudah lewat 1 jam 40 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            },
+            {
+              "at": 1791604456879,
+              "by": "Aziz",
+              "id": "kmv1v1acvc6bv",
+              "text": "Berapa foto"
+            },
+            {
+              "at": 1791606641427,
+              "by": "FAHRU",
+              "id": "kmv1wc3yrav15",
+              "text": "145"
+            }
+          ],
+          "createdAt": 1791447620848,
+          "date": "2026-10-09",
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "report": "belum bisa dikerjakan masih nunggu shotlist dari client",
+          "reportAt": 1791525758030,
+          "start": "08:10",
+          "status": "todo",
+          "title": "pembuatan moodboard TBS",
+          "id": "cmuz9nmbsih9n6q"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791525726718,
+          "date": "2026-10-09",
+          "doneAt": 1791533217932,
+          "due": "16:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "1770c11859369a2d27bcaab376a61d0f",
+            "at": 1791533216969,
+            "photoFile": "proof-photos/1770c11859369a2d27bcaab376a61d0f.jpg"
+          },
+          "report": "95-110",
+          "reportAt": 1791533217932,
+          "returnedAt": null,
+          "start": "11:00",
+          "startedAt": 1791533152510,
+          "status": "done",
+          "title": "Take konten axello 10",
+          "id": "gurx8q2d203urbjyp57t"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791606743438,
+              "by": "FAHRU",
+              "id": "kmv1weaoezn55",
+              "text": "dapat 10"
+            }
+          ],
+          "createdAt": 1791533755988,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791594447446,
+          "status": "doing",
+          "title": "Lead produksi Axelo 10 - 15 konten",
+          "id": "cmv0oxp53xnnec7"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791596394991,
+          "date": "2026-10-10",
+          "doneAt": 1791607446631,
+          "due": "12:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "b84b31a573cf51fc5287086826a58468",
+            "at": 1791607445438,
+            "photoFile": "proof-photos/b84b31a573cf51fc5287086826a58468.jpg"
+          },
+          "returnedAt": null,
+          "start": "09:00",
+          "startedAt": 1791607331740,
+          "status": "done",
+          "title": "Moodboard Hiqween Foto (10)",
+          "id": "6sahw1scw8ey2phkdwup"
         }
       ]
     },
@@ -595,21 +1188,37 @@
       "tasks": [
         {
           "by": "self",
+          "comments": [
+            {
+              "at": 1791516664684,
+              "by": "ANNABIL",
+              "id": "kmv0erlgs9czc",
+              "text": "Progress sampai ke render materi 3D ke 3"
+            }
+          ],
           "createdAt": 1791427858524,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791534594804,
           "due": null,
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "at": 1791534594804,
+            "link": "https://drive.google.com/drive/folders/1fang0-lNPQkQXZ9XzVgOkLE6rMj2MxUK?usp=drive_link"
+          },
+          "report": "Masih ada note untukl 3D",
+          "reportAt": 1791534594804,
+          "returnedAt": null,
           "source": "Klien",
           "start": "10:00",
           "startedAt": 1791427889036,
-          "status": "doing",
+          "status": "done",
           "title": "Revisi RS Unimus Part 3",
           "id": "e1q2gsy716pjkkc6y2e6"
         },
         {
+          "autoRemindAt": 1791450901165,
           "by": "owner",
           "comments": [
             {
@@ -623,19 +1232,59 @@
               "by": "vero",
               "id": "cmuz09jg6xe4jtp",
               "text": "https://drive.google.com/drive/folders/1tkZ2kAHGtqOQR-qr803uLagGTuDYPFBI\n\nini link footage nya ya mas"
+            },
+            {
+              "at": 1791450902176,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuyxy1gjbagyw1",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            },
+            {
+              "at": 1791516685561,
+              "by": "ANNABIL",
+              "id": "kmv0es1kplmgf",
+              "text": "Progress Bikin animasi text"
+            },
+            {
+              "at": 1791534514850,
+              "by": "ANNABIL",
+              "id": "kmv0pe6qq96la",
+              "text": "Final Draft 1\nhttps://drive.google.com/drive/folders/1niRbc2AHmj1Vy6O-bisNsgKAS-e5iCxo?usp=drive_link"
             }
           ],
           "createdAt": 1791427949799,
           "date": "2026-10-08",
+          "doneAt": 1791534529452,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791534529452,
+            "link": "https://drive.google.com/drive/folders/1niRbc2AHmj1Vy6O-bisNsgKAS-e5iCxo?usp=drive_link"
+          },
+          "returnedAt": null,
           "start": "10:00",
-          "status": "todo",
+          "startedAt": 1791516668940,
+          "status": "done",
           "title": "Edit Materi Ads HCM ( brief dan footage menunggu mas Yoga )",
           "id": "cmuyxy1gjbagyw1"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791536003472,
+          "date": "2026-10-10",
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "status": "todo",
+          "title": "menyelesaikan unimus",
+          "id": "cmv0q9z9un6rady"
         }
       ]
     },
@@ -756,15 +1405,21 @@
           "by": "self",
           "createdAt": 1791425646284,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447291335,
           "due": "16:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "b4c368732419091fd53ad770412a1de4",
+            "at": 1791447290188,
+            "photoFile": "proof-photos/b4c368732419091fd53ad770412a1de4.jpg"
+          },
+          "returnedAt": null,
           "source": "Inisiatif sendiri",
           "start": "09:30",
           "startedAt": 1791430120210,
-          "status": "doing",
+          "status": "done",
           "title": "cek project tracker untuk update hasil progres",
           "id": "j0nng0jf189ahtv6wn1z"
         },
@@ -838,17 +1493,181 @@
           "by": "self",
           "createdAt": 1791440446327,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447048142,
           "due": "16:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "b1607b7abcf309c2c738346b632bdf61",
+            "at": 1791447047144,
+            "photoFile": "proof-photos/b1607b7abcf309c2c738346b632bdf61.jpg"
+          },
+          "returnedAt": null,
           "source": "client",
           "start": "14:00",
           "startedAt": 1791441084611,
-          "status": "doing",
+          "status": "done",
           "title": "Delivery new order ke tim HCS",
           "id": "2c72n19cxht55c4ggrxr"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791465170342,
+          "date": "2026-10-09",
+          "doneAt": null,
+          "due": null,
+          "editedAt": 1791465811891,
+          "editedBy": "Aziz",
+          "fromAdmin": "Aziz",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791596866980,
+          "status": "doing",
+          "title": "tidak boleh pulang sebelum job hari berikutnya terisi dan project hari berjalan terdapat output kespakatan baru",
+          "id": "cmuzk1jof2qfk60"
+        },
+        {
+          "autoRemindAt": 1791519336444,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791519344131,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-85gkz9lowsvvml5vdjnb",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791511908744,
+          "date": "2026-10-09",
+          "doneAt": 1791525974369,
+          "due": "11:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "4b7b73a99354b4b795bb35f4f3970b15",
+            "at": 1791525973488,
+            "photoFile": "proof-photos/4b7b73a99354b4b795bb35f4f3970b15.jpg"
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "10:00",
+          "startedAt": 1791525478865,
+          "status": "done",
+          "title": "meeting dengan TBS food",
+          "id": "85gkz9lowsvvml5vdjnb"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791512271376,
+          "date": "2026-10-09",
+          "doneAt": 1791534039747,
+          "due": "16:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791534039747,
+            "link": "https://docs.google.com/spreadsheets/d/1MshttDML4RXx7X1Oq_Cc9JrbgihWfe2N6_D1_-8-MI8/edit?gid=2062184835#gid=2062184835"
+          },
+          "returnedAt": null,
+          "start": "09:30",
+          "startedAt": 1791512296300,
+          "status": "done",
+          "title": "memastikan semua project external berjalan sesuai timeline",
+          "id": "f34jp6mkq2gw2o1ls6r6"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791526077836,
+          "date": "2026-10-09",
+          "doneAt": 1791526100384,
+          "due": "12:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791526100384,
+            "link": "https://docs.google.com/spreadsheets/d/1fVEZeydRfmLwaRuLO8G3pviqLbIsmlJutNYLv-ynLyg/edit?gid=0#gid=0"
+          },
+          "returnedAt": null,
+          "start": "11:00",
+          "startedAt": 1791526083778,
+          "status": "done",
+          "title": "membuat timeline untuk TBS Food",
+          "id": "ddji42ija4j8ztg4duwy"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791526363433,
+          "date": "2026-10-09",
+          "doneAt": 1791526389494,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "57a7492fea4724b403fb38f5df7cdbf0",
+            "at": 1791526388595,
+            "photoFile": "proof-photos/57a7492fea4724b403fb38f5df7cdbf0.jpg"
+          },
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791526371822,
+          "status": "done",
+          "title": "Penagihan pembayaran Print house dan patra bag",
+          "id": "5vi9zsdjus4wjkg84714"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791526803545,
+          "date": "2026-10-09",
+          "doneAt": 1791528359527,
+          "due": "14:00",
+          "fromAdmin": "Radinta",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "04f67f330b867df61255c656139f5d0a",
+            "at": 1791528358449,
+            "link": "https://docs.google.com/spreadsheets/d/115RfmnvmTvzapTcNzoZuWqtgk_AtUNoA2rXM5TrxPlY/edit?gid=837487427#gid=837487427",
+            "photoFile": "proof-photos/04f67f330b867df61255c656139f5d0a.jpg"
+          },
+          "returnedAt": null,
+          "start": "13:30",
+          "startedAt": 1791527393741,
+          "status": "done",
+          "title": "Follow up konten makara & tanyakan iklan akan mulai kapan dgn budget per hari berapa",
+          "id": "cmv0ksrgskz4e5s"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791600917732,
+              "by": "vero",
+              "id": "kmv1sxfj8zxy7",
+              "text": "https://drive.google.com/drive/folders/1a0fMZrAUpjCTAfAYabeYnx4GYqXfDUWn\n\nbaru konten 1 dan 2 ya mas, ke 3 baru di cari"
+            }
+          ],
+          "createdAt": 1791568150672,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": "12:00",
+          "fromAdmin": "Radinta",
+          "hot": false,
+          "needProof": true,
+          "note": "https://fb.me/adspreview/facebook/1WXvj1Vw6rzju9b\nhttps://fb.me/adspreview/facebook/2fzUEHArmFWEbPT\nhttps://fb.me/adspreview/facebook/27EOzUS9jIpjxJs",
+          "start": "08:00",
+          "startedAt": 1791596863629,
+          "status": "doing",
+          "title": "Mintakan file konten ke makara dari link-link ini",
+          "id": "cmv199tk04wudyb"
         }
       ]
     },
@@ -899,7 +1718,7 @@
           "by": "owner",
           "createdAt": 1791403175443,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791449761512,
           "due": "16:00",
           "editedAt": 1791403232064,
           "editedBy": "Aziz",
@@ -907,11 +1726,82 @@
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791449761512,
+            "link": "https://drive.google.com/drive/folders/1IYsjpDEprmlJ70fhvgYQF-1D5yZRSQDO"
+          },
+          "returnedAt": null,
           "start": "14:00",
           "startedAt": 1791444472783,
-          "status": "doing",
+          "status": "done",
           "title": "Edit 5 Konten Siap Upload",
           "id": "1wwgxpbl49stsrxmsi1z"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791447450484,
+          "date": "2026-10-09",
+          "doneAt": 1791534939187,
+          "due": "16:00",
+          "editedAt": 1791510040569,
+          "editedBy": "vero",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791534939187,
+            "link": "https://drive.google.com/drive/folders/1i_femER291096NPU9E6I-5Rch4xJew_E?usp=drive_link"
+          },
+          "report": "",
+          "reportAt": null,
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791508044459,
+          "status": "done",
+          "title": "revisi 3 Foto senthong jawi",
+          "id": "cmuz9k0av5y6x1g"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791447469877,
+          "date": "2026-10-09",
+          "doneAt": 1791535825012,
+          "due": "16:00",
+          "editedAt": 1791510040759,
+          "editedBy": "vero",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791535825012,
+            "link": "https://drive.google.com/drive/folders/1IYsjpDEprmlJ70fhvgYQF-1D5yZRSQDO?usp=drive_link  ( folder no [6]-[11] )"
+          },
+          "report": "folder no [6] - [11]",
+          "reportAt": 1791535897611,
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791508052133,
+          "status": "done",
+          "title": "edit 6 video D'selokaton",
+          "id": "cmuz9kflyayhxsp"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791531887170,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791595549162,
+          "status": "doing",
+          "title": "edit konten mba niswa dan mba ika ( 3 konten dulu karena laptop tidak mampu kalau langsung 6 )",
+          "id": "cmv0ns0nidrqmvq"
         }
       ]
     },
@@ -958,20 +1848,154 @@
           "id": "cmuxvkaq0mkvwa9"
         },
         {
+          "autoRemindAt": 1791454523934,
           "by": "self",
+          "comments": [
+            {
+              "at": 1791454524706,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-elzfyvyvewzo19wftnx5",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 17:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791431676858,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791474421917,
           "due": "17:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "at": 1791474421917,
+            "link": "https://canva.link/z641eulbg9qg4et"
+          },
+          "returnedAt": null,
           "source": "Niswa",
           "start": "11:00",
           "startedAt": 1791431682031,
-          "status": "doing",
+          "status": "done",
           "title": "Audit SMM untuk calon client  SSK",
           "id": "elzfyvyvewzo19wftnx5"
+        },
+        {
+          "autoRemindAt": 1791537521701,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791537524660,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-ks7spethlbztgpsf5bf2",
+              "text": "Tugas ini belum selesai, sudah lewat 19 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791516583126,
+          "date": "2026-10-09",
+          "doneAt": 1791603826766,
+          "due": "16:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791603826766,
+            "link": "https://seller-id.tokopedia.com/promotion/campaign-tools/management?shop_region=ID"
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "08:00",
+          "startedAt": 1791516591271,
+          "status": "done",
+          "title": "All Brand External - Campaign Platform 10.10",
+          "id": "ks7spethlbztgpsf5bf2"
+        },
+        {
+          "autoRemindAt": 1791537521701,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791537522831,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-9e3smitlf42tkg4bhmq5",
+              "text": "Tugas ini belum selesai, sudah lewat 19 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791516646418,
+          "date": "2026-10-09",
+          "doneAt": 1791603860949,
+          "due": "16:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791603860949,
+            "link": "https://seller-id.tokopedia.com/promotion/campaign-tools/management?shop_region=ID"
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "08:00",
+          "startedAt": 1791526612156,
+          "status": "done",
+          "title": "All Brand External - Monitoring & Controling Ads",
+          "id": "9e3smitlf42tkg4bhmq5"
+        },
+        {
+          "autoRemindAt": 1791551724354,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791551725669,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-z14ze94jh5m3hg5c8qot",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 20:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791526604906,
+          "date": "2026-10-09",
+          "doneAt": 1791604852536,
+          "due": "20:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791604852536,
+            "link": "https://www.instagram.com/reel/DeTKa6axgsm/?utm_source=ig_web_copy_link&dlrf=MzRlODBiNWFlZA==&srtk=MzRlODBiNWFlZA=="
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "13:00",
+          "startedAt": 1791526614248,
+          "status": "done",
+          "title": "HCM - Content Reels Post",
+          "id": "z14ze94jh5m3hg5c8qot"
+        },
+        {
+          "autoRemindAt": 1791537521701,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791537526626,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-u3x2kgjv801ms2aunulp",
+              "text": "Tugas ini belum selesai, sudah lewat 19 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791526668471,
+          "date": "2026-10-09",
+          "doneAt": null,
+          "due": "16:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "source": "Inisiatif sendiri",
+          "start": "08:00",
+          "startedAt": 1791526671436,
+          "status": "doing",
+          "title": "Raraya - Kurasi Affiliator RC",
+          "id": "u3x2kgjv801ms2aunulp"
         }
       ]
     },
@@ -992,15 +2016,23 @@
           ],
           "createdAt": 1791409450098,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791449932749,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "7541ade21b46840596e4d1ffc6c67697",
+            "at": 1791449931622,
+            "photoFile": "proof-photos/7541ade21b46840596e4d1ffc6c67697.jpg"
+          },
+          "report": "https://docs.google.com/spreadsheets/d/1ekJCLlprsrDmowtR94dsMrkPQp_v19_jQiJI5mAJXRY/edit?pli=1&gid=798063972#gid=798063972\n\nprogres : pengoptimalan undangan ke kreator dengan topik yang menarik menyesuaikan dengan moment.. memantau pengiriman sampel ke kreator ..\n\nkendala: undangan bertarger terbatas sehingga harus manual per kreator.. saya masih kesulitan untuk membuat topik dan isi undangan yang menyesuaikan dengan moment..",
+          "reportAt": 1791449781399,
+          "returnedAt": null,
           "start": null,
           "startedAt": 1791422874517,
-          "status": "doing",
+          "status": "done",
           "title": "Kunir Putih - Reach Out Affiliator (TikTok Shop/Shopee))",
           "id": "cmuyk4rlcka7f0a"
         },
@@ -1012,21 +2044,125 @@
               "by": "Dian",
               "id": "kmuz1v419s0t8",
               "text": "@vero =kak hari ini aku reach affiliator from tiktok manual dan dari utas treads yang aku kirim kemarin.."
+            },
+            {
+              "at": 1791449569269,
+              "by": "Dian",
+              "id": "kmuzatib9qet5",
+              "text": "https://docs.google.com/spreadsheets/d/1vyGpDvb1R-iZmw6b3V3SZ7QHO0JtCgSRjuVjU3H9D9c/edit?gid=0#gid=0\n\nhasil pencarian hari ini di mulai dari angka 32"
             }
           ],
           "createdAt": 1791422673585,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791449834610,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "854e66d35bc200d43fb7198918bedc45",
+            "at": 1791449833013,
+            "photoFile": "proof-photos/854e66d35bc200d43fb7198918bedc45.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791422890622,
-          "status": "doing",
+          "status": "done",
           "title": "Reach Affiliator YUPI ( 20 - 50 )",
           "id": "cmuyuia3k7mlnx2"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791528539082,
+              "by": "Aziz",
+              "id": "cmv0ltz5ww9vjp5",
+              "text": "objektifnya apa ? @vero @Yoga"
+            },
+            {
+              "at": 1791529822876,
+              "by": "vero",
+              "id": "cmv0ml6jxui1zga",
+              "text": "yupi kerja sama dengan HAN untuk mendapatkan 1.000 affiliate yang akan dikirim produk yupi dan barter dengan konten kerkun @Aziz"
+            }
+          ],
+          "createdAt": 1791445685841,
+          "date": "2026-10-09",
+          "doneAt": 1791536424862,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "0201a5f6df3523a1069a23f7d2b2913b",
+            "at": 1791536420440,
+            "photoFile": "proof-photos/0201a5f6df3523a1069a23f7d2b2913b.jpg"
+          },
+          "report": "untuk dm manual hari ini dm 30 akun dan masih menunggu respos.. untuk search di treads blm ada respon kak..",
+          "reportAt": 1791536424862,
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791508956541,
+          "status": "done",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmuz8i4fpghjp2k"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791508935896,
+          "date": "2026-10-09",
+          "doneAt": 1791536626988,
+          "due": null,
+          "fromAdmin": "Yoga",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "5ccc6226dfa4c7a868543f3dda75cbc5",
+            "at": 1791536625356,
+            "photoFile": "proof-photos/5ccc6226dfa4c7a868543f3dda75cbc5.jpg"
+          },
+          "report": "search kreator manual 40 kreator baik meneruskan undangan yang kemarin dan manual chat karena untuk yang bertarget hanya bisa mengundang 1 kreator untuk hari ini..",
+          "reportAt": 1791536626989,
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791508970757,
+          "status": "done",
+          "title": "Kunir Putih - Reach Out Affiliator TikTok/Shopee target 4 Sample Keluar (Makesure Approve Creator yang memiliki performa yang bagus)",
+          "id": "cmv0059swempz76"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791531478215,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791595269199,
+          "status": "doing",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmv0nhgq1qb43qu"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791605196386,
+          "date": "2026-10-10",
+          "due": null,
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "status": "todo",
+          "title": "Kunir Putih - Reach Out Affiliator TikTok/Shopee target 4 Sample Keluar (Makesure Approve Creator yang memiliki performa yang bagus)",
+          "id": "cmv1vh3642e34wj"
         }
       ]
     },
@@ -1039,29 +2175,58 @@
           "by": "owner",
           "createdAt": 1791383052066,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791450333436,
           "due": "16:00",
           "fromAdmin": "FAHRU",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "ab1c2162b5db68789a4a27e1b6af169e",
+            "at": 1791450331100,
+            "photoFile": "proof-photos/ab1c2162b5db68789a4a27e1b6af169e.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791423536522,
-          "status": "doing",
+          "status": "done",
           "title": "Revisi Video Matera",
           "id": "cmuy77r0l1ssjy3"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791450439153,
+              "by": "RIZKY",
+              "id": "kmuzbc5ipcedp",
+              "text": "revisi 15"
+            },
+            {
+              "at": 1791450925910,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuy7a05zvislyi",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791383156720,
           "date": "2026-10-08",
+          "doneAt": 1791513640042,
           "due": "16:00",
           "fromAdmin": "FAHRU",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791513640042,
+            "link": "https://drive.google.com/drive/folders/1e08Le-4rQrlSrVsock9x4TQk_azygszr"
+          },
+          "returnedAt": null,
           "start": "08:00",
-          "status": "todo",
+          "startedAt": 1791450417198,
+          "status": "done",
           "title": "Edit Video Axello 15 konten",
           "id": "cmuy7a05zvislyi"
         },
@@ -1069,29 +2234,161 @@
           "by": "owner",
           "createdAt": 1791423491010,
           "date": "2026-10-08",
+          "doneAt": 1791450362800,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "686196ef480a646dba3a7d1adf84810a",
+            "at": 1791450359227,
+            "photoFile": "proof-photos/686196ef480a646dba3a7d1adf84810a.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
-          "status": "todo",
+          "startedAt": 1791450247248,
+          "status": "done",
           "title": "revisi all konten axelo ( voice over dan penulisan nama produk )",
           "id": "cmuyufgzvkuezan"
         },
         {
           "by": "owner",
-          "createdAt": 1791441614566,
-          "date": "2026-10-09",
+          "createdAt": 1791447777715,
+          "date": "2026-10-08",
+          "doneAt": 1791450391953,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "db5716297890bbde6b910210a2d3a0c5",
+            "at": 1791450389598,
+            "photoFile": "proof-photos/db5716297890bbde6b910210a2d3a0c5.jpg"
+          },
+          "returnedAt": null,
+          "start": "10:00",
+          "startedAt": 1791450256786,
+          "status": "done",
+          "title": "take video HBU",
+          "id": "cmuz9r11uw0noct"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791441614566,
+          "date": "2026-10-09",
+          "doneAt": 1791536963536,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "0b2ece2f6ca198a3c71267c6ed93fb8b",
+            "at": 1791536961729,
+            "photoFile": "proof-photos/0b2ece2f6ca198a3c71267c6ed93fb8b.jpg"
+          },
+          "returnedAt": null,
           "start": "08:10",
-          "status": "todo",
+          "startedAt": 1791536931145,
+          "status": "done",
           "title": "Edit konten Axelo ( 5 - 10 ) quantity menurun karena menggunakan VO real voice",
           "id": "cmuz62x4s1dmysl"
+        },
+        {
+          "autoRemindAt": 1791521133784,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791508418293,
+              "by": "Aziz",
+              "id": "cmuzzylixmnyx3s",
+              "text": "https://docs.google.com/spreadsheets/d/1S_oUURviVQ1pWrYNujkjqe_d5h5mHuthEZkastyU0ZE/edit?usp=drivesdk"
+            },
+            {
+              "at": 1791510040561,
+              "by": "Aziz",
+              "id": "cmuzy5qtnevqfsu",
+              "text": "Untuk Materi Iklan Hcs"
+            },
+            {
+              "at": 1791521135552,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuzl3isneuqov8",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:30. Mohon segera diselesaikan atau beri kabar di komentar."
+            },
+            {
+              "at": 1791528607063,
+              "by": "Aziz",
+              "id": "cmv0luxxd9lrhz6",
+              "text": "statusnya apa ? @vero"
+            },
+            {
+              "at": 1791529226497,
+              "by": "vero",
+              "id": "cmv0m7j9oa46rel",
+              "text": "masih take di cemara @Aziz"
+            }
+          ],
+          "createdAt": 1791467152907,
+          "date": "2026-10-09",
+          "doneAt": 1791536896881,
+          "due": "11:30",
+          "fromAdmin": "FAHRU",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "944ce35a6a475ee058eff35e737d4b7c",
+            "at": 1791536895419,
+            "photoFile": "proof-photos/944ce35a6a475ee058eff35e737d4b7c.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791535454259,
+          "status": "done",
+          "title": "Take video Mbak ika (3)",
+          "id": "cmuzl3isneuqov8"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791511811445,
+          "date": "2026-10-09",
+          "doneAt": 1791535440777,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "9b59891aefc5ea101c55bfcc65fd0e1a",
+            "at": 1791535439501,
+            "photoFile": "proof-photos/9b59891aefc5ea101c55bfcc65fd0e1a.jpg"
+          },
+          "returnedAt": null,
+          "start": "10:00",
+          "startedAt": 1791535383397,
+          "status": "done",
+          "title": "revisi 4 komnten axelo",
+          "id": "cmv0bumaj22fjnh"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791534075912,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791606811940,
+          "status": "doing",
+          "title": "edit Axelo 10-15 konten",
+          "id": "cmv0oy6qgbyizwn"
         }
       ]
     },
@@ -1101,18 +2398,33 @@
       "routines": [],
       "tasks": [
         {
+          "autoRemindAt": 1791454523934,
           "by": "self",
+          "comments": [
+            {
+              "at": 1791454525886,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-5l8m63tgdvyu6lawywfw",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 17:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791431541131,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791463586072,
           "due": "17:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "at": 1791463586072,
+            "link": "https://canva.link/1hys2fqsbz0a1ks"
+          },
+          "returnedAt": null,
           "source": "Niswa",
           "start": "11:00",
           "startedAt": 1791431637518,
-          "status": "doing",
+          "status": "done",
           "title": "Audit SEM calon klien (PT SSK)",
           "id": "5l8m63tgdvyu6lawywfw"
         }
@@ -1220,11 +2532,16 @@
           ],
           "createdAt": 1791433941135,
           "date": "2026-10-08",
-          "doneAt": 1791444368716,
+          "doneAt": 1791448623714,
           "due": "12:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "573fd0f7ebb575d43448f8bcae164a7b",
+            "at": 1791448622409,
+            "photoFile": "proof-photos/573fd0f7ebb575d43448f8bcae164a7b.jpg"
+          },
           "returnedAt": null,
           "source": "Yoga,Dinta,Krisna",
           "start": "10:00",
@@ -1234,18 +2551,46 @@
           "id": "dnlj4n1x9v35lbz94vpq"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791450924709,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz1xntulizkrs",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791434690979,
           "date": "2026-10-08",
+          "doneAt": null,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
           "start": "13:00",
-          "status": "todo",
+          "startedAt": 1791448342344,
+          "status": "doing",
           "title": "Revisi design MATERA",
           "id": "cmuz1xntulizkrs"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791599409779,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791603754793,
+          "status": "doing",
+          "title": "progress design matera progres nya gimana ?",
+          "id": "cmv1s0ghulqkhwm"
         }
       ]
     },
@@ -1255,7 +2600,17 @@
       "routines": [],
       "tasks": [
         {
+          "autoRemindAt": 1791472582327,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791472584404,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz7nr3c76ecba",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 22:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791444369405,
           "date": "2026-10-08",
           "due": "22:00",
@@ -1289,15 +2644,21 @@
           ],
           "createdAt": 1791426174832,
           "date": "2026-10-07",
-          "doneAt": null,
+          "doneAt": 1791514030684,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "5880d07f49cdfc95494cf6e27bf75727",
+            "at": 1791514029335,
+            "photoFile": "proof-photos/5880d07f49cdfc95494cf6e27bf75727.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791429800015,
-          "status": "doing",
+          "status": "done",
           "title": "Reach Affiliator YUPI",
           "id": "cmuxvajn6uxx1bi"
         },
@@ -1315,13 +2676,20 @@
           ],
           "createdAt": 1791426175288,
           "date": "2026-10-07",
+          "doneAt": 1791513874851,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791513874851,
+            "link": "https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043"
+          },
+          "returnedAt": null,
           "start": "08:00",
-          "status": "todo",
+          "startedAt": 1791513867689,
+          "status": "done",
           "title": "Mengelola End to End HBU",
           "id": "cmuxvkwau57okb7"
         },
@@ -1329,7 +2697,7 @@
           "by": "owner",
           "createdAt": 1791409449786,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791513735333,
           "due": null,
           "editedAt": 1791430102564,
           "editedBy": "Fahreza",
@@ -1337,9 +2705,16 @@
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791513735333,
+            "link": "https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043"
+          },
+          "report": "done https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043",
+          "reportAt": 1791450675284,
+          "returnedAt": null,
           "start": null,
           "startedAt": 1791435504784,
-          "status": "doing",
+          "status": "done",
           "title": "HBU - Listing & FO produk yang penjualan dibawah 5",
           "id": "cmuyk23edf90ll3"
         },
@@ -1355,15 +2730,22 @@
           ],
           "createdAt": 1791409450053,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791513755795,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791513755795,
+            "link": "https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043"
+          },
+          "report": "done https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043",
+          "reportAt": 1791450697039,
+          "returnedAt": null,
           "start": null,
           "startedAt": 1791435762079,
-          "status": "doing",
+          "status": "done",
           "title": "Analysis analitik produk (Impressi/CTR/CVR) > Optimasi",
           "id": "cmuyl1nfd6sl4i4"
         },
@@ -1371,54 +2753,288 @@
           "by": "owner",
           "createdAt": 1791409450068,
           "date": "2026-10-08",
+          "doneAt": 1791513784243,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791513784243,
+            "link": "https://docs.google.com/spreadsheets/d/1upTcmZGZcisoQII-Wa1_VgKLliqBAlk9CFYH8NhuDjI/edit?gid=310666043#gid=310666043"
+          },
+          "report": "done",
+          "reportAt": 1791450705704,
+          "returnedAt": null,
           "start": null,
-          "status": "todo",
+          "startedAt": 1791450565209,
+          "status": "done",
           "title": "HBU - Double check produk Sejawa Shopee",
           "id": "cmuyl05mof76vzc"
         },
         {
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791528503215,
+              "by": "Aziz",
+              "id": "cmv0lsbmhjz3nh0",
+              "text": "objektifnya apa ? @vero @Yoga"
+            }
+          ],
           "createdAt": 1791409450099,
           "date": "2026-10-08",
+          "doneAt": null,
           "due": null,
           "fromAdmin": "Fahreza",
           "hot": false,
           "needProof": true,
           "note": "",
+          "report": "baru di reach out",
+          "reportAt": 1791450720803,
           "start": null,
-          "status": "todo",
+          "startedAt": 1791450726817,
+          "status": "doing",
           "title": "HBU - Reach Out Affiliator (Gluevitta & Sejawa)",
           "id": "cmuyl3wxrgpfjoe"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791450928817,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuyuke086siqf1",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791426175360,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791513705584,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "955d7e3a0f8eb24dd2faa55f17bb49d9",
+            "at": 1791513704120,
+            "photoFile": "proof-photos/955d7e3a0f8eb24dd2faa55f17bb49d9.jpg"
+          },
           "report": "akun tiktok saya keband, hari ini sudah reach out 37 kreator namun belum ada balasan",
           "reportAt": 1791429905420,
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791429810930,
-          "status": "doing",
+          "status": "done",
           "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
           "id": "cmuyuke086siqf1"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791528503399,
+              "by": "Aziz",
+              "id": "cmv0lsr0ww30byg",
+              "text": "objektifnya apa ? @vero @Yoga"
+            },
+            {
+              "at": 1791529789696,
+              "by": "vero",
+              "id": "cmv0mkq6ub06tcb",
+              "text": "yupi kerja sama dengan HAN untuk mendapatkan 1.000 affiliate yang akan dikirim produk yupi dan barter dengan konten kerkun @Aziz"
+            }
+          ],
+          "createdAt": 1791447294328,
+          "date": "2026-10-09",
+          "doneAt": 1791536691629,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "b084d47194953a0c269a4940fae35e67",
+            "at": 1791536690140,
+            "photoFile": "proof-photos/b084d47194953a0c269a4940fae35e67.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791509764761,
+          "status": "done",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmuz8ig7pyk4n72"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791509736554,
+          "date": "2026-10-09",
+          "doneAt": 1791536651039,
+          "due": null,
+          "fromAdmin": "Yoga",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "83daf1779fc314e85d7ba48f909e6b14",
+            "at": 1791536649230,
+            "photoFile": "proof-photos/83daf1779fc314e85d7ba48f909e6b14.jpg"
+          },
+          "report": "semua produk apa khusus gleuvitta & SSR??",
+          "reportAt": 1791509794734,
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791509766493,
+          "status": "done",
+          "title": "HBU - Setting Flash Sale 10.10 \"FS Live\"",
+          "id": "cmuzzzv2dw6ljvp"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791536171116,
+          "date": "2026-10-09",
+          "doneAt": 1791536245506,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "1e1eeab16ad54d99a1b268b725b3763d",
+            "at": 1791536243804,
+            "photoFile": "proof-photos/1e1eeab16ad54d99a1b268b725b3763d.jpg"
+          },
+          "returnedAt": null,
+          "source": "Yoga",
+          "start": null,
+          "startedAt": 1791536174491,
+          "status": "done",
+          "title": "Ganti Harga Dasar Produk HBU",
+          "id": "sokop75ump26oeg9j5eg"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791531623076,
+          "date": "2026-10-10",
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "status": "todo",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmv0nh9ui5aczmm"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791604976420,
+          "date": "2026-10-10",
+          "due": "16:00",
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": "11:05",
+          "status": "todo",
+          "title": "HBU - RO Affiliatoir, daily target 4 Sample keluar ke creator yang terkurasi",
+          "id": "cmv1vcdnrv1cc23"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791605034609,
+          "date": "2026-10-10",
+          "due": "16:00",
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": "13:00",
+          "status": "todo",
+          "title": "HBU - Nominasi Produk  Campaign",
+          "id": "cmv1vdmfvznoyqf"
         }
       ]
     },
     "niswa": {
       "profileEdit": null,
       "askAt": null,
-      "routines": [],
+      "routines": [
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "09:00",
+          "hot": true,
+          "id": "6y2ixns",
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "start": "08:00",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur."
+        },
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "16:00",
+          "hot": true,
+          "id": "xaor02j",
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "start": "08:00",
+          "title": "Balas chat dengan fast respon."
+        },
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "10:00",
+          "hot": true,
+          "id": "fz6gds9",
+          "needProof": true,
+          "note": "",
+          "start": "09:00",
+          "title": "Follow Up Lead"
+        },
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "10:00",
+          "hot": true,
+          "id": "skgmui5",
+          "needProof": false,
+          "note": "",
+          "start": "09:00",
+          "title": "Follow Up Lead"
+        }
+      ],
       "tasks": [
         {
           "autoRemindAt": 1791366594442,
@@ -1434,15 +3050,24 @@
           ],
           "createdAt": 1791363144722,
           "date": "2026-10-07",
-          "doneAt": null,
+          "doneAt": 1791447518478,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "322224d0405ef1eda31733d4bc34fad4",
+            "at": 1791447517347,
+            "link": "https://docs.google.com/spreadsheets/d/1dbYWTxH99-BP7xqIpu2caICbwiv2Qa-wtKasn-m3640/edit?gid=819208408#gid=819208408",
+            "photoFile": "proof-photos/322224d0405ef1eda31733d4bc34fad4.jpg"
+          },
+          "report": "database leads entered into the new dashboard, not all of them have been entered into the database",
+          "reportAt": 1791447518478,
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791422384374,
-          "status": "doing",
+          "status": "done",
           "title": "Reach out leads",
           "id": "cmuxvcpn5eer2y6"
         },
@@ -1450,23 +3075,23 @@
           "by": "owner",
           "createdAt": 1791422373215,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447345054,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
           "proof": {
-            "asset": "3c6c7a8ae1525f251291e36e37b2cd40",
-            "at": 1791426082892,
-            "photoFile": "proof-photos/3c6c7a8ae1525f251291e36e37b2cd40.jpg"
+            "asset": "6db703b56f801e1f25ffc74eae7faf7a",
+            "at": 1791447343399,
+            "photoFile": "proof-photos/6db703b56f801e1f25ffc74eae7faf7a.jpg"
           },
-          "report": "MoU Final PT Sumber Surya kalvari and Preparation to deliver file on Friday : moodboard conten social media (SMM), audit research Search Engine Marketing.",
-          "reportAt": 1791426083876,
+          "report": "still needs internal revision, will be sent to PT Sumber Surya Kalvari by this afternoon at the latest",
+          "reportAt": 1791447345054,
           "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791425882904,
-          "status": "doing",
+          "status": "done",
           "title": "Reach out leads",
           "id": "cmuyumjq4opuli9"
         },
@@ -1496,15 +3121,23 @@
           ],
           "createdAt": 1791426281524,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447800603,
           "due": "10:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "48408a63398171e03e79d9453dbcfd90",
+            "at": 1791447798673,
+            "photoFile": "proof-photos/48408a63398171e03e79d9453dbcfd90.jpg"
+          },
+          "report": "finished",
+          "reportAt": 1791447800603,
+          "returnedAt": null,
           "source": "Tutik",
           "start": "09:24",
           "startedAt": 1791434553840,
-          "status": "doing",
+          "status": "done",
           "title": "Create Invoice Down Payment Social Media service \"Mellon Id\"",
           "id": "ez1yc7zb0k2nu76ml971"
         },
@@ -1528,15 +3161,23 @@
           ],
           "createdAt": 1791434977519,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447707614,
           "due": "09:00",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "575638bcb7140805d5c4fbddceaa9c38",
+            "at": 1791447706468,
+            "photoFile": "proof-photos/575638bcb7140805d5c4fbddceaa9c38.jpg"
+          },
+          "report": "content is finished",
+          "reportAt": 1791447707614,
+          "returnedAt": null,
           "source": "RIZKY",
           "start": "08:30",
           "startedAt": 1791434982737,
-          "status": "doing",
+          "status": "done",
           "title": "Hand Content Creator to Asseting team",
           "id": "oqpppry1zy4xmj0s5lmv"
         },
@@ -1560,15 +3201,23 @@
           ],
           "createdAt": 1791435184267,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447869153,
           "due": "11:30",
           "hot": false,
           "needProof": false,
           "note": "",
+          "proof": {
+            "asset": "9442737fc3577cceaeb2551aac3d0bb1",
+            "at": 1791447867491,
+            "photoFile": "proof-photos/9442737fc3577cceaeb2551aac3d0bb1.jpg"
+          },
+          "report": "content HBU Bina Max  is finished to create",
+          "reportAt": 1791447869153,
+          "returnedAt": null,
           "source": "vero",
           "start": "11:00",
           "startedAt": 1791435206774,
-          "status": "doing",
+          "status": "done",
           "title": "Making a video of the Bina Max HBU brand yellow basket",
           "id": "2al117fs8lw0098x1abw"
         },
@@ -1576,21 +3225,574 @@
           "by": "owner",
           "createdAt": 1791435271902,
           "date": "2026-10-08",
+          "doneAt": 1791448052268,
           "due": "16:00",
           "fromAdmin": "Radinta",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "3b84d2c6101a942ac6acf6f144ec728e",
+            "at": 1791448051140,
+            "photoFile": "proof-photos/3b84d2c6101a942ac6acf6f144ec728e.jpg"
+          },
+          "report": "Save client contact and give lead category is completed",
+          "reportAt": 1791448052268,
+          "returnedAt": null,
           "start": "13:00",
-          "status": "todo",
+          "startedAt": 1791447047784,
+          "status": "done",
           "title": "Save nomor (at least yg potensial) & kasih label buat semua lead yang masuk",
           "id": "cmuz2aeceqskgt8"
+        },
+        {
+          "autoRemindAt": 1791448228563,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791448229643,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-n948jft7jl133mazxqq9",
+              "text": "Tugas ini belum selesai, sudah lewat 30 menit dari jam selesai 15:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791448192597,
+          "date": "2026-10-08",
+          "doneAt": 1791448296197,
+          "due": "15:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "c80f713990665bd368396b15eadaa8ec",
+            "at": 1791448294619,
+            "photoFile": "proof-photos/c80f713990665bd368396b15eadaa8ec.jpg"
+          },
+          "report": "Pitching Activation e commerce process for Han creative marketing services",
+          "reportAt": 1791448296197,
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "14:00",
+          "startedAt": 1791448203002,
+          "status": "done",
+          "title": "Meeting with client lidiana petshop owner",
+          "id": "n948jft7jl133mazxqq9"
+        },
+        {
+          "autoRemindAt": 1791464487596,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791464488525,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-6y2ixns-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 11 jam 1 mnt dari jam selesai 09:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791464239020,
+          "date": "2026-10-08",
+          "doneAt": 1791468216933,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "proof": {
+            "asset": "8e3717cd5059e8617a6dbfb111e95699",
+            "at": 1791468215640,
+            "photoFile": "proof-photos/8e3717cd5059e8617a6dbfb111e95699.jpg"
+          },
+          "report": "All messages have been replied to any messages received after 22:00 PM will be answered tomorrow morning.",
+          "reportAt": 1791468216933,
+          "returnedAt": null,
+          "routine": "6y2ixns",
+          "start": "08:00",
+          "startedAt": 1791468118570,
+          "status": "done",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-6y2ixns-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791464727633,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791464728939,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-xaor02j-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 4 jam 5 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791464671262,
+          "date": "2026-10-08",
+          "doneAt": 1791468081713,
+          "due": "16:00",
+          "editedAt": 1791465170459,
+          "editedBy": "Radinta",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "proof": {
+            "asset": "f5a3b779aa50827a746ec827df641f5f",
+            "at": 1791468079850,
+            "photoFile": "proof-photos/f5a3b779aa50827a746ec827df641f5f.jpg"
+          },
+          "report": "Manage chat responses from HCM WhatsApp, Sales WhatsApp, and Threads to maintain a fast response time. Maximum response duration is 5 minutes during working hours (08:00 - 16:00). Outside of working hours, responses may be slower, but all messages will still be answered.",
+          "reportAt": 1791468081713,
+          "returnedAt": null,
+          "routine": "xaor02j",
+          "start": "08:00",
+          "startedAt": 1791467845112,
+          "status": "done",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-xaor02j-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791465212826,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791465214066,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-fz6gds9-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 10 jam 14 mnt dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791465170592,
+          "date": "2026-10-08",
+          "doneAt": 1791467793615,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "d3126c75b660e89b4be6ea4e81d6a76e",
+            "at": 1791467792358,
+            "photoFile": "proof-photos/d3126c75b660e89b4be6ea4e81d6a76e.jpg"
+          },
+          "report": "Follow-ups are conducted on WhatsApp based on incoming leads and threads that have already been reached out to and sent the company profile deck. tomorrow will be database on my dashboard",
+          "reportAt": 1791467793615,
+          "returnedAt": null,
+          "routine": "fz6gds9",
+          "start": "09:00",
+          "startedAt": 1791467777391,
+          "status": "done",
+          "title": "Follow Up Lead",
+          "id": "r-fz6gds9-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791465212826,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791465215300,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-ntxpcrk-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 4 jam 14 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791465171434,
+          "date": "2026-10-08",
+          "doneAt": 1791467450442,
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "4b59d5caa86d1a2ad053dc8c44551f91",
+            "at": 1791467449353,
+            "photoFile": "proof-photos/4b59d5caa86d1a2ad053dc8c44551f91.jpg"
+          },
+          "report": "The leads' contact information has been saved, and the leads have been categorized into segments.",
+          "reportAt": 1791467450442,
+          "returnedAt": null,
+          "routine": "ntxpcrk",
+          "start": "15:00",
+          "startedAt": 1791467350603,
+          "status": "done",
+          "title": "Save nomor (at least yg potensial) & kasih label buat semua lead yang masuk",
+          "id": "r-ntxpcrk-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791465212826,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791465216547,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-skgmui5-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 10 jam 14 mnt dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791465172338,
+          "date": "2026-10-08",
+          "doneAt": 1791467770954,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "85e1363171b84bd2a06aa9f010a2f36a",
+            "at": 1791467769842,
+            "photoFile": "proof-photos/85e1363171b84bd2a06aa9f010a2f36a.jpg"
+          },
+          "report": "Follow-ups are conducted on WhatsApp based on incoming leads and threads that have already been reached out to and sent the company profile deck. tomorrow will be database on my dashboard",
+          "reportAt": 1791467770954,
+          "returnedAt": null,
+          "routine": "skgmui5",
+          "start": "09:00",
+          "startedAt": 1791467494155,
+          "status": "done",
+          "title": "Follow Up Lead",
+          "id": "r-skgmui5-2026-10-08"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791479318030,
+          "date": "2026-10-09",
+          "doneAt": 1791509121232,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "proof": {
+            "asset": "5b1414f059fec8eb2fcbb380549c4b61",
+            "at": 1791509120233,
+            "photoFile": "proof-photos/5b1414f059fec8eb2fcbb380549c4b61.jpg"
+          },
+          "report": "Leads coming in after 22.00 PM (outside business hours) were all answered during working hours.",
+          "reportAt": 1791509121232,
+          "returnedAt": null,
+          "routine": "6y2ixns",
+          "start": "08:00",
+          "startedAt": 1791508989448,
+          "status": "done",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-6y2ixns-2026-10-09"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791479318557,
+          "date": "2026-10-09",
+          "doneAt": 1791537079197,
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "proof": {
+            "asset": "c932c9e971c732704cff9f9a18f26771",
+            "at": 1791537078054,
+            "photoFile": "proof-photos/c932c9e971c732704cff9f9a18f26771.jpg"
+          },
+          "report": "Today's focal points are inputting incoming database leads into the dashboard and shooting content for Han Creative Marketing's service needs. All incoming messages received between 08:00 and 16:00 have been replied to",
+          "reportAt": 1791537079197,
+          "returnedAt": null,
+          "routine": "xaor02j",
+          "start": "08:00",
+          "startedAt": 1791536773372,
+          "status": "done",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-xaor02j-2026-10-09"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791492068327,
+              "by": "Aziz",
+              "id": "cmuzzw6ndzr5el3",
+              "text": "https://docs.google.com/spreadsheets/d/1S_oUURviVQ1pWrYNujkjqe_d5h5mHuthEZkastyU0ZE/edit?usp=drivesdk"
+            }
+          ],
+          "createdAt": 1791479319076,
+          "date": "2026-10-09",
+          "doneAt": 1791514152112,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791514152112,
+            "link": "https://docs.google.com/spreadsheets/d/1wd3WD-e31048F13a17oMJfsrsMRynXqgpDrSK1bIA8I/edit?gid=1135638620#gid=1135638620"
+          },
+          "report": "Pitching potential leads via follow-up",
+          "reportAt": 1791514152112,
+          "returnedAt": null,
+          "routine": "fz6gds9",
+          "start": "09:00",
+          "startedAt": 1791514080538,
+          "status": "done",
+          "title": "Follow Up Lead",
+          "id": "r-fz6gds9-2026-10-09"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791479319562,
+          "date": "2026-10-09",
+          "doneAt": 1791514039563,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791514039563,
+            "link": "https://docs.google.com/spreadsheets/d/1wd3WD-e31048F13a17oMJfsrsMRynXqgpDrSK1bIA8I/edit?gid=1135638620#gid=1135638620"
+          },
+          "report": "Pitching potential leads via follow-up",
+          "reportAt": 1791514039563,
+          "returnedAt": null,
+          "routine": "skgmui5",
+          "start": "09:00",
+          "startedAt": 1791509891827,
+          "status": "done",
+          "title": "Follow Up Lead",
+          "id": "r-skgmui5-2026-10-09"
+        },
+        {
+          "autoRemindAt": 1791521130428,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791492068637,
+              "by": "Aziz",
+              "id": "cmuzzwk4l9izatg",
+              "text": "https://docs.google.com/spreadsheets/d/1S_oUURviVQ1pWrYNujkjqe_d5h5mHuthEZkastyU0ZE/edit?usp=drivesdk"
+            },
+            {
+              "at": 1791521131663,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuzy87chz398oe",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:30. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791489033525,
+          "date": "2026-10-09",
+          "doneAt": 1791537196357,
+          "due": "11:30",
+          "fromAdmin": "Aziz",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "d1156b47fe66eb672f32ca9ca66fcf39",
+            "at": 1791537195106,
+            "photoFile": "proof-photos/d1156b47fe66eb672f32ca9ca66fcf39.jpg"
+          },
+          "report": "We've completed 1 piece of content for Han Creative Marketing, and we'll work on the second one tomorrow.",
+          "reportAt": 1791537196357,
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791537084728,
+          "status": "done",
+          "title": "Take materi ads HCM sama Abied",
+          "id": "cmuzy87chz398oe"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791514210846,
+          "date": "2026-10-09",
+          "doneAt": 1791516017403,
+          "due": "11:30",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "85acf0952245e986d462932ef7adb242",
+            "at": 1791516016472,
+            "photoFile": "proof-photos/85acf0952245e986d462932ef7adb242.jpg"
+          },
+          "report": "We'll have to adjust the schedule for our follow-up discussion since Mr. Pracoyo is currently on a trip",
+          "reportAt": 1791516017403,
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "10:00",
+          "startedAt": 1791515907537,
+          "status": "done",
+          "title": "Meeting with client Spora media digital dan branding",
+          "id": "2z8ujfvl5hf8wwruat2n"
+        },
+        {
+          "autoRemindAt": 1791526694749,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791526695525,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-drjlvjp48o78p2ge1bij",
+              "text": "Tugas ini belum selesai, sudah lewat 1 jam 8 mnt dari jam selesai 12:10. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791526688023,
+          "date": "2026-10-09",
+          "doneAt": 1791526874188,
+          "due": "12:10",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "d7e073bfe8f8bf9b0ada1266a2879a35",
+            "at": 1791526872794,
+            "photoFile": "proof-photos/d7e073bfe8f8bf9b0ada1266a2879a35.jpg"
+          },
+          "report": "The SSK file submission, which includes the social media management moodboard and the website audit for Search Engine Marketing services, has been completed.",
+          "reportAt": 1791526874188,
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "12:00",
+          "startedAt": 1791526695523,
+          "status": "done",
+          "title": "Deliver File Moodboard SMM dan Audit Search Engine Marketing SSK",
+          "id": "drjlvjp48o78p2ge1bij"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791565767433,
+          "date": "2026-10-10",
+          "doneAt": 1791596101857,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "proof": {
+            "asset": "84ceca6350a7625b6e3d7479fe77efa9",
+            "at": 1791596100892,
+            "photoFile": "proof-photos/84ceca6350a7625b6e3d7479fe77efa9.jpg"
+          },
+          "report": "Chats received outside office hours from 10:00 PM to 8:00 AM have been answered.",
+          "reportAt": 1791596101857,
+          "returnedAt": null,
+          "routine": "6y2ixns",
+          "start": "08:00",
+          "startedAt": 1791595519462,
+          "status": "done",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-6y2ixns-2026-10-10"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791565768001,
+          "date": "2026-10-10",
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "routine": "xaor02j",
+          "start": "08:00",
+          "status": "todo",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-xaor02j-2026-10-10"
+        },
+        {
+          "autoRemindAt": 1791602159308,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791602160386,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-fz6gds9-2026-10-10",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791565768535,
+          "date": "2026-10-10",
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "",
+          "routine": "fz6gds9",
+          "start": "09:00",
+          "status": "todo",
+          "title": "Follow Up Lead",
+          "id": "r-fz6gds9-2026-10-10"
+        },
+        {
+          "autoRemindAt": 1791602159308,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791602162115,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-skgmui5-2026-10-10",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791565769171,
+          "date": "2026-10-10",
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "routine": "skgmui5",
+          "start": "09:00",
+          "status": "todo",
+          "title": "Follow Up Lead",
+          "id": "r-skgmui5-2026-10-10"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791598188795,
+          "date": "2026-10-10",
+          "doneAt": 1791598258813,
+          "due": "09:15",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "6d6b4429aaaef348e10030a88d3892f2",
+            "at": 1791598257839,
+            "photoFile": "proof-photos/6d6b4429aaaef348e10030a88d3892f2.jpg"
+          },
+          "report": "Add Article 5 Paragraph 1 Item F The First Party shall provide advice and recommendations to the Second Party regarding the performance enhancement of Google Ads on a monthly basis during the review or monthly report sessions.",
+          "reportAt": 1791598258813,
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "09:00",
+          "startedAt": 1791598193906,
+          "status": "done",
+          "title": "Revisi MoU Sumber Surya Kalvari",
+          "id": "h6nl7b0dcu70dd8a1i81"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791598538932,
+          "date": "2026-10-10",
+          "due": "11:45",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "source": "Aziz",
+          "start": "10:00",
+          "status": "todo",
+          "title": "Take Materi Ads 2  Han Creative Marketing",
+          "id": "iu8sf1pqff7by0qo6ljk"
         }
       ]
     },
     "cece": {
       "profileEdit": null,
-      "askAt": null,
+      "askAt": 1791597641875,
       "routines": [],
       "tasks": [
         {
@@ -1627,18 +3829,36 @@
           "id": "gp6tc7vft3mqwecco0xx"
         },
         {
+          "autoRemindAt": 1791447307379,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791447309001,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuy9lu1ibcxx0y",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 15:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791387067717,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791447341067,
           "due": "15:00",
           "fromAdmin": "Aziz",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "750faf66d3050bec0761d53b5c977dd9",
+            "at": 1791447339392,
+            "photoFile": "proof-photos/750faf66d3050bec0761d53b5c977dd9.jpg"
+          },
+          "report": "",
+          "reportAt": null,
+          "returnedAt": null,
           "start": "14:00",
           "startedAt": 1791444455619,
-          "status": "doing",
+          "status": "done",
           "title": "Cari cust kulinerRun",
           "id": "cmuy9lu1ibcxx0y"
         },
@@ -1646,15 +3866,91 @@
           "by": "owner",
           "createdAt": 1791387112063,
           "date": "2026-10-08",
+          "doneAt": 1791447789006,
           "due": "16:00",
           "fromAdmin": "Aziz",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "at": 1791447789006,
+            "link": "https://vt.tiktok.com/ZSbg3PQTT/"
+          },
+          "returnedAt": null,
           "start": "15:00",
-          "status": "todo",
+          "startedAt": 1791447447179,
+          "status": "done",
           "title": "Upload Konten",
           "id": "cmuy9msj66raues"
+        },
+        {
+          "autoRemindAt": 1791602453858,
+          "by": "self",
+          "comments": [
+            {
+              "at": 1791602456095,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-xbqlarojnjkdeq760tu1",
+              "text": "Tugas ini belum selesai, sudah lewat 21 menit dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791597976838,
+          "date": "2026-10-10",
+          "doneAt": 1791603873257,
+          "due": "10:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791603873257,
+            "link": "https://www.instagram.com/reel/DeTBAg6zpnr/?psln=Z2F5aHIzNDZxOHBh"
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "08:00",
+          "startedAt": 1791597980708,
+          "status": "done",
+          "title": "Buat konten ugc + upload konten ugc",
+          "id": "xbqlarojnjkdeq760tu1"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791604048547,
+          "date": "2026-10-10",
+          "doneAt": 1791605007382,
+          "due": "11:30",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "ed25f57e617df8c17880bd5b1d18fe1e",
+            "at": 1791605005718,
+            "photoFile": "proof-photos/ed25f57e617df8c17880bd5b1d18fe1e.jpg"
+          },
+          "returnedAt": null,
+          "source": "Inisiatif sendiri",
+          "start": "10:30",
+          "startedAt": 1791604063579,
+          "status": "done",
+          "title": "Kirim hasil editing ke deselokaton",
+          "id": "zsw8gdyrkh6yeesmw13n"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791605958769,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": "14:00",
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "source": "Inisiatif diri sendiir",
+          "start": "11:00",
+          "startedAt": 1791605965327,
+          "status": "doing",
+          "title": "Mencari referensi untuk senthong jawi produksi minggu ke  dua",
+          "id": "ysr3c9ol9gdd4ahvid4u"
         }
       ]
     },
@@ -1666,7 +3962,62 @@
         "role": "Sales"
       },
       "askAt": null,
-      "routines": [],
+      "routines": [
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "09:00",
+          "hot": true,
+          "id": "mfxge0p",
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "start": "08:00",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur."
+        },
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "16:00",
+          "hot": true,
+          "id": "eyspc6x",
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "start": "08:00",
+          "title": "Balas chat dengan fast respon."
+        },
+        {
+          "byName": "Radinta",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": "10:00",
+          "hot": true,
+          "id": "qhv35hk",
+          "needProof": false,
+          "note": "",
+          "start": "09:00",
+          "title": "Follow Up Lead"
+        }
+      ],
       "tasks": [
         {
           "by": "self",
@@ -1772,22 +4123,351 @@
           "by": "owner",
           "createdAt": 1791435286265,
           "date": "2026-10-08",
+          "doneAt": 1791446572886,
           "due": "16:00",
           "fromAdmin": "Radinta",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "fd66d0341d5e8d754796b6737c4bbf44",
+            "at": 1791446565956,
+            "link": "https://docs.google.com/spreadsheets/d/1wd3WD-e31048F13a17oMJfsrsMRynXqgpDrSK1bIA8I/edit?usp=drivesdk",
+            "photoFile": "proof-photos/fd66d0341d5e8d754796b6737c4bbf44.jpg"
+          },
+          "report": "untuk namanya udah tak save dan tak ceklis di colective datababse leads yang masuk di bulan ini",
+          "reportAt": 1791446572886,
+          "returnedAt": null,
           "start": "13:00",
-          "status": "todo",
+          "startedAt": 1791445028299,
+          "status": "done",
           "title": "Save nomor (at least yg potensial) & kasih label buat semua lead yang masuk",
           "id": "cmuz2b4k8o9801o"
+        },
+        {
+          "autoRemindAt": 1791464427595,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791464428548,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-mfxge0p-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 11 jam dari jam selesai 09:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            },
+            {
+              "at": 1791512965590,
+              "by": "Albi",
+              "id": "kmv0ckb868op0",
+              "text": "sudah terbalas, leads after office agak slow respon mas, apalagi kalau aku lagi kerja, optimal nya ku balas pas pagi"
+            }
+          ],
+          "createdAt": 1791464422682,
+          "date": "2026-10-08",
+          "doneAt": null,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "routine": "mfxge0p",
+          "start": "08:00",
+          "startedAt": 1791512926517,
+          "status": "doing",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-mfxge0p-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791464727633,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791464730190,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-eyspc6x-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 4 jam 5 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791464671759,
+          "date": "2026-10-08",
+          "doneAt": null,
+          "due": "16:00",
+          "editedAt": 1791465170458,
+          "editedBy": "Radinta",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "routine": "eyspc6x",
+          "start": "08:00",
+          "startedAt": 1791533514862,
+          "status": "doing",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-eyspc6x-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791465212826,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791465217798,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-hhgppyl-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 4 jam 14 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791465171894,
+          "date": "2026-10-08",
+          "doneAt": null,
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "routine": "hhgppyl",
+          "start": "15:00",
+          "startedAt": 1791533523451,
+          "status": "doing",
+          "title": "Save nomor (at least yg potensial) & kasih label buat semua lead yang masuk",
+          "id": "r-hhgppyl-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791465212826,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791465220327,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-qhv35hk-2026-10-08",
+              "text": "Tugas ini belum selesai, sudah lewat 10 jam 14 mnt dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791465172815,
+          "date": "2026-10-08",
+          "doneAt": null,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "routine": "qhv35hk",
+          "start": "09:00",
+          "startedAt": 1791533561338,
+          "status": "doing",
+          "title": "Follow Up Lead",
+          "id": "r-qhv35hk-2026-10-08"
+        },
+        {
+          "autoRemindAt": 1791519336444,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791519347249,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz9l2khw1ecj0",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791447499812,
+          "date": "2026-10-09",
+          "doneAt": 1791534236260,
+          "due": "11:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791534236260,
+            "link": "https://perkiraan biaya props"
+          },
+          "returnedAt": null,
+          "start": "10:00",
+          "startedAt": 1791533536023,
+          "status": "done",
+          "title": "meeting with TBS food",
+          "id": "cmuz9l2khw1ecj0"
+        },
+        {
+          "autoRemindAt": 1791512150156,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791512150966,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-mfxge0p-2026-10-09",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 09:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791510016877,
+          "date": "2026-10-09",
+          "doneAt": null,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "routine": "mfxge0p",
+          "start": "08:00",
+          "startedAt": 1791533526295,
+          "status": "doing",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-mfxge0p-2026-10-09"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791510018809,
+          "date": "2026-10-09",
+          "doneAt": 1791534175155,
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "proof": {
+            "asset": "12cba9431ebcbbff5175d1397e815548",
+            "at": 1791534174138,
+            "photoFile": "proof-photos/12cba9431ebcbbff5175d1397e815548.jpg"
+          },
+          "returnedAt": null,
+          "routine": "eyspc6x",
+          "start": "08:00",
+          "startedAt": 1791533529084,
+          "status": "done",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-eyspc6x-2026-10-09"
+        },
+        {
+          "autoRemindAt": 1791515717763,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791515719029,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-qhv35hk-2026-10-09",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791510020884,
+          "date": "2026-10-09",
+          "doneAt": 1791533948743,
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "692962a9a35818028cfb86a3c8d5eb3b",
+            "at": 1791533947707,
+            "photoFile": "proof-photos/692962a9a35818028cfb86a3c8d5eb3b.jpg"
+          },
+          "returnedAt": null,
+          "routine": "qhv35hk",
+          "start": "09:00",
+          "startedAt": 1791533532653,
+          "status": "done",
+          "title": "Follow Up Lead",
+          "id": "r-qhv35hk-2026-10-09"
+        },
+        {
+          "autoRemindAt": 1791598534513,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791598535391,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-mfxge0p-2026-10-10",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 09:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791565316066,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": "09:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "Ini prioritas pertama.",
+          "routine": "mfxge0p",
+          "start": "08:00",
+          "startedAt": 1791598100233,
+          "status": "doing",
+          "title": "Balas chat yang belum sempat terbalas di malam hari ketika tidur.",
+          "id": "r-mfxge0p-2026-10-10"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791565318664,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": "16:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": true,
+          "note": "Ini prioritas utama. Malam hari & hari libur boleh ga fast respon tapi usahakan tetap dibalas ketika sempat, terutama pada lead prospek (kecuali kalo lagi tidur).",
+          "routine": "eyspc6x",
+          "start": "08:00",
+          "startedAt": 1791597980483,
+          "status": "doing",
+          "title": "Balas chat dengan fast respon.",
+          "id": "r-eyspc6x-2026-10-10"
+        },
+        {
+          "autoRemindAt": 1791602453858,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791602458549,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-r-qhv35hk-2026-10-10",
+              "text": "Tugas ini belum selesai, sudah lewat 21 menit dari jam selesai 10:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791565320527,
+          "date": "2026-10-10",
+          "due": "10:00",
+          "fromAdmin": "Radinta",
+          "hot": true,
+          "needProof": false,
+          "note": "",
+          "routine": "qhv35hk",
+          "start": "09:00",
+          "status": "todo",
+          "title": "Follow Up Lead",
+          "id": "r-qhv35hk-2026-10-10"
         }
       ]
     },
     "ika-marketing-yaue": {
       "profileEdit": null,
       "askAt": null,
-      "routines": [],
+      "routines": [
+        {
+          "byName": "Krisna",
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "due": null,
+          "hot": true,
+          "id": "1xaf2va",
+          "needProof": false,
+          "note": "https://docs.google.com/spreadsheets/d/1GhPFyws0_wTcILQNBkglfgBchk7CTAfPeUnFcT00x0U/edit?usp=sharing\n\nproduk yang akan di push di sertakan di atas.",
+          "start": null,
+          "title": "Optimasi produk Planntygrow peridoe sampai November"
+        }
+      ],
       "tasks": [
         {
           "by": "owner",
@@ -1869,6 +4549,168 @@
           "status": "done",
           "title": "Lengkapi database Affiliate, termasuk sertakan Link creator yang sudah posting",
           "id": "cmuz06972b7l84f"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791447519046,
+          "date": "2026-10-09",
+          "doneAt": 1791532999926,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "at": 1791532999926,
+            "link": "https://docs.google.com/spreadsheets/d/1IPh1B5DwaHBrtZTnWOG4I_8Bg2GzzhSlHMSal4Dn_Fk/edit?usp=sharing"
+          },
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791467804360,
+          "status": "done",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmuz9lhb6ccxz3p"
+        },
+        {
+          "autoRemindAt": 1791521133784,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791521138723,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuzy8ysd5y8nu3",
+              "text": "Tugas ini belum selesai, sudah lewat 16 menit dari jam selesai 11:30. Mohon segera diselesaikan atau beri kabar di komentar."
+            },
+            {
+              "at": 1791533216364,
+              "by": "Ika Marketing",
+              "id": "kmv0omctot0nx",
+              "text": "Ini tinggal 1 konten lagi"
+            }
+          ],
+          "createdAt": 1791507655134,
+          "date": "2026-10-09",
+          "doneAt": 1791533242578,
+          "due": "11:30",
+          "fromAdmin": "Aziz",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "dd53020043bd65becb04d42c868cea47",
+            "at": 1791533241156,
+            "photoFile": "proof-photos/dd53020043bd65becb04d42c868cea47.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:00",
+          "startedAt": 1791529946251,
+          "status": "done",
+          "title": "Take materi ads HCS sama rizky",
+          "id": "cmuzy8ysd5y8nu3"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791507675107,
+          "date": "2026-10-09",
+          "doneAt": 1791533067122,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "asset": "96ff709dee550613357a5496fbb7e8a7",
+            "at": 1791533065687,
+            "photoFile": "proof-photos/96ff709dee550613357a5496fbb7e8a7.jpg"
+          },
+          "report": "Aku yg motoin take 2 konten",
+          "reportAt": 1791533067122,
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791529949935,
+          "status": "done",
+          "title": "Take konten info dari pak aziz",
+          "id": "kr8c955o65xswckgx7sl"
+        },
+        {
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791533189515,
+              "by": "Ika Marketing",
+              "id": "kmv0ols3vu0yn",
+              "text": "Ini on proses ya tapi gabisa selesai hari ini karena harus tektokan dengan creator"
+            }
+          ],
+          "createdAt": 1791531624035,
+          "date": "2026-10-09",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "Krisna",
+          "hot": true,
+          "needProof": false,
+          "note": "https://docs.google.com/spreadsheets/d/1GhPFyws0_wTcILQNBkglfgBchk7CTAfPeUnFcT00x0U/edit?usp=sharing\n\nproduk yang akan di push di sertakan di atas.",
+          "routine": "1xaf2va",
+          "start": null,
+          "startedAt": 1791533076926,
+          "status": "doing",
+          "title": "Optimasi produk Planntygrow peridoe sampai November",
+          "id": "r-1xaf2va-2026-10-09"
+        },
+        {
+          "by": "self",
+          "createdAt": 1791533099451,
+          "date": "2026-10-09",
+          "doneAt": 1791533163183,
+          "due": null,
+          "hot": false,
+          "needProof": false,
+          "note": "",
+          "proof": {
+            "at": 1791533163183,
+            "link": "https://docs.google.com/spreadsheets/d/1SSTyP0K5cbtA-OnGFLnrNaRFP5WtQ90_cLYaZ1ga3tY/edit?usp=sharing"
+          },
+          "report": "Sudah approvel dan kelola chat serta respon wa creator",
+          "reportAt": 1791533163183,
+          "returnedAt": null,
+          "start": null,
+          "startedAt": 1791533105871,
+          "status": "done",
+          "title": "Kelola brand plantygrow",
+          "id": "g5ofq4d7crdppw8yidun"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791531623456,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791598585446,
+          "status": "doing",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmv0nhtnkkdeqro"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791565316067,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "Krisna",
+          "hot": true,
+          "needProof": false,
+          "note": "https://docs.google.com/spreadsheets/d/1GhPFyws0_wTcILQNBkglfgBchk7CTAfPeUnFcT00x0U/edit?usp=sharing\n\nproduk yang akan di push di sertakan di atas.",
+          "routine": "1xaf2va",
+          "start": null,
+          "startedAt": 1791598582448,
+          "status": "doing",
+          "title": "Optimasi produk Planntygrow peridoe sampai November",
+          "id": "r-1xaf2va-2026-10-10"
         }
       ]
     },
@@ -1912,18 +4754,34 @@
           "id": "cmuxq0c1xqatu7f"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
+          "comments": [
+            {
+              "at": 1791450930360,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuyujbfd0sgi3e",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
           "createdAt": 1791422234396,
           "date": "2026-10-08",
-          "doneAt": null,
+          "doneAt": 1791467260573,
           "due": "16:00",
           "fromAdmin": "vero",
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "8dd0bcf6c94c4dc803d5ea6a9ec7b140",
+            "at": 1791467258767,
+            "photoFile": "proof-photos/8dd0bcf6c94c4dc803d5ea6a9ec7b140.jpg"
+          },
+          "returnedAt": null,
           "start": "08:00",
           "startedAt": 1791434891302,
-          "status": "doing",
+          "status": "done",
           "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
           "id": "cmuyujbfd0sgi3e"
         },
@@ -1952,6 +4810,7 @@
           "id": "el9ucr04luxo8lhufwjw"
         },
         {
+          "autoRemindAt": 1791450923912,
           "by": "owner",
           "comments": [
             {
@@ -1959,10 +4818,18 @@
               "by": "Fahreza",
               "id": "cmuz2irkf64x3ic",
               "text": "Produk Paris Japan, creator diarahkan CO. Share VA BCA. diajukan ke BO"
+            },
+            {
+              "at": 1791450932271,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz2gwlelzjnjj",
+              "text": "Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
             }
           ],
           "createdAt": 1791435545694,
           "date": "2026-10-08",
+          "doneAt": 1791527297558,
           "due": "16:00",
           "editedAt": 1791435852124,
           "editedBy": "Fahreza",
@@ -1970,10 +4837,91 @@
           "hot": false,
           "needProof": true,
           "note": "",
+          "proof": {
+            "asset": "28862475ae9d62e7ea610ea050b361fb",
+            "at": 1791527295820,
+            "photoFile": "proof-photos/28862475ae9d62e7ea610ea050b361fb.jpg"
+          },
+          "returnedAt": null,
           "start": "13:00",
-          "status": "todo",
+          "startedAt": 1791467244536,
+          "status": "done",
           "title": "RS - Reach Out Affiliate sekaligus FO",
           "id": "cmuz2gwlelzjnjj"
+        },
+        {
+          "autoRemindAt": 1791542426230,
+          "by": "owner",
+          "comments": [
+            {
+              "at": 1791528503099,
+              "by": "Aziz",
+              "id": "cmv0lrsdwu8703a",
+              "text": "obektifnya apa ? @vero @Yoga"
+            },
+            {
+              "at": 1791529738917,
+              "by": "vero",
+              "id": "cmv0mj0p3sdbkof",
+              "text": "yupi kerja sama dengan HAN untuk mendapatkan 1.000 affiliate yang akan dikirim produk yupi dan barter dengan konten kerkun @Aziz"
+            },
+            {
+              "at": 1791542437674,
+              "auto": true,
+              "by": "Pengingat otomatis",
+              "id": "auto-cmuz8hvnq1srxs6",
+              "text": "Tugas ini belum selesai, sudah lewat 1 jam 40 mnt dari jam selesai 16:00. Mohon segera diselesaikan atau beri kabar di komentar."
+            }
+          ],
+          "createdAt": 1791447294156,
+          "date": "2026-10-09",
+          "doneAt": 1791543339958,
+          "due": "16:00",
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "proof": {
+            "asset": "a4c743de651891bc67383456b4f52e61",
+            "at": 1791543338886,
+            "photoFile": "proof-photos/a4c743de651891bc67383456b4f52e61.jpg"
+          },
+          "returnedAt": null,
+          "start": "08:10",
+          "startedAt": 1791508412734,
+          "status": "done",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmuz8hvnq1srxs6"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791531623514,
+          "date": "2026-10-10",
+          "doneAt": null,
+          "due": null,
+          "fromAdmin": "vero",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": null,
+          "startedAt": 1791598598598,
+          "status": "doing",
+          "title": "Reach Affiliator YUPI ( 20 - 50 ) target 2 bulan 1.000",
+          "id": "cmv0nhcrubxlvnj"
+        },
+        {
+          "by": "owner",
+          "createdAt": 1791604935004,
+          "date": "2026-10-10",
+          "due": "16:00",
+          "fromAdmin": "Fahreza",
+          "hot": false,
+          "needProof": true,
+          "note": "",
+          "start": "11:05",
+          "status": "todo",
+          "title": "Raraya - RO Affiliatoir, daily target 4 Sample keluar ke creator yang terkurasi",
+          "id": "cmv1vbi3veyxtiu"
         }
       ]
     }
@@ -1988,6 +4936,23 @@
     }
   ],
   "tagLog": [
+    {
+      "about": [
+        "asep"
+      ],
+      "at": 1791604265207,
+      "id": "tmv1ux6gniwjr",
+      "open": [
+        "u_H64HvhGKb7E30cM1V3TZPg"
+      ],
+      "text": "Ada tugas lain ?",
+      "to": [
+        {
+          "name": "Fahreza",
+          "uid": "u_H64HvhGKb7E30cM1V3TZPg"
+        }
+      ]
+    },
     {
       "about": [
         "hanief-3432"

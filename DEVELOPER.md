@@ -10,7 +10,7 @@ pembuatan **versi mandiri**.
 |---|---|
 | `claude-ai/index.html` | Implementasi utama yang dipakai sekarang (artifact claude.ai, satu file HTML/JS tanpa build). Referensi fitur paling lengkap. |
 | `pwa/` | Versi mandiri awal: PWA + Firebase (Auth Google + Firestore + Hosting). Proyek: `dailytask-a8327`. |
-| `database/dailytask-export.json` | Snapshot database 8 Okt 2026 (format `dailytask-export/1`). |
+| `database/dailytask-export.json` | Snapshot database 10 Okt 2026 (format `dailytask-export/1`). |
 | `database/dailytask.sql` | Snapshot yang sama dalam SQL (PostgreSQL/MySQL/SQLite). |
 | `database/proof-photos/` | Foto bukti tugas (dirujuk `proof.photoFile`). |
 | `database/import-firebase.mjs` | Importer ke skema Firestore versi `pwa/`. |
