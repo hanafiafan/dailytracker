@@ -19,14 +19,14 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     return !!t && isAdmin && !t.isAdmin && manages(t.group);
   };
   const canSee = (email: string) => canManage(email) || (isMember && me === email);
-  const canCreateMember = (group: string, wantsAdmin: boolean) => isBoss || (!wantsAdmin && manages(group));
-  /** `patch` lists the fields being changed. */
-  const canEditMember = (email: string, patch: { group?: string; isAdmin?: boolean; adminGroups?: string[] }) => {
-    if (isBoss) return true;
-    if (!canManage(email)) return false;
-    if (patch.isAdmin !== undefined || patch.adminGroups !== undefined) return false;
-    return patch.group === undefined || manages(patch.group);
+  /** Superadmin (the owner account): the only one who adds, removes, moves, reorders, promotes people or changes their unit. */
+  const isSuper = isOwner;
+  const canCreateMember = () => isSuper;
+  /** `patch` lists the fields being changed. Everyone else who manages a person may only fix their name and title. */
+  const canEditMember = (email: string, patch: { name?: string; role?: string; group?: string; isAdmin?: boolean; adminGroups?: string[] }) => {
+    if (isSuper) return true;
+    return canManage(email) && Object.keys(patch).every(k => k === "name" || k === "role");
   };
-  return { me, isOwner, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember };
+  return { me, isOwner, isSuper, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember };
 }
 export type Policy = ReturnType<typeof makePolicy>;

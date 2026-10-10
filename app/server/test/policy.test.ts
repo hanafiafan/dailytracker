@@ -24,15 +24,19 @@ describe("policy", () => {
     expect(p.canManage("b@x.id")).toBe(false);
     expect(p.canManage("vero@x.id")).toBe(false);
   });
-  it("unit admin cannot make admins or move people out of their unit", () => {
-    const p = as("hcs@x.id");
-    expect(p.canEditMember("a@x.id", { isAdmin: true })).toBe(false);
-    expect(p.canEditMember("a@x.id", { adminGroups: ["HCS"] })).toBe(false);
-    expect(p.canEditMember("a@x.id", { group: "ADS" })).toBe(false);
-    expect(p.canEditMember("a@x.id", { group: "HCS" })).toBe(true);
-    expect(p.canCreateMember("ADS", false)).toBe(false);
-    expect(p.canCreateMember("HCS", true)).toBe(false);
-    expect(p.canCreateMember("HCS", false)).toBe(true);
+  it("only the superadmin (owner) restructures the team; managers may fix name and title", () => {
+    for (const who of ["hcs@x.id", "vero@x.id"]) {
+      const p = as(who);
+      expect(p.isSuper).toBe(false);
+      expect(p.canCreateMember()).toBe(false);
+      expect(p.canEditMember("a@x.id", { isAdmin: true })).toBe(false);
+      expect(p.canEditMember("a@x.id", { adminGroups: ["HCS"] })).toBe(false);
+      expect(p.canEditMember("a@x.id", { group: "HCS" })).toBe(false);
+    }
+    expect(as("hcs@x.id").canEditMember("a@x.id", { name: "A", role: "B" })).toBe(true);
+    expect(as("hcs@x.id").canEditMember("b@x.id", { name: "A" })).toBe(false);
+    const o = as("boss@x.id", true);
+    expect(o.isSuper && o.canCreateMember() && o.canEditMember("a@x.id", { isAdmin: true })).toBe(true);
   });
   it("a member sees only themself", () => {
     const p = as("a@x.id");

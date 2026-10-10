@@ -64,7 +64,7 @@ export function Login() {
       <main className="loginform">
         <div>
           <h1>Masuk</h1>
-          <p className="muted">Gunakan akun Google yang emailnya sudah didaftarkan pemilik.</p>
+          <p className="muted">Gunakan akun Google yang emailnya sudah didaftarkan Superadmin.</p>
           {failed && <p className="warnbox" role="alert" style={{ marginTop: 8 }}><span className="warnico" aria-hidden="true">!</span><span className="txt"><b>Masuk gagal</b>Pastikan memakai akun Google yang emailnya terdaftar di tim, lalu coba lagi.</span></p>}
           <div ref={slot} style={{ minHeight: 44, display: "flex", marginTop: 8 }} />
           <button className="btn" style={{ height: 46 }} onClick={signInByRedirect}>Tombol di atas kosong? Masuk lewat halaman Google</button>

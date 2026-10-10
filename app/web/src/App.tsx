@@ -136,7 +136,7 @@ function NotRegistered({ email }: { email: string }) {
     <Center>
       <h1 style={{ fontSize: "1.5rem" }}>Email belum terdaftar</h1>
       <p className="muted">Kamu masuk sebagai <b>{email}</b>. Email ini belum ada di daftar tim.</p>
-      <p className="muted">Kirim email ini ke pemilik aplikasi supaya ditambahkan, lalu buka aplikasi lagi. Atau keluar dan masuk dengan akun Google lain.</p>
+      <p className="muted">Kirim email ini ke Superadmin aplikasi supaya ditambahkan, lalu buka aplikasi lagi. Atau keluar dan masuk dengan akun Google lain.</p>
       <button className="btn" onClick={async () => { await ok(api.auth.logout.$post()); qc.clear(); await qc.invalidateQueries({ queryKey: keys.me }); }}>Keluar</button>
     </Center>
   );

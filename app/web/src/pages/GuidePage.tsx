@@ -33,13 +33,13 @@ const KARYAWAN: Sec[] = [
 
 const UNIT: Sec[] = [
   { h: "Yang bisa kamu lakukan", items: [
-    "Kamu memantau anggota biasa di unit yang diberikan pemilik. Orang di luar unitmu dan sesama admin tidak terlihat.",
+    "Kamu memantau anggota biasa di unit yang diberikan Superadmin. Menambah, menghapus, atau mengubah unit anggota hanya bisa dilakukan Superadmin; kamu bisa memperbaiki nama dan jabatan orang di unitmu. Orang di luar unitmu dan sesama admin tidak terlihat.",
     "Beri tugas lewat tombol Tambah tugas: pilih orang, tanggal, jam, prioritas, dan Wajib bukti. Kalau memberi jam selesai, pilih juga kapan penerima diingatkan (15 menit sampai 1 hari sebelumnya); tugas dengan tenggat yang sudah mepet langsung ditandai. Pilih Ulangi rutin untuk tugas harian atau mingguan.",
     "Ubah, hapus, atau kembalikan tugas yang sudah selesai kalau buktinya belum sesuai.",
   ] },
   { h: "Memantau", items: [
     "Dasbor menampilkan progres tim dan orang yang belum punya tugas aktif. Orang yang menekan Minta tugas ditandai ikon tangan, dan kamu mendapat pemberitahuan; beri tugas lewat tombol + di namanya.",
-    "Halaman Tim berisi anggota unitmu; kamu bisa menambah dan mengubah profil anggota biasa di unitmu.",
+    "Halaman Tim berisi anggota unitmu; kamu bisa memperbaiki nama dan jabatan anggota biasa di unitmu. Menambah atau menghapus anggota hanya Superadmin.",
     "Laporan merangkum kinerja per orang dan per hari; salin atau cetak untuk dibagikan.",
   ] },
   { h: "Persetujuan dan komunikasi", items: [
@@ -53,7 +53,6 @@ const UNIT: Sec[] = [
 const ADMIN: Sec[] = [
   { h: "Yang bisa kamu lakukan", items: [
     "Admin semua unit memantau seluruh anggota tim, dan boleh memberi tugas ke admin lain.",
-    "Tambah anggota baru, ubah profil dan unit, dan jadikan seseorang admin atau cabut aksesnya di halaman Tim.",
     "Kamu boleh memberi tugas ke admin lain; mereka melihatnya di tab Tugas saya.",
     "Semua yang bisa dilakukan admin unit (lihat tab Admin unit) berlaku untuk semua unit.",
   ] },
@@ -70,9 +69,9 @@ const ADMIN: Sec[] = [
 ];
 
 const OWNER: Sec[] = [
-  { h: "Yang hanya bisa dilakukan pemilik", items: [
-    "Akunmu adalah pemilik aplikasi: semua tugas, laporan, dan data tim terlihat olehmu tanpa batas unit. Semua permintaan tugas dan pengingat terlambat otomatis juga sampai kepadamu.",
-    "Menunjuk atau mencabut admin, dan menentukan unit mana yang dipantau tiap admin (halaman Tim, lalu pilih orangnya).",
+  { h: "Yang hanya bisa dilakukan Superadmin", items: [
+    "Akunmu adalah Superadmin (pemilik aplikasi): semua tugas, laporan, dan data tim terlihat olehmu tanpa batas unit. Semua permintaan tugas dan pengingat terlambat otomatis juga sampai kepadamu.",
+    "Menambah anggota baru, menghapus atau memindahkan email, mengatur urutan dan unit, menunjuk atau mencabut admin, dan menentukan unit mana yang dipantau tiap admin (halaman Tim). Admin lain tidak bisa melakukan ini.",
     "Menghapus anggota atau alat bersifat permanen. Hapus hanya jika yakin.",
   ] },
   { h: "Mengatur tim", items: [
@@ -84,7 +83,7 @@ const OWNER: Sec[] = [
   ] },
 ];
 
-const TITLE: Record<Role, string> = { karyawan: "Karyawan", unit: "Admin unit", admin: "Admin semua unit", owner: "Pemilik" };
+const TITLE: Record<Role, string> = { karyawan: "Karyawan", unit: "Admin unit", admin: "Admin semua unit", owner: "Superadmin" };
 const BODY: Record<Role, Sec[]> = { karyawan: KARYAWAN, unit: UNIT, admin: ADMIN, owner: OWNER };
 const INTRO: Record<Role, string> = {
   karyawan: "Cara memakai aplikasi untuk tugas harianmu.",

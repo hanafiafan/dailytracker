@@ -72,7 +72,7 @@ export function TopNav() {
           </button>
           {menu && (
             <div className="popover" role="menu" style={{ minWidth: 220 }}>
-              <div style={{ padding: "8px 12px" }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1">{m?.role || (me.owner ? "Pemilik" : me.email)}</small></div>
+              <div style={{ padding: "8px 12px" }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1">{m?.role || (me.owner ? "Superadmin" : me.email)}</small></div>
               <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/panduan"); }}><BookOpen size={16} /><span>Panduan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/pengaturan"); }}><Settings size={16} /><span>Pengaturan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { toggleTheme(); setMenu(false); }}>{getTheme() === "dark" ? <Sun size={16} /> : <Moon size={16} />}<span>{getTheme() === "dark" ? "Mode terang" : "Mode gelap"}</span></button>

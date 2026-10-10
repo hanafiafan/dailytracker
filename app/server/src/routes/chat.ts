@@ -54,7 +54,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     });
   };
   const toMessage = (m: typeof messages.$inferSelect, files: { id: string; name: string; mime: string; size: number }[], viewer: { policy: ReturnType<typeof makePolicy> }): MessageDTO => ({
-    id: m.id, channel: m.channel, email: m.email, name: team().find(x => x.email === m.email)?.name ?? (ownerOf(m.email) ? "Pemilik" : m.email),
+    id: m.id, channel: m.channel, email: m.email, name: team().find(x => x.email === m.email)?.name ?? (ownerOf(m.email) ? "Superadmin" : m.email),
     text: m.deletedAt ? "" : m.text, refs: m.deletedAt ? [] : labelRefs(m.refs, viewer), attachments: m.deletedAt ? [] : files, createdAt: m.createdAt, deleted: !!m.deletedAt,
   });
   const filesOf = (ids: string[]) => ids.length ? db.select({ id: attachments.id, name: attachments.name, mime: attachments.mime, size: attachments.size, messageId: attachments.messageId }).from(attachments).where(inArray(attachments.messageId, ids)).all() : [];
@@ -66,7 +66,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const info = (id: string) => {
         const last = db.select().from(messages).where(and(eq(messages.channel, id), isNull(messages.deletedAt))).orderBy(desc(messages.createdAt)).get();
         const unread = db.select({ n: sql<number>`count(*)` }).from(messages).where(and(eq(messages.channel, id), isNull(messages.deletedAt), ne(messages.email, u.email), gt(messages.createdAt, reads.get(id) ?? 0))).get()?.n ?? 0;
-        return { unread, last: last ? { text: last.text || "Lampiran", name: team().find(x => x.email === last.email)?.name ?? "Pemilik", at: last.createdAt } : null };
+        return { unread, last: last ? { text: last.text || "Lampiran", name: team().find(x => x.email === last.email)?.name ?? "Superadmin", at: last.createdAt } : null };
       };
       if (canAccess(u.email, u.owner, GENERAL)) out.push({ id: GENERAL, kind: "general", name: "Umum", projectId: null, color: null, ...info(GENERAL) });
       for (const p of db.select().from(projects).orderBy(asc(projects.createdAt)).all()) {

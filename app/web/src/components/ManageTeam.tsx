@@ -21,7 +21,7 @@ const units = (team: MemberDTO[]) => [...new Set(team.map(m => m.group).filter(B
 
 function UnitField({ name, defaultValue }: { name: string; defaultValue?: string }) {
   const { team, policy } = useViewer();
-  if (!policy.isBoss) return <label className="field"><span>Unit</span><select className="input" name={name} defaultValue={defaultValue || policy.groups[0]}>{policy.groups.map(g => <option key={g}>{g}</option>)}</select></label>;
+  if (!policy.isSuper) return <label className="field"><span>Unit</span><select className="input" name={name} defaultValue={defaultValue || policy.groups[0]}>{policy.groups.map(g => <option key={g}>{g}</option>)}</select></label>;
   return <label className="field"><span>Unit (mis. HCS, HCM)</span>
     <input className="input" name={name} list="unit-list" maxLength={20} placeholder="Kosongkan kalau tidak ada" defaultValue={defaultValue} />
     <datalist id="unit-list">{units(team).map(g => <option key={g} value={g} />)}</datalist></label>;
@@ -32,7 +32,7 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
   const qc = useQueryClient();
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null | undefined>(undefined); // undefined = unchanged, null = remove
   const self = m.email === me.email;
-  const canAdmin = policy.isManager && !self;
+  const canAdmin = policy.isSuper && !self; // unit and email changes belong to the superadmin
   const save = useAction(async (f: FormData) => {
     const email = String(f.get("email") ?? m.email).trim().toLowerCase();
     const body: { name: string; role: string; group?: string } = { name: String(f.get("name")), role: String(f.get("role")) };
@@ -106,10 +106,10 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
         <p className="muted" style={{ marginBottom: 10 }}>{m.role || "—"} · {m.email}</p>
         <div className="alist">
           <button className="menuitem" onClick={() => { setSheet(false); onEdit(true); }}><Pencil size={18} /><span>Ubah profil</span></button>
-          {policy.isBoss && !self && <button className="menuitem" onClick={() => { toggleAdmin.mutate(); setSheet(false); }}><ShieldCheck size={18} /><span>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</span></button>}
-          {!self && <ConfirmButton className="menuitem danger" label="Hapus dari tim" armed="Yakin hapus?" onConfirm={() => { remove.mutate(); setSheet(false); }} />}
+          {policy.isSuper && !self && <button className="menuitem" onClick={() => { toggleAdmin.mutate(); setSheet(false); }}><ShieldCheck size={18} /><span>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</span></button>}
+          {policy.isSuper && !self && <ConfirmButton className="menuitem danger" label="Hapus dari tim" armed="Yakin hapus?" onConfirm={() => { remove.mutate(); setSheet(false); }} />}
         </div>
-        {policy.isBoss && m.isAdmin && !self && units(team).length > 0 && <div style={{ marginTop: 12 }}><ScopeChips m={m} /></div>}
+        {policy.isSuper && m.isAdmin && !self && units(team).length > 0 && <div style={{ marginTop: 12 }}><ScopeChips m={m} /></div>}
       </Sheet>
       {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
     </>
@@ -117,7 +117,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
   return (
     <>
       <div ref={setNodeRef} className={"mrow" + (isDragging ? " dragging" : "")} style={{ transform: CSS.Translate.toString(transform), transition }}>
-        <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button>
+        {policy.isSuper ? <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button> : <span className="handle" aria-hidden="true" />}
         <Avatar m={m} />
         <div className="who"><b><PersonLink email={m.email}>{m.name}</PersonLink></b><small>{m.role || "—"}</small><small>{m.email}</small></div>
         <div className="mtags">
@@ -126,11 +126,11 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
         </div>
         <div className="mact">
-          {policy.isBoss && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
+          {policy.isSuper && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
           <button className="btn small" onClick={() => onEdit(!editing)}>{editing ? "Tutup" : "Ubah"}</button>
-          {!self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
+          {policy.isSuper && !self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
         </div>
-        {policy.isBoss && m.isAdmin && !self && units(team).length > 0 && <ScopeChips m={m} />}
+        {policy.isSuper && m.isAdmin && !self && units(team).length > 0 && <ScopeChips m={m} />}
       </div>
       {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
     </>
@@ -156,16 +156,16 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
   return (
     <details className="manage" id="manage" open={open}>
       <summary>Kelola tim</summary>
-      <p className="foot hide-touch" style={{ margin: "8px 0" }}>{policy.isBoss
-        ? 'Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin "Semua unit" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu.'
-        : `Kamu mengelola unit ${policy.groups.join(", ")}. Orang di unit lain tidak terlihat di sini.`}</p>
-      <p className="foot hide-touch" style={{ margin: "0 0 6px" }}>Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap.</p>
+      <p className="foot hide-touch" style={{ margin: "8px 0" }}>{policy.isSuper
+        ? 'Hanya Superadmin yang bisa menambah, menghapus, mengatur urutan, dan menjadikan admin. Setiap orang masuk dengan akun Google sesuai email yang terdaftar di sini dan hanya melihat tugasnya sendiri. Admin "Semua unit" punya kendali penuh; admin satu unit hanya mengelola orang di unit itu.'
+        : `Kamu bisa memperbaiki nama dan jabatan orang di unitmu${policy.groups.length ? " (" + policy.groups.join(", ") + ")" : ""}. Menambah atau menghapus anggota hanya bisa dilakukan Superadmin.`}</p>
+      {policy.isSuper && <p className="foot hide-touch" style={{ margin: "0 0 6px" }}>Tarik ikon ⠿ untuk mengatur urutan. Urutan ini juga dipakai di kartu tugas dan rekap.</p>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={list.map(m => m.email)} strategy={verticalListSortingStrategy}>
           <div className="mlist">{list.map(m => <Row key={m.email} m={m} editing={editing === m.email} onEdit={o => setEditing(o ? m.email : null)} />)}</div>
         </SortableContext>
       </DndContext>
-      <form className="addmember" onSubmit={e => {
+      {policy.isSuper && <form className="addmember" onSubmit={e => {
         e.preventDefault(); const form = e.currentTarget, f = new FormData(form);
         if (!String(f.get("name")).trim()) return void toast.error("Tulis nama anggota");
         add.mutate(f, { onSuccess: () => form.reset(), onError: e2 => toast.error(errorText(e2)) });
@@ -176,7 +176,7 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
         <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required placeholder="nama@gmail.com" /></label>
         <UnitField name="group" />
         <button className="btn primary" type="submit" disabled={add.isPending}>Tambah anggota</button>
-      </form>
+      </form>}
     </details>
   );
 }

@@ -72,7 +72,7 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
       <Sheet open={acct} onClose={() => setAcct(false)} title="Akun">
         <div className="acct">
           {m ? <Avatar m={m} big /> : <span className="avatar big" style={{ background: "var(--ink)", color: "var(--volt)" }}>{me.name[0]}</span>}
-          <div style={{ minWidth: 0 }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1" style={{ display: "block" }}>{m?.role || (me.owner ? "Pemilik" : me.email)}</small><small className="muted clamp1" style={{ display: "block" }}>{me.email}</small></div>
+          <div style={{ minWidth: 0 }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1" style={{ display: "block" }}>{m?.role || (me.owner ? "Superadmin" : me.email)}</small><small className="muted clamp1" style={{ display: "block" }}>{me.email}</small></div>
         </div>
         <div className="alist" style={{ marginTop: 10 }}>
           <button className="menuitem" onClick={() => { setAcct(false); go("/pengaturan"); }}><Settings size={18} /><span>Pengaturan</span></button>

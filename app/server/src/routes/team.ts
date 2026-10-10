@@ -18,7 +18,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
   })
   .post("/", zValidator("json", memberCreate), c => {
     const u = c.var.user, b = c.req.valid("json");
-    if (!u.policy.canCreateMember(b.group, false)) return c.json({ error: "forbidden" }, 403);
+    if (!u.policy.canCreateMember()) return c.json({ error: "forbidden" }, 403);
     if (db.select().from(members).where(eq(members.email, b.email)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
     const order = Math.max(0, ...loadTeam(db).map(m => m.sortOrder)) + 1;
     db.insert(members).values({ email: b.email, name: b.name, role: b.role, group: b.group, sortOrder: order }).run();
@@ -27,8 +27,9 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
   })
   .put("/order", zValidator("json", memberOrder), c => {
     const u = c.var.user, { emails } = c.req.valid("json");
+    if (!u.policy.isSuper) return c.json({ error: "forbidden" }, 403);
     db.transaction(tx => {
-      emails.forEach((email, i) => { if (u.policy.canManage(email) || u.email === email) tx.update(members).set({ sortOrder: i + 1 }).where(eq(members.email, email)).run(); });
+      emails.forEach((email, i) => { tx.update(members).set({ sortOrder: i + 1 }).where(eq(members.email, email)).run(); });
     });
     bus.emit("team");
     return c.json({ ok: true });
@@ -40,7 +41,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     const self = u.email === email;
     const selfFields = Object.keys(b).every(k => k === "name" || k === "role");
     if (!(self && selfFields) && !u.policy.canEditMember(email, b)) return c.json({ error: "forbidden" }, 403);
-    if (self && (b.isAdmin !== undefined || b.adminGroups !== undefined) && !u.policy.isBoss) return c.json({ error: "forbidden" }, 403);
+    if (self && (b.isAdmin !== undefined || b.adminGroups !== undefined) && !u.policy.isSuper) return c.json({ error: "forbidden" }, 403);
     const patch: Partial<typeof members.$inferInsert> = { ...b };
     if (b.isAdmin === false) patch.adminGroups = [];
     if (b.isAdmin === true && b.adminGroups === undefined) patch.adminGroups = target.group ? [target.group] : []; // a new admin starts limited to their own unit
@@ -51,7 +52,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
   // Change someone's email: tasks and routines follow through ON UPDATE CASCADE.
   .post("/:email/move", zValidator("json", memberMove), c => {
     const u = c.var.user, email = c.req.param("email"), { email: to } = c.req.valid("json");
-    if (u.email === email || !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    if (u.email === email || !u.policy.isSuper) return c.json({ error: "forbidden" }, 403);
     if (!loadTeam(db).some(m => m.email === email)) return c.json({ error: "not found" }, 404);
     if (db.select().from(members).where(eq(members.email, to)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
     db.update(members).set({ email: to, seenAt: null }).where(eq(members.email, email)).run();
@@ -60,7 +61,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
   })
   .delete("/:email", c => {
     const u = c.var.user, email = c.req.param("email");
-    if (u.email === email || !u.policy.canManage(email)) return c.json({ error: "forbidden" }, 403);
+    if (u.email === email || !u.policy.isSuper) return c.json({ error: "forbidden" }, 403);
     db.delete(members).where(eq(members.email, email)).run();
     bus.emit("team"); bus.emit("tasks");
     return c.json({ ok: true });

@@ -29,7 +29,7 @@ export function TaskDrawer({ id }: { id: string }) {
       <div className="scrim" onClick={closeTask} />
       <div className="drawer" role="dialog" aria-label="Detail tugas">
         {!t ? <div className="drawer-h"><h2>{q.isError ? "Tugas tidak ditemukan" : "Memuat…"}</h2><button className="iconbtn" onClick={closeTask} aria-label="Tutup"><X size={18} /></button></div>
-          : <DrawerBody t={t} key={t.id} activity={act.data ?? []} owner={meta.data?.owner ?? { name: "Pemilik", email: "" }} />}
+          : <DrawerBody t={t} key={t.id} activity={act.data ?? []} owner={meta.data?.owner ?? { name: "Superadmin", email: "" }} />}
       </div>
     </>
   );

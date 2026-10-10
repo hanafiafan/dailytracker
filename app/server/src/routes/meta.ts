@@ -12,7 +12,7 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
   const guard = new Hono<AppEnv>().use(async (c, next) => c.var.user.policy.isManager ? next() : c.json({ error: "forbidden" }, 403));
   return new Hono<AppEnv>()
     .get("/", c => c.json({
-      owner: { email: env.OWNER_EMAIL, name: db.select({ n: sessions.name }).from(sessions).where(eq(sessions.email, env.OWNER_EMAIL)).orderBy(desc(sessions.exp)).get()?.n ?? "Pemilik" },
+      owner: { email: env.OWNER_EMAIL, name: db.select({ n: sessions.name }).from(sessions).where(eq(sessions.email, env.OWNER_EMAIL)).orderBy(desc(sessions.exp)).get()?.n ?? "Superadmin" },
       projects: db.select().from(projects).orderBy(asc(projects.createdAt)).all().map(toProject),
       labels: db.select().from(labels).orderBy(asc(labels.name)).all().map(toLabel),
     }))

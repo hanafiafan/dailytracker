@@ -9,7 +9,7 @@ import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
 
 type Level = "owner" | "boss" | "head" | "member";
-const LEVEL: Record<Level, string> = { owner: "Pemilik", boss: "Admin penuh", head: "Kepala unit", member: "Anggota" };
+const LEVEL: Record<Level, string> = { owner: "Superadmin", boss: "Admin penuh", head: "Kepala unit", member: "Anggota" };
 const NOUNIT = "Tanpa unit";
 
 interface Person { key: string; name: string; role: string; level: Level; unit: string; m?: MemberDTO; reports: string }
@@ -20,7 +20,7 @@ function useOrg() {
   const owner = useMeta(true).data?.owner;
   return useMemo(() => {
     const ownerM = owner ? team.find(m => m.email === owner.email) : undefined;
-    const top: Person[] = owner ? [{ key: owner.email, name: ownerM?.name ?? owner.name, role: ownerM?.role || "Pemilik aplikasi", level: "owner", unit: "", m: ownerM, reports: "—" }] : [];
+    const top: Person[] = owner ? [{ key: owner.email, name: ownerM?.name ?? owner.name, role: ownerM?.role || "Superadmin aplikasi", level: "owner", unit: "", m: ownerM, reports: "—" }] : [];
     const bosses = team.filter(m => m.isAdmin && !m.adminGroups.length && m.email !== owner?.email);
     const topNames = [...top, ...bosses.map(b => ({ name: b.name }))].map(p => p.name).join(", ") || "—";
     const bossP: Person[] = bosses.map(b => ({ key: b.email, name: b.name, role: b.role || "Admin", level: "boss", unit: "", m: b, reports: top[0]?.name ?? "—" }));

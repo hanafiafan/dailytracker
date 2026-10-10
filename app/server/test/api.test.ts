@@ -105,6 +105,18 @@ describe("api", () => {
     expect(t.db.select().from(members).all().find(m => m.email === "a@x.id")).toMatchObject({ isAdmin: true, adminGroups: ["HCS"] });
   });
 
+  it("only the superadmin adds, moves, reorders or removes team members", async () => {
+    const body = { name: "Baru", email: "baru@x.id" };
+    for (const who of ["vero@x.id", "hcs@x.id", "a@x.id"]) {
+      expect((await t.call(who, "POST", "/team", body)).status).toBe(403);
+      expect((await t.call(who, "PUT", "/team/order", { emails: ["a@x.id"] })).status).toBe(403);
+      expect((await t.call(who, "POST", "/team/b@x.id/move", { email: "z@x.id" })).status).toBe(403);
+      expect((await t.call(who, "DELETE", "/team/b@x.id")).status).toBe(403);
+    }
+    expect((await t.call(OWNER, "POST", "/team", body)).status).toBe(201);
+    expect((await t.call(OWNER, "DELETE", "/team/baru@x.id")).status).toBe(200);
+  });
+
   it("ask-for-work notifies managers", async () => {
     expect((await t.call("a@x.id", "POST", "/ask")).status).toBe(200);
     const s = t.sent.find(x => x.title.includes("minta tugas"));

@@ -27,7 +27,7 @@ export function SettingsPage() {
     <Page noNew title="Pengaturan" sub={me.email}>
       <div className="two" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", maxWidth: 1040 }}>
         <section className="surface"><div className="surface-h"><h2>Profil</h2></div>
-          {m ? <ProfileForm m={m} onClose={() => { /* stays on the page */ }} /> : <p className="muted">Kamu masuk sebagai pemilik ({me.email}). Pemilik tidak memiliki profil anggota.</p>}
+          {m ? <ProfileForm m={m} onClose={() => { /* stays on the page */ }} /> : <p className="muted">Kamu masuk sebagai Superadmin ({me.email}). Pemilik tidak memiliki profil anggota.</p>}
         </section>
         <div style={{ display: "grid", gap: 18, alignContent: "start" }}>
           <section className="surface"><div className="surface-h"><h2>Notifikasi</h2></div>
