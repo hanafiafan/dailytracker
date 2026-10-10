@@ -7,9 +7,9 @@ import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { pushSub } from "@shared/schemas";
+import { GUIDE_VERSION, guideAck, pushSub } from "@shared/schemas";
 import { wib } from "@shared/time";
-import { members, pushSubs } from "./db/schema.js";
+import { guideAcks, members, pushSubs } from "./db/schema.js";
 import { toMemberLite } from "./dto.js";
 import { endSession, requireTeam, requireUser, startSession } from "./auth.js";
 import { createNotify } from "./notify.js";
@@ -86,7 +86,16 @@ export function createApp(deps: Deps) {
         db.update(members).set({ seenAt: Date.now() }).where(eq(members.email, u.email)).run();
         bus.emit("team");
       }
-      return c.json({ email: u.email, name: m?.name ?? u.name, owner: u.owner, member: m ? toMemberLite(m) : null });
+      const ack = db.select().from(guideAcks).where(eq(guideAcks.email, u.email)).get();
+      return c.json({ email: u.email, name: m?.name ?? u.name, owner: u.owner, member: m ? toMemberLite(m) : null, guideAck: ack ? { version: ack.version, at: ack.at } : null });
+    })
+    // "I have read the guide for my role and accept the terms": remembered per person and guide version.
+    .post("/guide/ack", auth, team, zValidator("json", guideAck), c => {
+      const u = c.var.user;
+      if (c.req.valid("json").version !== GUIDE_VERSION) return c.json({ error: "Panduan sudah diperbarui. Muat ulang halaman." }, 409);
+      const row = { email: u.email, role: u.policy.guideRole(), version: GUIDE_VERSION, at: Date.now() };
+      db.insert(guideAcks).values(row).onConflictDoUpdate({ target: guideAcks.email, set: row }).run();
+      return c.json({ ok: true });
     })
     .use("/team/*", auth, team).route("/team", teamRoutes(deps))
     .use("/tasks/*", auth, team).route("/tasks", taskRoutes(deps, notify))

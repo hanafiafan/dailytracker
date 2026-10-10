@@ -227,6 +227,14 @@ export const attachments = sqliteTable("attachments", {
   data: blob("data", { mode: "buffer" }).notNull(),
   createdAt: integer("created_at").notNull(),
 }, t => [index("attachments_message").on(t.messageId)]);
+/** Who confirmed reading the guide and accepting the terms, for which role and version. */
+export const guideAcks = sqliteTable("guide_acks", {
+  email: text("email").primaryKey(),
+  role: text("role").notNull(),
+  version: integer("version").notNull(),
+  at: integer("at").notNull(),
+});
+
 /** Chat groups made by team members: channel id "g-<id>". Only listed members (and the creator) can read them, managers get no automatic access. */
 export const chatGroups = sqliteTable("chat_groups", {
   id: text("id").primaryKey(),

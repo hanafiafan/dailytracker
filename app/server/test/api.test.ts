@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ensureRoutines, runReminders } from "../src/jobs.js";
-import { comments, members, tasks } from "../src/db/schema.js";
+import { comments, guideAcks, members, tasks } from "../src/db/schema.js";
 import { wib } from "@shared/time";
 import { JPEG, OWNER, setup } from "./helpers.js";
 
@@ -26,7 +26,7 @@ describe("api", () => {
     expect(mine).toHaveLength(1);
     expect(mine[0]).toMatchObject({ title: "Foto produk", by: "owner", status: "todo" });
     expect(await (await t.call("b@x.id", "GET", "/tasks?from=2000-01-01")).json()).toHaveLength(0);
-    expect(t.sent.some(s => s.title === "Tugas baru" && s.to[0] === "a@x.id")).toBe(true);
+    expect(t.sent.some(s => s.title.startsWith("Tugas baru") && s.to[0] === "a@x.id")).toBe(true);
   });
 
   it("unit admin cannot assign outside their unit", async () => {
@@ -142,6 +142,18 @@ describe("api", () => {
     expect((await t.call(OWNER, "PATCH", "/team/b@x.id", { managerEmail: "a@x.id" })).status).toBe(400);
     expect((await t.call(OWNER, "PATCH", "/team/b@x.id", { managerEmail: "nobody@x.id" })).status).toBe(404);
     expect((await t.call(OWNER, "PATCH", "/team/a@x.id", { managerEmail: null })).status).toBe(200);
+  });
+
+  it("guide confirmation is remembered per person and version, with their role", async () => {
+    const me = async (who: string) => (await (await t.call(who, "GET", "/me")).json()) as { guideAck: { version: number } | null };
+    expect((await me("a@x.id")).guideAck).toBeNull();
+    expect((await t.call("a@x.id", "POST", "/guide/ack", { version: 999 })).status).toBe(409);
+    expect((await t.call("a@x.id", "POST", "/guide/ack", { version: 1 })).status).toBe(200);
+    expect((await me("a@x.id")).guideAck?.version).toBe(1);
+    expect((await me("hcs@x.id")).guideAck).toBeNull();
+    expect((await t.call("out@x.id", "POST", "/guide/ack", { version: 1 })).status).toBe(403);
+    await t.call(OWNER, "POST", "/guide/ack", { version: 1 });
+    expect(t.db.select().from(guideAcks).all().map(r => r.role).sort()).toEqual(["karyawan", "owner"]);
   });
 
   it("ask-for-work notifies managers", async () => {

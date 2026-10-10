@@ -1,6 +1,8 @@
 // Who may see and change what. Pure functions so the server enforces them and the web app mirrors them for the UI.
 export interface PolicyMember { email: string; group: string; isAdmin: boolean; adminGroups: string[] }
 
+export type GuideRole = "karyawan" | "unit" | "admin" | "owner";
+
 export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMember[]) {
   const mine = team.find(m => m.email === me);
   const isMember = !!mine;
@@ -27,6 +29,8 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     if (isSuper) return true;
     return canManage(email) && Object.keys(patch).every(k => k === "name" || k === "role");
   };
-  return { me, isOwner, isSuper, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember };
+  /** Which guide this account reads (and confirms). */
+  const guideRole = (): GuideRole => isOwner ? "owner" : isBoss ? "admin" : isAdmin ? "unit" : "karyawan";
+  return { me, isOwner, isSuper, guideRole, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember };
 }
 export type Policy = ReturnType<typeof makePolicy>;

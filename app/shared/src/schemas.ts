@@ -106,7 +106,10 @@ export interface TaskDTO {
 export interface RoutineDTO { id: string; email: string; title: string; note: string; start: string | null; due: string | null; days: number[]; hot: boolean; needProof: boolean; byName: string | null }
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
 export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
-export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null }
+/** Bump when the guide or its terms change materially: everyone is asked to confirm again. */
+export const GUIDE_VERSION = 1;
+export const guideAck = z.object({ version: z.number().int() });
+export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null; guideAck: { version: number; at: number } | null }
 export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; proofLink: string | null; hasPhoto: boolean; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }
 export interface TimeEntryDTO { id: string; taskId: string; email: string; startedAt: number; endedAt: number | null }
 export interface RunningTimerDTO { entry: TimeEntryDTO; taskTitle: string }

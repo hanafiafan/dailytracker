@@ -3,13 +3,15 @@ import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 import { Toaster } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { makePolicy } from "@shared/policy";
+import { GUIDE_VERSION } from "@shared/schemas";
 import type { MeDTO } from "@shared/schemas";
 import { Login } from "./components/Login";
 import { NewTaskDialog } from "./components/NewTaskDialog";
 import { TopNav } from "./components/Page";
 import { SearchDialog } from "./components/SearchDialog";
 import { TaskDrawer } from "./components/TaskDrawer";
-import { Onboarding } from "./components/Onboarding";
+import { Onboarding, needsSetup } from "./components/Onboarding";
+import { GuideGate } from "./components/GuideView";
 import { Legal } from "./components/Legal";
 import { Center, Loading } from "./components/ui";
 import { today } from "./lib/format";
@@ -43,6 +45,7 @@ function Signed({ me }: { me: MeDTO }) {
   const [, nav] = useLocation();
   const [newTask, setNewTask] = useState<NewTaskPrefill | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [setup, setSetup] = useState(() => needsSetup(me.email));
   const [, tick] = useReducer(n => n + 1, 0);
   const lastDay = useRef(today());
 
@@ -121,7 +124,8 @@ function Signed({ me }: { me: MeDTO }) {
           </main>
           <Legal />
         </div>
-        <Onboarding />
+        <Onboarding onClose={() => setSetup(false)} />
+        {!setup && me.guideAck?.version !== GUIDE_VERSION && <GuideGate role={viewer.policy.guideRole()} />}
         {taskId && <TaskDrawer id={taskId} />}
         {newTask && <NewTaskDialog key={JSON.stringify(newTask)} prefill={newTask} date={date} onClose={() => setNewTask(null)} onTemplate={setNewTask} />}
         {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}

@@ -15,7 +15,7 @@ const isPhone = () => isIOS() && !/macintosh/i.test(ua()) || isAndroid();
 const key = (email: string) => "th-setup-" + email;
 const done = (email: string) => { if (navigator.webdriver) return true; /* automated test browsers skip the first-run guide */ try { return localStorage.getItem(key(email)) === "1"; } catch { return true; } };
 /** Setup is required on every device: until it is finished, or again if notification permission is later taken away. */
-const needsSetup = (email: string) => !done(email) || (!navigator.webdriver && ((pushSupported() && Notification.permission !== "granted") || (isPhone() && !standalone())));
+export const needsSetup = (email: string) => !done(email) || (!navigator.webdriver && ((pushSupported() && Notification.permission !== "granted") || (isPhone() && !standalone())));
 
 /** What to do to put the app on the home screen, written for this device. */
 function installHelp(canPrompt: boolean) {
