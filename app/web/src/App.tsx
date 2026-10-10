@@ -21,6 +21,7 @@ const ProjectsPage = lazy(() => import("./pages/ProjectsPage").then(m => ({ defa
 const HistoryPage = lazy(() => import("./pages/HistoryPage").then(m => ({ default: m.HistoryPage })));
 const LeavePage = lazy(() => import("./pages/LeavePage").then(m => ({ default: m.LeavePage })));
 const ResourcesPage = lazy(() => import("./pages/ResourcesPage").then(m => ({ default: m.ResourcesPage })));
+const GuidePage = lazy(() => import("./pages/GuidePage").then(m => ({ default: m.GuidePage })));
 const InboxPage = lazy(() => import("./pages/InboxPage").then(m => ({ default: m.InboxPage })));
 const TasksPage = lazy(() => import("./pages/TasksPage").then(m => ({ default: m.TasksPage })));
 const Board = lazy(() => import("./pages/Board").then(m => ({ default: m.Board })));
@@ -112,6 +113,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/inbox"><InboxPage /></Route>
               <Route path="/alat"><ResourcesPage /></Route>
               <Route path="/laporan"><ReportsPage /></Route>
+              <Route path="/panduan"><GuidePage /></Route>
               <Route path="/pengaturan"><SettingsPage /></Route>
               <Route><Redirect to="/" /></Route>
             </Switch>

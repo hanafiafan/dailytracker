@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut } from "lucide-react";
+import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -73,6 +73,7 @@ export function TopNav() {
           {menu && (
             <div className="popover" role="menu" style={{ minWidth: 220 }}>
               <div style={{ padding: "8px 12px" }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1">{m?.role || (me.owner ? "Pemilik" : me.email)}</small></div>
+              <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/panduan"); }}><BookOpen size={16} /><span>Panduan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/pengaturan"); }}><Settings size={16} /><span>Pengaturan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { toggleTheme(); setMenu(false); }}>{getTheme() === "dark" ? <Sun size={16} /> : <Moon size={16} />}<span>{getTheme() === "dark" ? "Mode terang" : "Mode gelap"}</span></button>
               <button className="menuitem" role="menuitem" onClick={out}><LogOut size={16} /><span>Keluar</span></button>

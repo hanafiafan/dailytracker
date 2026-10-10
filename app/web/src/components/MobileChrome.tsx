@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { MessageSquare, ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2 } from "lucide-react";
+import { MessageSquare, ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2, BookOpen } from "lucide-react";
 import { getTheme, toggleTheme } from "../lib/theme";
 import { useUi, useViewer } from "../lib/viewer";
 import { Bell_ } from "./Bell";
@@ -16,6 +16,7 @@ const MORE = [
   { to: "/izin", label: "Izin & cuti", Icon: CalendarOff, tone: "coral" },
   { to: "/laporan", label: "Laporan", Icon: BarChart3, tone: "dark" },
   { to: "/riwayat", label: "Riwayat", Icon: History, tone: "gray" },
+  { to: "/panduan", label: "Panduan", Icon: BookOpen, tone: "lime" },
   { to: "/pengaturan", label: "Pengaturan", Icon: Settings, tone: "gray" },
 ];
 
