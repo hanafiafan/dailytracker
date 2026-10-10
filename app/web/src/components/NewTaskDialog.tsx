@@ -31,7 +31,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     emails: [...sel], title: String(f.get("title")), note: String(f.get("note") ?? ""), date: routine ? undefined : String(f.get("date") || date),
     start: start || null, due: due || null, priority, projectId: String(f.get("project") || "") || null, labelIds: [...lab],
     subtasks: String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean),
-    needProof: proof, warnMin: manager && due ? warn : null, routineDays: routine ? [...days].sort() : undefined,
+    needProof: proof, warnMin: manager && due && !routine ? warn : null, routineDays: routine ? [...days].sort() : undefined,
   } })), { done: routine ? "Tugas rutin disimpan" : sel.size > 1 ? `Tugas dibagikan ke ${sel.size} orang` : "Tugas dibuat", refresh: [keys.tasks, keys.team, keys.routines, keys.activity] });
 
   const submit = (f: FormData) => {
@@ -84,7 +84,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
             </div>}
             {routine && <div className="field"><span>Muncul otomatis setiap</span><div className="chips">{[1, 2, 3, 4, 5, 6, 0].map(d => <button type="button" key={d} className="chip" aria-pressed={days.has(d)} onClick={() => setDays(toggle(days, d))}>{DAYN[d]}</button>)}</div></div>}
           </section>
-          {manager && due && (
+          {manager && due && !routine && (
             <section className="dsec"><h3>Peringatan tenggat</h3>
               <label className="field"><span>Ingatkan penerima sebelum jam {due}</span><select className="input" value={warn} onChange={e => setWarn(Number(e.target.value))}>{WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelumnya</option>)}</select></label>
               <p className="muted" style={{ fontSize: ".8rem" }}>Pengingat dikirim ke notifikasi dan lonceng penerima. Kalau tenggat sudah lebih dekat dari ini, tugas langsung ditandai mepet.</p>
