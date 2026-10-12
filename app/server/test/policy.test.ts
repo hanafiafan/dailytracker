@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { makePolicy, type PolicyMember } from "@shared/policy";
 
 const team: PolicyMember[] = [
+  { email: "hanief@x.id", name: "Hanief", role: "BO", group: "", isAdmin: true, adminGroups: [] },
+  { email: "aziz@x.id", name: "Aziz", role: "Direktur", group: "", isAdmin: true, adminGroups: [] },
   { email: "vero@x.id", group: "", isAdmin: true, adminGroups: [] },
   { email: "hcs@x.id", group: "HCS", isAdmin: true, adminGroups: ["HCS"] },
   { email: "a@x.id", group: "HCS", isAdmin: false, adminGroups: [] },
@@ -49,5 +51,33 @@ describe("policy", () => {
     const p = as("who@x.id");
     expect(p.isMember).toBe(false);
     expect(p.canSee("a@x.id")).toBe(false);
+  });
+  it("BO (Hanief) connects only with Director (Aziz) and sits above Aziz", () => {
+    const bo = as("hanief@x.id");
+    expect(bo.isBO).toBe(true);
+    expect(bo.isManager).toBe(true);
+    expect(bo.isSuper).toBe(true);
+    // BO can see and manage Director (Aziz) and self
+    expect(bo.canSee("hanief@x.id")).toBe(true);
+    expect(bo.canSee("aziz@x.id")).toBe(true);
+    expect(bo.canManage("aziz@x.id")).toBe(true);
+    // BO cannot see or manage ordinary staff or unit admins
+    expect(bo.canSee("a@x.id")).toBe(false);
+    expect(bo.canSee("b@x.id")).toBe(false);
+    expect(bo.canSee("hcs@x.id")).toBe(false);
+    expect(bo.canManage("a@x.id")).toBe(false);
+
+    // Ordinary members cannot see or manage BO
+    const staff = as("a@x.id");
+    expect(staff.canSee("hanief@x.id")).toBe(false);
+    expect(staff.canManage("hanief@x.id")).toBe(false);
+
+    // Director (Aziz) can see and manage BO and the rest of the team
+    const dir = as("aziz@x.id");
+    expect(dir.isDirector).toBe(true);
+    expect(dir.canSee("hanief@x.id")).toBe(true);
+    expect(dir.canManage("hanief@x.id")).toBe(true);
+    expect(dir.canSee("a@x.id")).toBe(true);
+    expect(dir.canManage("a@x.id")).toBe(true);
   });
 });

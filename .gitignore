@@ -18,3 +18,5 @@ dailytask-migrasi.zip
 dailytask-migrasi/
 *.bak-*
 pwa/worker/.wrangler/
+.DS_Store
+*.zip

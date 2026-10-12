@@ -469,7 +469,7 @@
   .htable { width: 100%; border-collapse: collapse; } .htable th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; padding: 8px 10px; } .htable td { padding: 11px 10px; border-top: 1px solid var(--line); font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 0; }
   .htable tr.hr { cursor: pointer; } .htable tr.hr:hover td { background: var(--hover); } .htable tr.hr td:first-child { border-radius: 14px 0 0 14px; } .htable tr.hr td:last-child { border-radius: 0 14px 14px 0; }
   .htable .nm { display: flex; align-items: center; gap: 10px; min-width: 0; } .htable .nm b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-  .stpill { display: inline-flex; align-items: center; height: 24px; padding: 0 12px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: var(--glass); color: var(--muted); } .stpill.doing { background: var(--blue-soft); color: var(--blue-ink); } .stpill.done { background: var(--ok-soft); color: var(--ok); } .stpill.late { background: var(--bad-soft); color: var(--bad); }
+  .stpill { display: inline-flex; align-items: center; height: 24px; padding: 0 12px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: var(--glass); color: var(--muted); } .stpill.bo { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; } .stpill.doing { background: var(--blue-soft); color: var(--blue-ink); } .stpill.done { background: var(--ok-soft); color: var(--ok); } .stpill.late { background: var(--bad-soft); color: var(--bad); }
   .searchbox { display: flex; align-items: center; gap: 8px; background: var(--canvas); border-radius: 999px; padding: 0 14px; height: 36px; min-width: 200px; } .searchbox input { border: 0; background: none; outline: none; flex: 1; min-width: 0; font-size: .84rem; }
 
   /* ---- projects & history pages */
@@ -606,10 +606,11 @@
   .omembers .onode::before { content: ""; position: absolute; left: -16px; top: 50%; width: 14px; height: 2px; background: var(--line-2); }
   .onode b { display: block; font-size: .86rem; } .onode small { display: block; color: var(--muted); font-size: .74rem; }
   .onode .avatar { width: 36px; height: 36px; }
+  .onode.bo { background: linear-gradient(135deg, #18191d 0%, #262833 100%); color: #f4d06f; border: 2px solid #f4d06f; min-width: 240px; box-shadow: 0 4px 16px rgb(244 208 111 / .18); } .onode.bo small { color: #f4d06f; opacity: .88; font-weight: 600; }
   .onode.owner { background: var(--ink); color: var(--surface); border-color: transparent; min-width: 230px; } .onode.owner small { color: #aab0bd; }
   .onode.boss { border-color: var(--ink); min-width: 220px; } .onode.head { background: var(--volt); color: #101114; border-color: transparent; } .onode.head small { color: rgb(16 17 20 / .65); }
   .ocnt { margin-left: auto; background: var(--glass); color: var(--ink); border-radius: 99px; min-width: 24px; height: 24px; padding: 0 7px; display: grid; place-items: center; font-size: .72rem; font-weight: 800; }
-  .onode.owner .ocnt { background: rgb(255 255 255 / .16); color: inherit; } .onode.head .ocnt { background: rgb(16 17 20 / .12); color: #101114; }
+  .onode.bo .ocnt { background: #f4d06f; color: #101114; } .onode.owner .ocnt { background: rgb(255 255 255 / .16); color: inherit; } .onode.head .ocnt { background: rgb(16 17 20 / .12); color: #101114; }
   .otable td { max-width: none; }
 }
 @layer components {

@@ -11,17 +11,19 @@ const owner = process.env.OWNER_EMAIL ?? "owner@demo.id";
 const today = wib().date, now = Date.now(), min = 60_000;
 
 const team = [
-  { email: "rani@demo.id", name: "Rani", role: "Kepala Kreatif", group: "", isAdmin: true },
-  { email: "dimas@demo.id", name: "Dimas", role: "Lead Konten", group: "HCS", isAdmin: true, adminGroups: ["HCS"] },
-  { email: "sinta@demo.id", name: "Sinta", role: "Fotografer", group: "HCS" },
-  { email: "bayu@demo.id", name: "Bayu", role: "Videografer", group: "HCS" },
-  { email: "citra@demo.id", name: "Citra", role: "Editor", group: "HCS" },
+  { email: "hanief@demo.id", name: "Hanief", role: "BO", group: "", isAdmin: true, adminGroups: [], managerEmail: null },
+  { email: "aziz@demo.id", name: "Aziz", role: "Direktur", group: "", isAdmin: true, adminGroups: [], managerEmail: "hanief@demo.id" },
+  { email: "rani@demo.id", name: "Rani", role: "Kepala Kreatif", group: "", isAdmin: true, adminGroups: [], managerEmail: "aziz@demo.id" },
+  { email: "dimas@demo.id", name: "Dimas", role: "Lead Konten", group: "HCS", isAdmin: true, adminGroups: ["HCS"], managerEmail: "rani@demo.id" },
+  { email: "sinta@demo.id", name: "Sinta", role: "Fotografer", group: "HCS", managerEmail: "dimas@demo.id" },
+  { email: "bayu@demo.id", name: "Bayu", role: "Videografer", group: "HCS", managerEmail: "dimas@demo.id" },
+  { email: "citra@demo.id", name: "Citra", role: "Editor", group: "HCS", managerEmail: "dimas@demo.id" },
   { email: "eko@demo.id", name: "Eko", role: "Sosmed", group: "HUC" },
   { email: "fajar@demo.id", name: "Fajar", role: "Ads", group: "HUC" },
   { email: "gita@demo.id", name: "Gita", role: "Kreator", group: "HUC" },
   { email: "hendra@demo.id", name: "Hendra Kusuma Wardhana Pratama", role: "Koordinator Operasional dan Logistik Gudang Pusat", group: "HCM" },
 ];
-team.forEach((m, i) => db.insert(members).values({ adminGroups: [], ...m, sortOrder: i + 1, seenAt: i < 7 ? now - i * 3600_000 : null }).run());
+team.forEach((m, i) => db.insert(members).values({ adminGroups: [], ...m, sortOrder: i, seenAt: i < 7 ? now - i * 3600_000 : null }).run());
 
 const P = Object.fromEntries([["lebaran", "Kampanye Lebaran", "pink"], ["katalog", "Katalog Q4", "sky"], ["live", "Live Shopping", "yellow"], ["brand", "Brand Refresh", "lilac"], ["panjang", "Kampanye Hari Raya Idul Fitri dan Ramadhan Seluruh Marketplace", "mint"]].map(([k, name, color]) => {
   const id = newId(); db.insert(projects).values({ id, name: name!, color: color!, createdAt: now }).run(); return [k, id];

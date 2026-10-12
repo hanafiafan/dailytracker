@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-orm";
-import { makePolicy } from "@shared/policy";
+import { makePolicy, isBOMember, isDirectorMember } from "@shared/policy";
 import { groupInput, groupPatch, messageCreate, type ChannelDTO, type ChatRefDTO, type MessageDTO } from "@shared/schemas";
 import { attachments, channelReads, chatGroupMembers, chatGroups, messages, projects, tasks } from "../db/schema.js";
 import { loadTeam, newId, type AppEnv, type Deps } from "../context.js";
@@ -50,6 +50,15 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
   const canAccess = (email: string, owner: boolean, channel: string) => {
     const t = team(), p = makePolicy(email, owner, t), me = t.find(m => m.email === email);
     if (!owner && !me) return false;
+    if (channel === "bo-direktur") return p.isBO || p.isDirector;
+    if (p.isBO) {
+      if (channel === GENERAL) return false;
+      if (channel.startsWith("g-")) {
+        const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, channel.slice(2))).all().map(x => x.email);
+        return ms.every(e => e === email || isDirectorMember(t.find(x => x.email === e)) || e === env.OWNER_EMAIL);
+      }
+      return false;
+    }
     if (channel === GENERAL) return true;
     if (channel.startsWith("g-")) return groupAccess(email, channel.slice(2));
     const proj = projectOf(channel);
@@ -82,6 +91,21 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         const unread = db.select({ n: sql<number>`count(*)` }).from(messages).where(and(eq(messages.channel, id), isNull(messages.deletedAt), ne(messages.email, u.email), gt(messages.createdAt, reads.get(id) ?? 0))).get()?.n ?? 0;
         return { unread, last: last ? { text: last.text || "Lampiran", name: team().find(x => x.email === last.email)?.name ?? "Superadmin", at: last.createdAt } : null };
       };
+      if (canAccess(u.email, u.owner, "bo-direktur")) {
+        out.unshift({
+          id: "bo-direktur",
+          kind: "group",
+          name: "BO & Direktur",
+          projectId: null,
+          color: "yellow",
+          ...info("bo-direktur"),
+          group: {
+            members: team().filter(x => isBOMember(x) || isDirectorMember(x) || x.email === env.OWNER_EMAIL).map(x => x.email),
+            createdBy: u.email,
+            canManage: false,
+          },
+        });
+      }
       if (canAccess(u.email, u.owner, GENERAL)) out.push({ id: GENERAL, kind: "general", name: "Umum", projectId: null, color: null, ...info(GENERAL) });
       for (const p of db.select().from(projects).orderBy(asc(projects.createdAt)).all()) {
         const id = "p-" + p.id;
@@ -102,6 +126,12 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, b = c.req.valid("json"), t = team();
       if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
       if (b.emails.some(e => !t.some(m => m.email === e))) return c.json({ error: "Anggota tidak ditemukan" }, 404);
+      if (u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)) && e !== env.OWNER_EMAIL)) {
+        return c.json({ error: "BO hanya dapat terhubung dengan Direktur" }, 403);
+      }
+      if (!u.policy.isDirector && !u.policy.isBO && b.emails.some(e => isBOMember(t.find(x => x.email === e)))) {
+        return c.json({ error: "Hanya Direktur yang dapat berkomunikasi dengan BO" }, 403);
+      }
       const id = newId();
       db.transaction(tx => {
         tx.insert(chatGroups).values({ id, name: b.name, createdBy: u.email, createdAt: Date.now() }).run();

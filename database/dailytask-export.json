@@ -22,7 +22,7 @@
     {
       "id": "aziz-s09z",
       "name": "Aziz",
-      "role": "Humas",
+      "role": "Direktur",
       "group": "",
       "isAdmin": true,
       "adminGroups": [],
@@ -208,11 +208,11 @@
     {
       "id": "hanief-3432",
       "name": "Hanief",
-      "role": "Spesialis",
+      "role": "BO",
       "group": "",
-      "isAdmin": false,
+      "isAdmin": true,
       "adminGroups": [],
-      "order": 15,
+      "order": 0,
       "photo": null,
       "claudeUid": "u_o7bSyYp7jo1kPxL4HpFOeg",
       "email": null,

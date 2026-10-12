@@ -20,7 +20,7 @@ CREATE TABLE routines (
 );
 CREATE TABLE admin_links (id VARCHAR(40) PRIMARY KEY, title TEXT, url TEXT, created_at BIGINT);
 
-INSERT INTO team VALUES ('aziz-s09z', 'Aziz', 'Humas', NULL, TRUE, NULL, 1, NULL, 'u_fb05Hm8saC9b0qEoZnLsNg', NULL);
+INSERT INTO team VALUES ('aziz-s09z', 'Aziz', 'Direktur', NULL, TRUE, NULL, 1, NULL, 'u_fb05Hm8saC9b0qEoZnLsNg', NULL);
 INSERT INTO team VALUES ('vero-itam', 'vero', 'PM', NULL, TRUE, NULL, 2, NULL, 'u_BcRizTwV0BAUQ_J9bCVWng', NULL);
 INSERT INTO team VALUES ('fahru', 'FAHRU', 'LEAD HCS', 'HCS', TRUE, '["HCS"]', 4, NULL, 'u_3Tkia0Fdpo5UTEJpZu_k3g', NULL);
 INSERT INTO team VALUES ('rizky', 'RIZKY', 'Fotografer & Videografer HCS', 'HCS', FALSE, NULL, 4, NULL, 'u_a_9kLRPu01EosNOUyCxUFw', NULL);
@@ -34,7 +34,7 @@ INSERT INTO team VALUES ('nayla', 'Nayla', 'Affiliator', 'HCM', FALSE, NULL, 11,
 INSERT INTO team VALUES ('dian', 'Dian', 'Affiliator', 'HCM', FALSE, NULL, 12, NULL, 'u_XbHT4jf3QNBqoRCJ6ZME7Q', NULL);
 INSERT INTO team VALUES ('niswa', 'Niswa', 'Sales 1', NULL, FALSE, NULL, 13, NULL, 'u_q82MNHed50V027sQ133JjQ', NULL);
 INSERT INTO team VALUES ('albi', 'Albi', 'Sales 2', NULL, FALSE, NULL, 14, NULL, 'u_sMsF4pv3bJofWr0lzaubaA', NULL);
-INSERT INTO team VALUES ('hanief-3432', 'Hanief', 'Spesialis', NULL, FALSE, NULL, 15, NULL, 'u_o7bSyYp7jo1kPxL4HpFOeg', NULL);
+INSERT INTO team VALUES ('hanief-3432', 'Hanief', 'BO', NULL, TRUE, NULL, 0, NULL, 'u_o7bSyYp7jo1kPxL4HpFOeg', NULL);
 INSERT INTO team VALUES ('radinta-djpu', 'Radinta', 'Marketing 1', NULL, TRUE, NULL, 16, NULL, 'u_bmMPEdM2T5vn9ENbCydkCg', NULL);
 INSERT INTO team VALUES ('ika-marketing-yaue', 'Ika Marketing', 'Lead Aff', NULL, FALSE, NULL, 17, NULL, 'u_xkyHCrHAHvQB6mYBaWQqKQ', NULL);
 INSERT INTO team VALUES ('tutik-a5pu', 'Tutik', 'Finance', NULL, FALSE, NULL, 18, NULL, NULL, NULL);

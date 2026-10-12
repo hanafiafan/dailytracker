@@ -7,7 +7,7 @@ export const NEXT = { todo: "doing", doing: "done", done: "todo" } as const;
 export const today = () => ymd(new Date());
 export const fmtLong = (s: string) => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(parseYmd(s));
 export const fmtShort = (s: string) => new Intl.DateTimeFormat("id-ID", { weekday: "short", day: "numeric", month: "short" }).format(parseYmd(s));
-export const fmtTime = (ms: number) => new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(ms));
+export const fmtTime = (ms: number) => new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(ms)).replace(".", ":");
 export const isToday = (ms: number | null | undefined) => !!ms && ymd(new Date(ms)) === today();
 
 export function dur(ms: number) {
