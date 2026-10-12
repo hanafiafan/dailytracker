@@ -31,22 +31,24 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   const isDirector = isDirectorMember(mine) || isOwner;
   const isAdmin = !!mine?.isAdmin;
   const groups = isAdmin ? mine!.adminGroups : [];
-  /** Owner, or an admin without a unit limit, or BO. */
-  const isBoss = isOwner || (isAdmin && groups.length === 0) || isBO;
+  /** Owner, or an admin without a unit limit. BO is kept distinct from isBoss to maintain isolation. */
+  const isBoss = isOwner || (isAdmin && groups.length === 0);
   const isManager = isOwner || isAdmin || isBO;
   const manages = (group: string) => isAdmin && !!group && groups.includes(group);
   const target = (email: string) => team.find(m => m.email === email);
 
   /** Manage someone's tasks and profile:
+   *  - Superadmin (Hellens / isOwner): full access to manage anyone.
    *  - BO only connects with Director (Aziz) and self.
-   *  - Other members cannot manage BO; only Director and BO can manage BO.
+   *  - Other members cannot manage BO; only Director, Superadmin, and BO can manage BO.
    *  - Boss anyone; unit admin only ordinary members of their units.
    */
   const canManage = (email: string) => {
+    if (isOwner) return true;
     if (isBO) {
       if (email === me) return true;
       const t = target(email);
-      return isDirectorMember(t) || (!t && isOwner);
+      return isDirectorMember(t);
     }
     const t = target(email);
     if (isBOMember(t)) {
@@ -57,14 +59,16 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   };
 
   /** Visibility:
+   *  - Superadmin (Hellens / isOwner): full visibility of everyone.
    *  - BO only sees Director (Aziz) and self.
-   *  - Other members cannot see BO; only Director and BO can see BO.
+   *  - Other members cannot see BO; only Director, Superadmin, and BO can see BO.
    */
   const canSee = (email: string) => {
+    if (isOwner) return true;
     if (isBO) {
       if (email === me) return true;
       const t = target(email);
-      return isDirectorMember(t) || (!t && isOwner);
+      return isDirectorMember(t);
     }
     const t = target(email);
     if (isBOMember(t)) {

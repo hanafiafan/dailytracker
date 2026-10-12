@@ -18,6 +18,11 @@ export function openDb(path: string) {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: migrationsDir });
+  try {
+    sqlite.prepare("UPDATE members SET role = 'BO' WHERE lower(name) = 'hanief' AND role != 'BO'").run();
+    sqlite.prepare("UPDATE members SET role = 'Direktur' WHERE lower(name) = 'aziz' AND role != 'Direktur'").run();
+    sqlite.prepare("UPDATE members SET manager_email = (SELECT email FROM members WHERE lower(name) = 'hanief' LIMIT 1) WHERE lower(name) = 'aziz' AND (manager_email IS NULL OR manager_email = '')").run();
+  } catch {}
   return Object.assign(db, { sqlite });
 }
 export type Db = ReturnType<typeof openDb>;

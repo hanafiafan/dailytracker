@@ -80,4 +80,16 @@ describe("policy", () => {
     expect(dir.canSee("a@x.id")).toBe(true);
     expect(dir.canManage("a@x.id")).toBe(true);
   });
+  it("Superadmin (Hellens / owner) has full access to everyone including BO and Director", () => {
+    const superadmin = as("hellensdev@gmail.com", true);
+    expect(superadmin.isOwner).toBe(true);
+    expect(superadmin.isSuper).toBe(true);
+    expect(superadmin.isBoss).toBe(true);
+    expect(superadmin.canSee("hanief@x.id")).toBe(true);
+    expect(superadmin.canManage("hanief@x.id")).toBe(true);
+    expect(superadmin.canSee("aziz@x.id")).toBe(true);
+    expect(superadmin.canManage("aziz@x.id")).toBe(true);
+    expect(superadmin.canSee("a@x.id")).toBe(true);
+    expect(superadmin.canManage("a@x.id")).toBe(true);
+  });
 });

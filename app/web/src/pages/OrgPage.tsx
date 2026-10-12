@@ -8,65 +8,80 @@ import { useLeaves, useMeta, useTasks } from "../lib/queries";
 import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
 
-type Level = "bo" | "owner" | "head" | "member";
-const LEVEL: Record<Level, string> = { bo: "BO", owner: "Direktur", head: "Atasan", member: "Anggota" };
+type Level = "superadmin" | "bo" | "director" | "owner" | "head" | "member";
+const LEVEL: Record<Level, string> = { superadmin: "Superadmin", bo: "BO", director: "Direktur", owner: "Superadmin", head: "Atasan", member: "Anggota" };
 
 interface Person { key: string; name: string; role: string; level: Level; unit: string; m?: MemberDTO; reports: string; kids: Person[] }
 
-/** The chart follows the executive hierarchy: BO sits at the top; Director reports to BO; units report to Director. */
+/** The chart follows the executive hierarchy: Superadmin (Hellens) sits at the very top; BO (Hanief) sits under Hellens; Director (Aziz) reports to BO; units report to Director. */
 function useOrg() {
   const { team, me } = useViewer();
   const owner = useMeta(true).data?.owner;
   return useMemo(() => {
     const ownerM = owner ? team.find(m => m.email === owner.email) : undefined;
     const boM = team.find(m => isBOMember(m));
-    const directorM = team.find(m => isDirectorMember(m)) ?? ownerM;
+    const directorM = team.find(m => isDirectorMember(m));
 
-    // Root is BO (Hanief) if present, sitting above Director (Aziz). Otherwise fallback to owner.
-    const rootKey = boM ? boM.email : (owner?.email ?? "root");
-    const root: Person = boM ? {
-      key: boM.email,
-      name: boM.name,
-      role: boM.role || "BO",
-      level: "bo",
-      unit: boM.group,
-      m: boM,
-      reports: "—",
-      kids: [],
-    } : {
-      key: owner?.email ?? "root",
-      name: ownerM?.name ?? owner?.name ?? "Superadmin",
-      role: ownerM?.role || "Superadmin aplikasi",
-      level: "owner",
-      unit: "",
+    // Root is ALWAYS Hellens (Superadmin / Owner)
+    const rootName = ownerM?.name ?? (owner?.name && owner.name !== "Superadmin" ? owner.name : "Hellens");
+    const rootRole = ownerM?.role || "Superadmin";
+    const rootKey = owner?.email ?? "root";
+    const root: Person = {
+      key: rootKey,
+      name: rootName,
+      role: rootRole,
+      level: "superadmin",
+      unit: ownerM?.group ?? "",
       m: ownerM,
       reports: "—",
       kids: [],
     };
 
     const nodes = new Map<string, Person>(
-      team.filter(m => m.email !== root.key).map(m => [
-        m.email,
-        {
-          key: m.email,
-          name: m.name,
-          role: m.role,
-          level: (directorM && m.email === directorM.email) ? "owner" : "member",
-          unit: m.group,
-          m,
-          reports: root.name,
-          kids: [],
-        },
-      ])
+      team.filter(m => m.email !== root.key).map(m => {
+        const isBO = !!boM && m.email === boM.email;
+        const isDir = !!directorM && m.email === directorM.email;
+        const level: Level = isBO ? "bo" : isDir ? "director" : "member";
+        const role = isBO
+          ? (m.role && m.role.trim().toUpperCase() === "BO" ? m.role : "BO")
+          : isDir
+          ? (m.role && m.role.trim().toLowerCase().includes("direktur") ? m.role : "Direktur")
+          : m.role;
+        return [
+          m.email,
+          {
+            key: m.email,
+            name: m.name,
+            role,
+            level,
+            unit: m.group,
+            m,
+            reports: root.name,
+            kids: [],
+          },
+        ];
+      })
     );
 
     const parentOf = (m: MemberDTO): string | null => {
-      if (boM && directorM && m.email === directorM.email) return boM.email;
-      if (m.managerEmail && m.managerEmail !== m.email && (nodes.has(m.managerEmail) || m.managerEmail === root.key)) return m.managerEmail;
+      // Hanief (BO) reports directly to Hellens (root)
+      if (boM && m.email === boM.email) return root.key;
+
+      // Aziz (Director) reports directly to Hanief (BO) if present, otherwise to Hellens (root)
+      if (directorM && m.email === directorM.email) return boM ? boM.email : root.key;
+
+      // If a specific manager is configured:
+      if (m.managerEmail && m.managerEmail !== m.email && (nodes.has(m.managerEmail) || m.managerEmail === root.key)) {
+        return m.managerEmail;
+      }
+
+      // If in a unit with a designated head:
       const head = m.group ? team.find(h => h.email !== m.email && h.isAdmin && h.adminGroups.includes(m.group)) : undefined;
-      if (head && head.email !== root.key) return head.email;
+      if (head && head.email !== root.key && head.email !== m.email) return head.email;
+
+      // Default for unit leads / employees: report to Director (Aziz) if present, else root
       if (directorM && m.email !== directorM.email) return directorM.email;
-      return null;
+      return root.key;
     };
 
     const direct = new Map(team.filter(m => m.email !== root.key).map(m => [m.email, parentOf(m)]));
@@ -84,7 +99,9 @@ function useOrg() {
     const mark = (p: Person) => {
       p.kids.sort((a, b) => (a.m?.sortOrder ?? 999) - (b.m?.sortOrder ?? 999));
       p.kids.forEach(mark);
-      if (p.level !== "bo" && p.level !== "owner" && p.kids.length) p.level = "head";
+      if (p.level !== "superadmin" && p.level !== "bo" && p.level !== "director" && p.level !== "owner" && p.kids.length) {
+        p.level = "head";
+      }
     };
     mark(root);
     const flat: Person[] = [];
@@ -140,7 +157,7 @@ export function OrgView() {
             <tbody>{rows.map(p => (
               <tr key={p.key}>
                 <td><span className="nm">{p.m ? <Avatar m={p.m} /> : <span className="avatar">{p.name[0]}</span>}<b>{p.name}</b></span></td>
-                <td>{p.role || "—"}</td><td>{p.unit || "—"}</td><td><span className={"stpill " + (p.level === "bo" ? "bo" : p.level === "member" ? "" : p.level === "head" ? "doing" : "done")}>{LEVEL[p.level]}</span></td>
+                <td>{p.role || "—"}</td><td>{p.unit || "—"}</td><td><span className={"stpill " + (p.level === "superadmin" || p.level === "owner" ? "superadmin" : p.level === "bo" ? "bo" : p.level === "director" ? "director" : p.level === "member" ? "" : p.level === "head" ? "doing" : "done")}>{LEVEL[p.level]}</span></td>
                 <td>{p.reports}</td>{policy.isManager && <td style={{ textAlign: "right", fontWeight: 700 }}>{openOf(p.m?.email) ?? "—"}</td>}
                 <td className="muted">{p.m?.seenAt ? fmtShort(new Date(p.m.seenAt).toISOString().slice(0, 10)) : "Belum pernah"}</td>
               </tr>))}</tbody>

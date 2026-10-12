@@ -48,8 +48,9 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     for (const email of new Set(emails)) tx.insert(chatGroupMembers).values({ groupId: gid, email }).run();
   };
   const canAccess = (email: string, owner: boolean, channel: string) => {
+    if (owner) return true; // Superadmin has full access to all channels
     const t = team(), p = makePolicy(email, owner, t), me = t.find(m => m.email === email);
-    if (!owner && !me) return false;
+    if (!me) return false;
     if (channel === "bo-direktur") return p.isBO || p.isDirector;
     if (p.isBO) {
       if (channel === GENERAL) return false;
@@ -102,7 +103,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
           group: {
             members: team().filter(x => isBOMember(x) || isDirectorMember(x) || x.email === env.OWNER_EMAIL).map(x => x.email),
             createdBy: u.email,
-            canManage: false,
+            canManage: u.owner,
           },
         });
       }
@@ -126,10 +127,10 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, b = c.req.valid("json"), t = team();
       if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
       if (b.emails.some(e => !t.some(m => m.email === e))) return c.json({ error: "Anggota tidak ditemukan" }, 404);
-      if (u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)) && e !== env.OWNER_EMAIL)) {
+      if (!u.owner && u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)) && e !== env.OWNER_EMAIL)) {
         return c.json({ error: "BO hanya dapat terhubung dengan Direktur" }, 403);
       }
-      if (!u.policy.isDirector && !u.policy.isBO && b.emails.some(e => isBOMember(t.find(x => x.email === e)))) {
+      if (!u.owner && !u.policy.isDirector && !u.policy.isBO && b.emails.some(e => isBOMember(t.find(x => x.email === e)))) {
         return c.json({ error: "Hanya Direktur yang dapat berkomunikasi dengan BO" }, 403);
       }
       const id = newId();
