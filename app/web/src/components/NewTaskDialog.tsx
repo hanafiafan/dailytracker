@@ -12,7 +12,7 @@ import { useViewer, type NewTaskPrefill } from "../lib/viewer";
 const PRESETS: [string, string, string][] = [["Pagi", "08:00", "12:00"], ["Siang", "13:00", "17:00"], ["Sore", "15:00", "17:00"], ["Malam", "19:00", "21:00"], ["Tanpa jam", "", ""]];
 const toggle = <T,>(s: Set<T>, v: T) => { const n = new Set(s); if (n.has(v)) n.delete(v); else n.add(v); return n; };
 
-/** Create a task with support for Team Assignment or Advanced Self Task. */
+/** Create a task with support for Team Assignment or Self Task. */
 export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill: NewTaskPrefill; date: string; onClose: () => void; onTemplate: (p: NewTaskPrefill) => void }) {
   const [, setTpl] = useState(0);
   const templates = loadTemplates();
@@ -45,7 +45,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const [start, setStart] = useState(prefill.start ?? "");
   const [due, setDue] = useState(prefill.due ?? "");
 
-  // Advanced Self Task States
+  // Self Task States
   const [focusType, setFocusType] = useState<"deep" | "quick" | "routine" | "urgent" | null>(prefill.focusType ?? null);
   const [targetOutput, setTargetOutput] = useState(prefill.targetOutput ?? "");
   const [refLink, setRefLink] = useState(prefill.refLink ?? "");
