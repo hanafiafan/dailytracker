@@ -24,7 +24,22 @@ export interface Ui {
   newTask: (prefill?: NewTaskPrefill) => void;
   openSearch: () => void;
 }
-export interface NewTaskPrefill { emails?: string[]; date?: string; start?: string; due?: string; projectId?: string; title?: string; note?: string; priority?: Priority; labelIds?: string[]; steps?: string[] }
+export interface NewTaskPrefill {
+  mode?: "team" | "self";
+  emails?: string[];
+  date?: string;
+  start?: string;
+  due?: string;
+  projectId?: string;
+  title?: string;
+  note?: string;
+  priority?: Priority;
+  labelIds?: string[];
+  steps?: string[];
+  targetOutput?: string;
+  refLink?: string;
+  focusType?: "deep" | "quick" | "routine" | "urgent";
+}
 export const UiContext = createContext<Ui | null>(null);
 export const useUi = () => {
   const v = useContext(UiContext);

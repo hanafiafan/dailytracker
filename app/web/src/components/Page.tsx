@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen } from "lucide-react";
+import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen, Sparkles } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -87,12 +87,95 @@ export function TopNav() {
 }
 
 /** Page frame: title, optional day navigation and actions, then the optional tab row. */
+export function NewTaskHeaderButton() {
+  const { policy, me } = useViewer();
+  const { newTask } = useUi();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const on = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", on);
+    return () => document.removeEventListener("mousedown", on);
+  }, [open]);
+
+  if (!policy.isManager) {
+    return (
+      <button
+        className="btn blue hide-mobile"
+        style={{ height: 40 }}
+        onClick={() => newTask({ mode: "self", emails: [me.email] })}
+      >
+        <Plus size={16} />
+        Tugas baru
+      </button>
+    );
+  }
+
+  return (
+    <div className="usermenu hide-mobile" ref={ref} style={{ display: "inline-block" }}>
+      <button
+        className="btn blue"
+        style={{ height: 40, gap: 6, paddingRight: 10 }}
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+      >
+        <Plus size={16} />
+        Tambah tugas
+        <ChevronDown size={14} style={{ opacity: 0.8, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+      </button>
+      {open && (
+        <div
+          className="popover"
+          role="menu"
+          style={{ minWidth: 290, right: 0, top: "calc(100% + 6px)", padding: 6, zIndex: 60 }}
+        >
+          <button
+            type="button"
+            className="menuitem"
+            style={{ padding: "10px 12px", borderRadius: 10, display: "flex", gap: 12, alignItems: "center", textAlign: "left" }}
+            onClick={() => { setOpen(false); newTask({ mode: "team" }); }}
+          >
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(59, 130, 246, 0.12)", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Users size={18} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--fg)" }}>Tugas untuk Tim</div>
+              <div className="muted" style={{ fontSize: "0.74rem", fontWeight: 400, marginTop: 1 }}>Tugaskan ke anggota atau seluruh tim</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="menuitem"
+            style={{ padding: "10px 12px", borderRadius: 10, display: "flex", gap: 12, alignItems: "center", textAlign: "left", marginTop: 2 }}
+            onClick={() => { setOpen(false); newTask({ mode: "self", emails: [me.email] }); }}
+          >
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(139, 92, 246, 0.12)", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--fg)" }}>Tugas Diri Sendiri</span>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: "rgba(139, 92, 246, 0.15)", color: "#7c3aed" }}>Advanced</span>
+              </div>
+              <div className="muted" style={{ fontSize: "0.74rem", fontWeight: 400, marginTop: 1 }}>Target, durasi, checklist &amp; referensi mandiri</div>
+            </div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions, noNew, back }: {
   title: ReactNode; sub?: ReactNode; tabs?: { id: string; label: string }[]; tab?: string; onTab?: (id: string) => void;
   dateNav?: boolean; actions?: ReactNode; children: ReactNode; noNew?: boolean; back?: string;
 }) {
-  const { policy } = useViewer();
-  const { date, setDate, newTask } = useUi();
+  const { date, setDate } = useUi();
   const t = today();
   const [, goBack] = useLocation();
   return (
@@ -108,7 +191,7 @@ export function Page({ title, sub, tabs, tab, onTab, dateNav, children, actions,
               <button aria-label="Hari berikutnya" onClick={() => setDate(addDays(date, 1))}><ChevronRight size={16} /></button>
             </div>
           )}
-          {!noNew && <button className="btn blue hide-mobile" style={{ height: 40 }} onClick={() => newTask()}><Plus size={16} />{policy.isManager ? "Tambah tugas" : "Tugas baru"}</button>}
+          {!noNew && <NewTaskHeaderButton />}
         </div>
       </div>
       {(tabs || actions) && (
