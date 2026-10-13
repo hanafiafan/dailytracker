@@ -9,6 +9,7 @@ export function useTaskActions(t: Pick<TaskDTO, "id">) {
   const id = t.id, param = { id };
   return {
     setStatus: useAction((status: TaskDTO["status"]) => ok(api.tasks[":id"].status.$patch({ param, json: { status } })), { refresh }),
+    approve: useAction((status: "approved" | "rejected") => ok(api.tasks[":id"].approve.$post({ param, json: { status } })), { done: "Keputusan persetujuan disimpan", refresh }),
     remove: useAction(() => ok(api.tasks[":id"].$delete({ param })), { done: "Tugas dihapus", refresh }),
     nudge: useAction(() => ok(api.tasks[":id"].nudge.$post({ param })), { done: "Pengingat terkirim", refresh: [keys.activity, keys.inbox] }),
     giveBack: useAction(() => ok(api.tasks[":id"].return.$post({ param })), { done: "Tugas dikembalikan. Tulis alasannya di komentar.", refresh }),

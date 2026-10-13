@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
-import { commentCreate, subtaskCreate, subtaskPatch, taskCreate, taskPatch, taskReport, taskStatus, type Priority } from "@shared/schemas";
+import { commentCreate, subtaskCreate, subtaskPatch, taskApproval, taskCreate, taskPatch, taskReport, taskStatus, type Priority } from "@shared/schemas";
 import { addDays, weekday, wib } from "@shared/time";
 import { activity, comments, labels, members, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
 import { toActivity, toComment } from "../dto.js";
@@ -53,17 +53,26 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (!projectOk(b.projectId)) return c.json({ error: "Proyek tidak ditemukan" }, 404);
       const priority: Priority = b.hot && b.priority === "normal" ? "high" : b.priority;
 
-      const self = !u.policy.isManager;
-      if (self && (!u.member || emails.length !== 1 || emails[0] !== u.email || b.routineDays)) return c.json({ error: "forbidden" }, 403);
-      if (!self && emails.some(e => !u.policy.canManage(e))) return c.json({ error: "forbidden" }, 403);
+      const isSelfOnly = emails.length === 1 && emails[0] === u.email;
+      if (isSelfOnly) {
+        if (!u.member || (b.routineDays && !u.policy.isManager)) return c.json({ error: "forbidden" }, 403);
+      } else {
+        if (!u.policy.isManager || emails.some(e => e !== u.email && !u.policy.canManage(e))) return c.json({ error: "forbidden" }, 403);
+      }
 
       const made: (typeof tasks.$inferSelect)[] = [];
       db.transaction(tx => {
         for (const email of emails) {
+          const isSelf = email === u.email;
+          const approvalStatus = "approved" as const;
           const base = {
-            email, title: b.title, note: self ? "" : b.note, start: b.start ?? null, due: b.due ?? null, hot: isHot(priority), priority,
-            projectId: b.projectId ?? null, needProof: self ? false : b.needProof, warnMin: self ? null : b.warnMin ?? null, by: self ? "self" as const : "owner" as const,
-            fromAdmin: self ? null : u.member?.name ?? u.name, createdAt: now,
+            email, title: b.title, note: b.note ?? "", start: b.start ?? null, due: b.due ?? null, hot: isHot(priority), priority,
+            projectId: b.projectId ?? null, needProof: isSelf ? false : b.needProof, warnMin: isSelf ? null : b.warnMin ?? null, by: isSelf ? "self" as const : "owner" as const,
+            fromAdmin: isSelf ? null : u.member?.name ?? u.name,
+            approvalStatus,
+            approvedBy: isSelf ? who(u) : null,
+            approvedAt: isSelf ? now : null,
+            createdAt: now,
           };
           if (b.routineDays?.length) {
             const rid = newId(4);
@@ -78,13 +87,20 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
             tx.insert(tasks).values(row).run();
             b.subtasks.forEach((title, i) => tx.insert(subtasks).values({ id: newId(), taskId: row.id, title, position: i }).run());
             for (const labelId of b.labelIds) tx.insert(taskLabels).values({ taskId: row.id, labelId }).onConflictDoNothing().run();
-            tx.insert(activity).values({ id: newId(), taskId: row.id, actorEmail: u.email, actorName: who(u), kind: "created", text: self ? "membuat tugas sendiri" : `memberi tugas kepada ${team.find(m => m.email === email)?.name ?? email}`, at: now }).run();
+            const actText = isSelf ? "membuat tugas sendiri" : `memberi tugas kepada ${team.find(m => m.email === email)?.name ?? email}`;
+            tx.insert(activity).values({ id: newId(), taskId: row.id, actorEmail: u.email, actorName: who(u), kind: "created", text: actText, at: now }).run();
             made.push(tx.select().from(tasks).where(eq(tasks.id, row.id)).get()!);
           }
-          if (!self) tx.update(members).set({ askAt: null }).where(eq(members.email, email)).run();
+          if (!isSelf) tx.update(members).set({ askAt: null }).where(eq(members.email, email)).run();
         }
       });
-      if (!self) made.forEach(t => void notify.newTask(t));
+      made.forEach(t => {
+        if (t.approvalStatus === "pending") {
+          void notify.taskApprovalRequested(t, who(u));
+        } else if (t.by === "owner") {
+          void notify.newTask(t);
+        }
+      });
       touch(); bus.emit("team");
       return c.json({ ids: made.map(t => t.id) }, 201);
     })
@@ -129,10 +145,27 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       touch();
       return c.json({ ok: true });
     })
+    .post("/:id/approve", zValidator("json", taskApproval), c => {
+      const u = c.var.user, t = find(c.req.param("id")), { status } = c.req.valid("json");
+      if (!t) return c.json({ error: "not found" }, 404);
+      if (!u.policy.canApproveTask(t.email)) return c.json({ error: "forbidden" }, 403);
+      if (t.approvalStatus !== "pending") return c.json({ error: "Tugas ini sudah diputuskan." }, 409);
+      const now = Date.now(), approver = who(u);
+      db.update(tasks).set({
+        approvalStatus: status,
+        approvedBy: approver,
+        approvedAt: now,
+      }).where(eq(tasks.id, t.id)).run();
+      log(u, t.id, status === "approved" ? "approved" : "rejected", status === "approved" ? "menyetujui tugas mandiri" : "menolak tugas mandiri");
+      void notify.taskApprovalDecided(t, approver, status === "approved");
+      touch();
+      return c.json({ ok: true });
+    })
     .patch("/:id/status", zValidator("json", taskStatus), c => {
       const u = c.var.user, t = find(c.req.param("id")), { status } = c.req.valid("json");
       if (!t) return c.json({ error: "not found" }, 404);
       if (!canWork(u, t)) return c.json({ error: "forbidden" }, 403);
+      if (t.approvalStatus === "pending") return c.json({ error: "Tugas belum disetujui atasan" }, 400);
       // Members finish a task through /complete (proof); managers can set it directly.
       if (status === "done" && !u.policy.canManage(t.email)) return c.json({ error: "Selesaikan tugas lewat form bukti" }, 400);
       const now = Date.now();
@@ -152,6 +185,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, t = find(c.req.param("id"));
       if (!t) return c.json({ error: "not found" }, 404);
       if (!canWork(u, t)) return c.json({ error: "forbidden" }, 403);
+      if (t.approvalStatus === "pending") return c.json({ error: "Tugas belum disetujui atasan" }, 400);
       const form = await c.req.parseBody();
       const photo = form.photo instanceof File && form.photo.size ? new Uint8Array(await form.photo.arrayBuffer()) : null;
       let link = typeof form.link === "string" ? form.link.trim() : "";
@@ -160,7 +194,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (link && !/^https?:\/\//i.test(link)) link = "https://" + link;
       if (link && !URL.canParse(link)) return c.json({ error: "Link tidak valid" }, 400);
       if (photo && (!isJpeg(photo) || photo.length > MAX_PROOF)) return c.json({ error: "Foto harus JPG dan kurang dari 1,5 MB" }, 400);
-      if (!skip && !photo && !link) return c.json({ error: "Lampirkan foto atau link sebagai bukti" }, 400);
+      if (!skip && !photo && !link && !note) return c.json({ error: "Lampirkan foto, link, atau keterangan sebagai bukti" }, 400);
       if (skip && t.needProof && !u.policy.canManage(t.email)) return c.json({ error: "Tugas ini wajib bukti" }, 400);
       const now = Date.now();
       db.transaction(tx => {

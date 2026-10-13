@@ -77,7 +77,7 @@ export function Board() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }));
   const move = useAction((v: { id: string; status: Status }) => ok(api.tasks[":id"].status.$patch({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
 
-  const people = team.filter(m => !m.isAdmin && policy.canSee(m.email));
+  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss) && policy.canSee(m.email));
   const wk = weekStart(date);
   const tasks = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -93,11 +93,12 @@ export function Board() {
     }).sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99"));
   }, [tq.data, range, date, wk, who, proj, lab, prio, q]);
 
-  const canDrag = (t: TaskDTO) => policy.canManage(t.email) || (me.email === t.email && !!me.member);
+  const canDrag = (t: TaskDTO) => t.approvalStatus !== "pending" && (policy.canManage(t.email) || (me.email === t.email && !!me.member));
   const onEnd = (e: DragEndEvent) => {
     setDragging(null);
     const t = tasks.find(x => x.id === e.active.id), to = e.over?.id as Status | undefined;
     if (!t || !to || !STATUSES.includes(to) || to === t.status) return;
+    if (t.approvalStatus === "pending") { toast("Tugas belum disetujui atasan."); return; }
     if (to === "done" && !policy.canManage(t.email)) { toast("Selesaikan lewat panel tugas agar bisa melampirkan bukti."); openTask(t.id); return; }
     patchTaskLocally(qc, t.id, { status: to });
     move.mutate({ id: t.id, status: to });

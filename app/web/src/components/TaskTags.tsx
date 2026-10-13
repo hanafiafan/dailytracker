@@ -44,7 +44,9 @@ export function TaskMeta({ t, isLate, time = true, compact, max }: { t: TaskDTO;
   if (t.comments.length > 0) add("cmt", <span className="tag off"><MessageSquare size={I} />{t.comments.length}</span>, `${t.comments.length} komentar`);
   for (const id of t.labelIds) { const l = label(id); if (l) add("l" + id, <span className="tag proj" data-c={l.color} title={l.name}>#{l.name}</span>, "#" + l.name); }
   if (t.routineId) add("rut", <span className="tag rut"><Repeat size={I} />Rutin</span>, "Tugas rutin");
-  if (t.by === "self") add("self", <span className="tag off">Buatan sendiri</span>, "Dibuat sendiri");
+  if (t.approvalStatus === "pending") add("appr", <span className="tag late" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#d97706", borderColor: "rgba(245, 158, 11, 0.3)" }}>Menunggu persetujuan</span>, "Menunggu persetujuan atasan");
+  else if (t.approvalStatus === "rejected") add("appr", <span className="tag late" style={{ background: "rgba(239, 68, 68, 0.15)", color: "#dc2626", borderColor: "rgba(239, 68, 68, 0.3)" }}>Ditolak</span>, "Ditolak oleh atasan");
+  else if (t.by === "self") add("self", <span className="tag off">Buatan sendiri</span>, "Dibuat sendiri");
   if (!compact && t.status !== "done" && t.needProof) add("need", <span className="tag off"><Paperclip size={I} />Wajib bukti</span>, "Wajib bukti");
   if (t.status === "done") add("proof", t.proofAt ? <span className="tag on"><CheckCheck size={I} />Ada bukti</span> : t.needProof ? <span className="tag late">Tanpa bukti</span> : null, "Bukti");
 

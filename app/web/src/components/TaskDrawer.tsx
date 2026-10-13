@@ -44,14 +44,21 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const mobile = useIsMobile(), [more, setMore] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [sub, setSub] = useState("");
+  const isPending = t.approvalStatus === "pending";
+  const canApprove = isPending && policy.canApproveTask(t.email);
   const canEdit = policy.canManage(t.email) || (me.email === t.email && !!me.member && t.by === "self");
   const manager = policy.canManage(t.email);
-  const work = manager || (me.email === t.email && !!me.member);
+  const work = (manager || (me.email === t.email && !!me.member)) && !isPending;
   const who = member(t.email);
   const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
   const done = t.subtasks.filter(s => s.done).length;
   const photo = t.hasPhoto ? `/api/tasks/${t.id}/proof` : null;
-  const cycle = () => { const next = NEXT[t.status]; if (!manager && next === "done") return setProofOpen(true); a.setStatus.mutate(next); };
+  const cycle = () => {
+    if (isPending) return void toast.error("Tugas belum disetujui atasan.");
+    const next = NEXT[t.status];
+    if (next === "done" && (t.needProof || t.email === me.email || !manager)) return setProofOpen(true);
+    a.setStatus.mutate(next);
+  };
   const onBlur = (field: "title" | "note") => (e: React.FocusEvent<HTMLTextAreaElement>) => {
     const v = e.target.value.trim();
     if (field === "title" && !v) { e.target.value = t.title; return; }
@@ -61,7 +68,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
     <>
       <div className="drawer-h">
         <div style={{ flex: 1, display: "grid", gap: 8 }}>
-          <div><button className={"status " + t.status} onClick={cycle} disabled={!work} aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button></div>
+          <div><button className={"status " + (isPending ? "pending" : t.status)} onClick={cycle} disabled={!work && !isPending} title={isPending ? "Menunggu persetujuan atasan" : undefined} aria-label={`Status: ${isPending ? "Menunggu" : STATUS[t.status]}. Ketuk untuk ganti.`}>{isPending ? "Menunggu" : STATUS[t.status]}</button></div>
           {canEdit
             ? <textarea className="input titlefield" rows={2} defaultValue={t.title} maxLength={120} onBlur={onBlur("title")} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} aria-label="Judul tugas" />
             : <h2>{t.title}</h2>}
@@ -70,6 +77,26 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <button className="iconbtn" onClick={closeTask} aria-label="Tutup"><X size={18} /></button>
       </div>
       <div className="drawer-b">
+        {isPending && (
+          <div className="surface" style={{ background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "grid", gap: 2 }}>
+              <b style={{ color: "#d97706", fontSize: 13 }}>Menunggu persetujuan atasan</b>
+              <small className="muted">{canApprove ? "Tugas mandiri ini memerlukan keputusan persetujuanmu sebelum bisa dikerjakan." : "Tugas ini belum disetujui atasan sehingga belum bisa dimulai."}</small>
+            </div>
+            {canApprove && (
+              <div className="chips" style={{ flexWrap: "nowrap" }}>
+                <button className="btn small primary" disabled={a.approve.isPending} onClick={() => a.approve.mutate("approved")}>Setujui</button>
+                <button className="btn small" disabled={a.approve.isPending} onClick={() => a.approve.mutate("rejected")}>Tolak</button>
+              </div>
+            )}
+          </div>
+        )}
+        {t.approvalStatus === "rejected" && (
+          <div className="surface" style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: 10, padding: "10px 14px", display: "grid", gap: 2 }}>
+            <b style={{ color: "#dc2626", fontSize: 13 }}>Tugas mandiri ini ditolak</b>
+            <small className="muted">{t.approvedBy ? `Ditolak oleh ${t.approvedBy}` : "Ditolak oleh atasan"}. Kamu bisa menghapus tugas ini.</small>
+          </div>
+        )}
         <section className="props">
           <span>Ditugaskan</span>
           {manager && people.length > 1
@@ -154,7 +181,13 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         </section>
       </div>
       <footer className="drawer-f">
-        {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (manager ? a.setStatus.mutate("done") : setProofOpen(true))}>Tandai selesai</button>}
+        {canApprove && (
+          <>
+            <button className="btn primary" disabled={a.approve.isPending} onClick={() => a.approve.mutate("approved")}>Setujui tugas</button>
+            <button className="btn" disabled={a.approve.isPending} onClick={() => a.approve.mutate("rejected")}>Tolak tugas</button>
+          </>
+        )}
+        {work && t.status !== "done" && !proofOpen && <button className="btn primary" onClick={() => (t.needProof || t.email === me.email || !manager ? setProofOpen(true) : a.setStatus.mutate("done"))}>Tandai selesai</button>}
         {mobile ? <><button className="btn" onClick={() => setMore(true)}><MoreHorizontal size={16} />Lainnya</button>
           <Sheet open={more} onClose={() => setMore(false)} title="Aksi tugas"><div className="alist sheetacts" onClick={() => setMore(false)}>
         {manager && t.status !== "done" && t.email !== me.email && <button className="btn" onClick={() => a.nudge.mutate()} disabled={a.nudge.isPending}><BellRing size={14} />Ingatkan</button>}

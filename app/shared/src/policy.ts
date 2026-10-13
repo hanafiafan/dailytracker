@@ -55,8 +55,17 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
       return email === me || isDirector;
     }
     if (isBoss) return true;
+    if (t?.managerEmail === me) return true;
     return !!t && isAdmin && !t.isAdmin && manages(t.group);
   };
+
+  /** Who may approve someone's self-created task: a superior who manages them (cannot approve own task). */
+  const canApproveTask = (email: string) => email !== me && canManage(email);
+
+  /** Does this user need approval when creating a task for themselves?
+   *  Tasks can be added instantly without superior approval.
+   */
+  const needsTaskApproval = () => false;
 
   /** Visibility:
    *  - Superadmin (Hellens / isOwner): full visibility of everyone.
@@ -87,7 +96,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   };
   /** Which guide this account reads (and confirms). */
   const guideRole = (): GuideRole => isBO ? "owner" : isOwner ? "owner" : isBoss ? "admin" : isAdmin ? "unit" : "karyawan";
-  return { me, isOwner, isSuper, isBO, isDirector, guideRole, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember };
+  return { me, isOwner, isSuper, isBO, isDirector, guideRole, isMember, isAdmin, isBoss, isManager, groups, manages, canManage, canSee, canCreateMember, canEditMember, canApproveTask, needsTaskApproval };
 }
 export type Policy = ReturnType<typeof makePolicy>;
 

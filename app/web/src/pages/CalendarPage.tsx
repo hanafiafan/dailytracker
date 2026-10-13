@@ -147,7 +147,7 @@ export function CalendarPage() {
   const counts = useMemo(() => { const c = new Map<string, number>(); for (const t of tq.data ?? []) c.set(t.date, (c.get(t.date) ?? 0) + 1); return c; }, [tq.data]);
   const t0 = today();
   const nowMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
-  const people = team.filter(m => !m.isAdmin && policy.canSee(m.email));
+  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss) && policy.canSee(m.email));
   const dragged = tasks.find(t => t.id === dragId);
   const title = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
 

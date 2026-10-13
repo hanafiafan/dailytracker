@@ -19,8 +19,10 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const { me, team, policy, projects, labels } = useViewer();
   const manager = policy.isManager;
   // The owner and admins without a unit limit may also give tasks to other admins.
-  const people = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email));
-  const [sel, setSel] = useState(new Set(manager ? prefill.emails ?? [] : [me.email]));
+  // Everyone (including managers) may also create tasks for themselves.
+  const people = team.filter(m => m.email === me.email || ((!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email)));
+  const [sel, setSel] = useState(() => new Set(prefill.emails && prefill.emails.length > 0 ? prefill.emails : [me.email]));
+  const isSelfOnly = sel.size === 1 && sel.has(me.email);
   const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
   const [proof, setProof] = useState(true), [warn, setWarn] = useState(30), [routine, setRoutine] = useState(false);
   const [days, setDays] = useState(new Set([1, 2, 3, 4, 5, 6]));
@@ -32,7 +34,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     start: start || null, due: due || null, priority, projectId: String(f.get("project") || "") || null, labelIds: [...lab],
     subtasks: String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean),
     needProof: proof, warnMin: manager && due && !routine ? warn : null, routineDays: routine ? [...days].sort() : undefined,
-  } })), { done: routine ? "Tugas rutin disimpan" : sel.size > 1 ? `Tugas dibagikan ke ${sel.size} orang` : "Tugas dibuat", refresh: [keys.tasks, keys.team, keys.routines, keys.activity] });
+  } })), { done: routine ? "Tugas rutin disimpan" : sel.size === 1 && sel.has(me.email) ? "Tugas mandiri berhasil dibuat" : sel.size > 1 ? `Tugas dibagikan ke ${sel.size} orang` : "Tugas dibuat", refresh: [keys.tasks, keys.team, keys.routines, keys.activity] });
 
   const submit = (f: FormData) => {
     if (!sel.size) return void toast.error("Pilih minimal satu orang");
@@ -41,19 +43,78 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     if (routine && !days.size) return void toast.error("Pilih hari untuk tugas rutin");
     save.mutate(f, { onSuccess: onClose });
   };
-  const all = people.length > 0 && sel.size === people.length;
+  const others = people.filter(p => p.email !== me.email);
+  const allTeam = others.length > 0 && others.every(p => sel.has(p.email));
   return (
     <>
       <div className="scrim" onClick={onClose} />
       <div className="dialog" role="dialog" aria-label="Tugas baru"><form style={{ display: "contents" }} onSubmit={e => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}>
-        <div className="dialog-h"><div><h2>{manager ? "Tugas baru" : "Tugas untukku"}</h2><p className="muted">{manager ? "Bagikan pekerjaan ke satu orang atau lebih." : "Catatan pekerjaan pribadimu."}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></div>
+        <div className="dialog-h"><div><h2>{isSelfOnly ? "Tugas mandiri" : manager ? "Tugas baru" : "Tugas untukku"}</h2><p className="muted">{isSelfOnly ? "Catatan pekerjaan untuk diri sendiri." : manager ? "Bagikan pekerjaan ke satu orang atau lebih." : "Catatan pekerjaan pribadimu."}</p></div><button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button></div>
         <div className="dialog-b">
           {manager && (
-            <section className="dsec"><h3>Penerima</h3>
-              <div className="chips">
-                <button type="button" className="chip" aria-pressed={all} onClick={() => setSel(all ? new Set() : new Set(people.map(p => p.email)))}>Semua</button>
-                {people.map(m => <button type="button" key={m.email} className="chip" aria-pressed={sel.has(m.email)} onClick={() => setSel(toggle(sel, m.email))}>{m.name}</button>)}
+            <section className="dsec">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <h3 style={{ margin: 0 }}>Penerima</h3>
+                <span className="muted" style={{ fontSize: 12 }}>
+                  {isSelfOnly ? "Tugas untuk Anda sendiri" : sel.size > 0 ? `${sel.size} orang dipilih` : "Pilih penerima"}
+                </span>
               </div>
+              <div className="seg" role="group" aria-label="Target tugas" style={{ width: "100%", marginBottom: 10 }}>
+                <button
+                  type="button"
+                  style={{ flex: 1 }}
+                  aria-pressed={isSelfOnly}
+                  onClick={() => setSel(new Set([me.email]))}
+                >
+                  Untuk Saya Sendiri ({me.member?.name ?? "Saya"})
+                </button>
+                <button
+                  type="button"
+                  style={{ flex: 1 }}
+                  aria-pressed={!isSelfOnly}
+                  onClick={() => {
+                    const o = people.filter(p => p.email !== me.email);
+                    const first = o[0];
+                    setSel(new Set(first ? [first.email] : []));
+                  }}
+                >
+                  Tugaskan ke Tim
+                </button>
+              </div>
+
+              {!isSelfOnly && (
+                <div className="chips">
+                  <button type="button" className="chip" aria-pressed={allTeam} onClick={() => {
+                    const o = people.filter(p => p.email !== me.email);
+                    setSel(sel.size === o.length ? new Set() : new Set(o.map(p => p.email)));
+                  }}>
+                    Semua Tim
+                  </button>
+                  {people.filter(m => m.email !== me.email).map(m => (
+                    <button type="button" key={m.email} className="chip" aria-pressed={sel.has(m.email)} onClick={() => setSel(toggle(sel, m.email))}>
+                      {m.name}
+                    </button>
+                  ))}
+                  <button type="button" className="chip" aria-pressed={sel.has(me.email)} onClick={() => setSel(toggle(sel, me.email))}>
+                    + {me.member?.name ?? "Saya"} (Ikut)
+                  </button>
+                </div>
+              )}
+
+              {isSelfOnly && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(99, 102, 241, 0.08)", borderRadius: 8, border: "1px solid rgba(99, 102, 241, 0.2)" }}>
+                  <span style={{ fontSize: 13 }}>Ditugaskan untuk: <b>{me.member?.name ?? me.email} (Anda)</b></span>
+                </div>
+              )}
+
+              {isSelfOnly && policy.needsTaskApproval() && (
+                <p className="muted" style={{ fontSize: 12, marginTop: 6, color: "#d97706" }}>Catatan: Tugas mandiri memerlukan persetujuan atasan sebelum bisa dikerjakan.</p>
+              )}
+            </section>
+          )}
+          {!manager && policy.needsTaskApproval() && (
+            <section className="dsec">
+              <p className="muted" style={{ fontSize: 12, color: "#d97706" }}>Catatan: Tugas mandiri memerlukan persetujuan atasan sebelum bisa dikerjakan.</p>
             </section>
           )}
           {templates.length > 0 && (
@@ -63,7 +124,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
           )}
           <section className="dsec"><h3>Detail</h3>
             <label className="field"><span>Judul</span><input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder="Contoh: Foto produk pashmina warna baru" maxLength={120} /></label>
-            {manager && <label className="field"><span>Deskripsi <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span><textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, link brief, atau target" /></label>}
+            <label className="field"><span>Deskripsi <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span><textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, link brief, atau target" /></label>
             <div className="dgrid">
               <div className="field"><span>Prioritas</span><div className="seg" role="group" aria-label="Prioritas" style={{ justifySelf: "start" }}>{PRIORITIES.map(p => <button type="button" key={p} aria-pressed={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</button>)}</div></div>
               <label className="field"><span>Proyek</span><select className="input" name="project" defaultValue={prefill.projectId ?? ""}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
@@ -98,7 +159,12 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
           )}
           {routine && manager && <section className="dsec"><h3>Bukti</h3><label className="check"><input type="checkbox" checked={proof} onChange={e => setProof(e.target.checked)} />Karyawan wajib melampirkan bukti</label></section>}
         </div>
-        <footer className="dialog-f"><button type="button" className="btn ghost" onClick={onClose}>Batal</button><button type="submit" className="btn primary" disabled={save.isPending}>{routine ? "Simpan tugas rutin" : manager ? "Bagikan tugas" : "Simpan"}</button></footer>
+        <footer className="dialog-f">
+          <button type="button" className="btn ghost" onClick={onClose}>Batal</button>
+          <button type="submit" className="btn primary" disabled={save.isPending}>
+            {routine ? "Simpan tugas rutin" : isSelfOnly ? "Simpan tugas mandiri" : manager ? (sel.size > 1 ? `Bagikan ke ${sel.size} orang` : "Kirim tugas") : "Simpan"}
+          </button>
+        </footer>
       </form></div>
     </>
   );

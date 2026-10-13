@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState } from "react";
 import type { TaskDTO } from "@shared/schemas";
 import { NEXT, STATUS, fmtTime, host } from "../lib/format";
@@ -9,7 +10,7 @@ import { ConfirmButton } from "./ui";
 
 /** A task in a list. Tapping the title opens the detail drawer. */
 export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boolean; isLate?: boolean }) {
-  const { policy } = useViewer();
+  const { policy, me } = useViewer();
   const { openTask } = useUi();
   const [proofOpen, setProofOpen] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -17,14 +18,18 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
   const manager = policy.isManager;
 
   const cycle = () => {
+    if (t.approvalStatus === "pending") {
+      toast.error("Tugas belum disetujui atasan.");
+      return;
+    }
     const next = NEXT[t.status];
-    if (!manager && next === "done") return setProofOpen(true);
+    if (next === "done" && (t.needProof || t.email === me.email || !manager)) return setProofOpen(true);
     a.setStatus.mutate(next);
   };
   const photo = t.hasPhoto ? `/api/tasks/${t.id}/proof` : null;
   return (
     <li className="task" data-status={t.status}>
-      <button className={"status " + t.status} onClick={cycle} title="Ketuk untuk ganti status" aria-label={`Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{STATUS[t.status]}</button>
+      <button className={"status " + (t.approvalStatus === "pending" ? "pending" : t.status)} onClick={cycle} title={t.approvalStatus === "pending" ? "Menunggu persetujuan atasan" : "Ketuk untuk ganti status"} aria-label={t.approvalStatus === "pending" ? "Menunggu persetujuan atasan" : `Status: ${STATUS[t.status]}. Ketuk untuk ganti.`}>{t.approvalStatus === "pending" ? "Menunggu" : STATUS[t.status]}</button>
       <div className="tt">
         <b className="clamp2" title={t.title} role="link" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}>{t.title}</b>
         {t.note && <p className="clamp2">{t.note}</p>}

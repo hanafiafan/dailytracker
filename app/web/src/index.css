@@ -177,6 +177,7 @@
   .status::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); box-sizing: border-box; flex: none; }
   .status.doing { background: var(--volt); color: var(--volt-ink); } .status.doing::before { border-color: var(--ink); background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
   .status.done { background: var(--ink); color: #fff; } .status.done::before { border-color: var(--volt); background: var(--volt); }
+  .status.pending { background: rgba(245, 158, 11, 0.15); color: #d97706; } .status.pending::before { border-color: #d97706; border-style: dashed; }
   .del { background: none; border: 0; color: var(--muted); font-size: .8rem; padding: 4px 9px; border-radius: 999px; }
   .del:hover { color: var(--bad); background: var(--bad-soft); } .del.arm { color: var(--bad); background: var(--bad-soft); font-weight: 700; }
   .routines { font-size: .8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -423,6 +424,7 @@
   .mention, .nowline::before { background: var(--volt); }
   .status.doing { background: var(--blue-soft); color: var(--blue-ink); } .status.doing::before { border-color: var(--blue-ink); background: linear-gradient(90deg, var(--blue-ink) 50%, transparent 50%); }
   .status.done { background: var(--ok-soft); color: var(--ok); } .status.done::before { border-color: var(--ok); background: var(--ok); }
+  .status.pending { background: rgba(245, 158, 11, 0.15); color: #d97706; } .status.pending::before { border-color: #d97706; border-style: dashed; }
   .ev.doing { background: var(--blue-soft); color: var(--blue-ink); }
   .thbtn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-transform: inherit; letter-spacing: inherit; }
   .thbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }

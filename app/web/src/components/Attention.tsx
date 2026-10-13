@@ -1,4 +1,4 @@
-import { BellRing, CalendarOff, CheckCheck, Flame, Undo2 } from "lucide-react";
+import { BellRing, CalendarOff, CheckCheck, Clock, Flame, Undo2 } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { addDays, atMs } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -10,13 +10,14 @@ import { useUi, useViewer } from "../lib/viewer";
 import { Avatar, Empty } from "./ui";
 
 const DAY = 86_400_000;
-/** What a manager has to act on: late work (nudge), finished work to review (accept or send back), urgent work not started. */
-export function attention(tasks: TaskDTO[], canManage: (e: string) => boolean) {
+/** What a manager has to act on: late work (nudge), finished work to review (accept or send back), urgent work not started, and pending self tasks to approve. */
+export function attention(tasks: TaskDTO[], canManage: (e: string) => boolean, meEmail?: string) {
   const now = Date.now(), t0 = today(), mine = tasks.filter(t => canManage(t.email));
   const late = mine.filter(t => t.status !== "done" && (t.date < t0 || (t.due && now > atMs(t.date, t.due)))).sort((a, b) => a.date.localeCompare(b.date));
   const review = mine.filter(t => t.status === "done" && t.by !== "self" && t.doneAt && now - t.doneAt < 3 * DAY).sort((a, b) => b.doneAt! - a.doneAt!);
   const stuck = mine.filter(t => t.status === "todo" && (t.priority === "urgent" || t.priority === "high") && t.date <= addDays(t0, 1) && !late.includes(t));
-  return { late, review, stuck };
+  const pending = mine.filter(t => t.approvalStatus === "pending" && (!meEmail || t.email !== meEmail));
+  return { late, review, stuck, pending };
 }
 
 function Row({ t, children, note }: { t: TaskDTO; children: React.ReactNode; note: string }) {
@@ -32,16 +33,27 @@ function Row({ t, children, note }: { t: TaskDTO; children: React.ReactNode; not
 }
 
 export function Attention({ tasks }: { tasks: TaskDTO[] }) {
-  const { policy } = useViewer();
-  const { late, review, stuck } = attention(tasks, policy.canManage);
-  const { me, member } = useViewer();
+  const { policy, me, member } = useViewer();
+  const { late, review, stuck, pending } = attention(tasks, policy.canManage, policy.me);
   const waiting = (useLeaves(true).data ?? []).filter(l => l.status === "pending" && l.email !== me.email && policy.canManage(l.email));
   const decide = useAction((v: { id: string; status: "approved" | "rejected" }) => ok(api.leaves[":id"].decision.$patch({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.leaves, keys.inbox], done: "Keputusan tersimpan" });
+  const approveTask = useAction((v: { id: string; status: "approved" | "rejected" }) => ok(api.tasks[":id"].approve.$post({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity], done: "Keputusan persetujuan tersimpan" });
   const nudge = useAction((id: string) => ok(api.tasks[":id"].nudge.$post({ param: { id } })), { done: "Pengingat terkirim", refresh: [keys.activity, keys.inbox] });
   const back = useAction((id: string) => ok(api.tasks[":id"].return.$post({ param: { id } })), { done: "Dikembalikan untuk diperbaiki", refresh: [keys.tasks, keys.activity, keys.analytics] });
   const days = (d: string) => { const n = Math.round((atMs(today(), "12:00") - atMs(d, "12:00")) / DAY); return n > 0 ? `terlambat ${n} hari` : "lewat jam tenggat"; };
   return (
     <div className="two2">
+      {pending.length > 0 && (
+        <section className="bc s12">
+          <div className="bc-h"><span className="bc-ico" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#d97706" }}><Clock size={18} /></span><h2>Persetujuan tugas mandiri</h2><span className="muted">{pending.length}</span></div>
+          <ul className="alist">{pending.slice(0, 8).map(t => (
+            <Row key={t.id} t={t} note={`${fmtShort(t.date)}${t.due ? ` · s/d ${t.due}` : ""}`}>
+              <button className="btn small primary" disabled={approveTask.isPending} onClick={() => approveTask.mutate({ id: t.id, status: "approved" })}>Setujui</button>
+              <button className="btn small" disabled={approveTask.isPending} onClick={() => approveTask.mutate({ id: t.id, status: "rejected" })}>Tolak</button>
+            </Row>
+          ))}</ul>
+        </section>
+      )}
       <section className="bc">
         <div className="bc-h"><span className="bc-ico red"><BellRing size={18} /></span><h2>Terlambat</h2><span className="muted">{late.length}</span></div>
         <ul className="alist">{late.slice(0, 8).map(t => <Row key={t.id} t={t} note={days(t.date)}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>

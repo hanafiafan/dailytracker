@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { activity, notifications, tasks } from "../src/db/schema.js";
+import { activity, members, notifications, tasks } from "../src/db/schema.js";
 import { wib } from "@shared/time";
 import { OWNER, setup } from "./helpers.js";
 
@@ -413,3 +413,56 @@ describe("leave evidence", () => {
     expect((await t.call("a@x.id", "PUT", `/leaves/${l.id}/proof`, JPG)).status).toBe(403); // frozen once decided
   });
 });
+
+describe("instant self tasks and proof completion", () => {
+  it("unit admin and members create self tasks instantly and complete with proof note", async () => {
+    const t = setup();
+    // Unit admin (hcs@x.id) can create their own task instantly
+    const res = await t.call("hcs@x.id", "POST", "/tasks", { emails: ["hcs@x.id"], title: "Desain Konten Sendiri" });
+    expect(res.status).toBe(201);
+    const { ids } = await json(res);
+    const taskId = ids[0];
+
+    // Task is instant approved
+    const [task] = (await json(await t.call("hcs@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
+    expect(task).toMatchObject({ id: taskId, by: "self", approvalStatus: "approved", needProof: false });
+
+    // Can change status to doing directly
+    expect((await t.call("hcs@x.id", "PATCH", `/tasks/${taskId}/status`, { status: "doing" })).status).toBe(200);
+
+    // Completing without photo/link/note fails
+    const failRes = await t.call("hcs@x.id", "POST", `/tasks/${taskId}/complete`, new FormData());
+    expect(failRes.status).toBe(400);
+
+    // Completing with note (keterangan) succeeds
+    const fd = new FormData();
+    fd.set("note", "Sudah selesai dikerjakan dan diposting");
+    const okRes = await t.call("hcs@x.id", "POST", `/tasks/${taskId}/complete`, fd);
+    expect(okRes.status).toBe(200);
+
+    const [doneTask] = (await json(await t.call("hcs@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
+    expect(doneTask).toMatchObject({ id: taskId, status: "done", report: "Sudah selesai dikerjakan dan diposting" });
+  });
+
+  it("ordinary member can create self task instantly", async () => {
+    const t = setup();
+    const res = await t.call("a@x.id", "POST", "/tasks", { emails: ["a@x.id"], title: "Inisiatif A" });
+    expect(res.status).toBe(201);
+    const { ids } = await json(res);
+    const taskId = ids[0];
+
+    const [task] = (await json(await t.call("a@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
+    expect(task).toMatchObject({ id: taskId, by: "self", approvalStatus: "approved" });
+  });
+
+  it("brand owner self task is created instantly", async () => {
+    const t = setup();
+    t.db.insert(members).values({ email: "hanief@x.id", name: "Hanief", role: "BO", isAdmin: true, sortOrder: 0 }).run();
+    const res = await t.call("hanief@x.id", "POST", "/tasks", { emails: ["hanief@x.id"], title: "Review Bisnis" });
+    expect(res.status).toBe(201);
+    const { ids } = await json(res);
+    const [task] = (await json(await t.call("hanief@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
+    expect(task).toMatchObject({ id: ids[0], by: "self", approvalStatus: "approved" });
+  });
+});
+

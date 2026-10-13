@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ChevronRight, Hand } from "lucide-react";
+import { ChevronRight, Hand, Plus } from "lucide-react";
 import { addDays } from "@shared/time";
 import { Page } from "../components/Page";
 import { InstallCard, NotifyCard } from "../components/Cards";
@@ -81,7 +81,7 @@ function ManagerDashboard() {
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
   const leaves = useLeaves(true).data ?? [];
   const idle = loaded && date === today() ? workers.filter(m => !m.isAdmin && !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
-  const a = attention(tasks, policy.canManage), attn = a.late.length + a.review.length + a.stuck.length;
+  const a = attention(tasks, policy.canManage, policy.me), attn = a.late.length + a.review.length + a.stuck.length + a.pending.length;
   const asking = idle.filter(m => isToday(m.askAt));
   // An admin who is also on the team gets tasks from the owner or other admins: they need their own list too.
   const self = me.member ? member(me.email) : undefined;
@@ -96,10 +96,15 @@ function ManagerDashboard() {
         {myUnits.map(g => <button key={g} className="chip" aria-pressed={unit === g} onClick={() => setUnit(g)}>{g}</button>)}
       </div> : undefined}>
       {tab === "orang" && self && (
-        <button className="surface mytasks" onClick={() => setTab("saya")} aria-label={`Buka tugas saya, ${myOpen} belum selesai`}>
-          <span><b>Tugas saya</b><small className="muted">{myOpen ? `${myOpen} tugas belum selesai` : "Semua tugasmu sudah selesai"}</small></span>
-          <ChevronRight size={18} />
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "stretch" }}>
+          <button className="surface mytasks" style={{ flex: 1 }} onClick={() => setTab("saya")} aria-label={`Buka tugas saya, ${myOpen} belum selesai`}>
+            <span><b>Tugas saya</b><small className="muted">{myOpen ? `${myOpen} tugas belum selesai` : "Semua tugasmu sudah selesai"}</small></span>
+            <ChevronRight size={18} />
+          </button>
+          <button className="btn blue" style={{ alignSelf: "center", height: 48, whiteSpace: "nowrap" }} onClick={() => newTask({ emails: [self.email], date })}>
+            <Plus size={15} /> Buat tugas saya
+          </button>
+        </div>
       )}
       {tab === "orang" && <><InstallCard /><NotifyCard manager /></>}
       {tab === "orang" && (mobile
@@ -136,7 +141,12 @@ function ManagerDashboard() {
       {tab === "saya" && self && <>
         {myDay.late.length > 0 && <section className="list"><h2>Belum selesai dari hari sebelumnya</h2><ul className="tasks">{myDay.late.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} isLate />)}</ul></section>}
         <section className="list">
-          <h2>{date === today() ? "Tugas hari ini" : "Tugas " + fmtShort(date)}</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <h2 style={{ margin: 0 }}>{date === today() ? "Tugas hari ini" : "Tugas " + fmtShort(date)}</h2>
+            <button className="btn small blue" onClick={() => newTask({ emails: [self.email], date })}>
+              <Plus size={14} /> Tugas baru
+            </button>
+          </div>
           {myDay.day.length ? <ul className="tasks">{myDay.day.map(t => <TaskRow key={t.id} t={t} canDelete={t.by === "self"} />)}</ul>
             : <p className="empty">{loaded ? "Belum ada tugas untukmu di tanggal ini." : "Memuat…"}</p>}
           <QuickAddSelf email={self.email} date={date} />

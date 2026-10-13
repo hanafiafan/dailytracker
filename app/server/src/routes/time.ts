@@ -29,6 +29,7 @@ export const timeRoutes = ({ db, bus }: Deps) => {
       if (!t) return c.json({ error: "not found" }, 404);
       if (!(u.policy.canManage(t.email) || (u.email === t.email && !!u.member))) return c.json({ error: "forbidden" }, 403);
       if (t.status === "done") return c.json({ error: "Tugas ini sudah selesai." }, 409);
+      if (t.approvalStatus === "pending") return c.json({ error: "Tugas belum disetujui atasan." }, 400);
       stopRunning(u.email, now);
       db.insert(timeEntries).values({ id: newId(), taskId: t.id, email: u.email, startedAt: now }).run();
       if (t.status === "todo") { db.update(tasks).set({ status: "doing", startedAt: now }).where(eq(tasks.id, t.id)).run(); logActivity(db, u, t.id, "doing", "mulai mengerjakan"); }

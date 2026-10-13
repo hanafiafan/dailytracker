@@ -75,6 +75,8 @@ export const commentCreate = z.object({ text: z.string().trim().min(1).max(600),
 export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), url: z.string().trim().url().max(500) });
 export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
 
+export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });
+
 // ---- shapes returned by the API ----
 export interface MemberDTO {
   email: string; name: string; role: string; group: string; isAdmin: boolean; adminGroups: string[];
@@ -99,6 +101,7 @@ export interface AnalyticsDTO {
 export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
   status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
+  approvalStatus: "pending" | "approved" | "rejected"; approvedBy: string | null; approvedAt: number | null;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];
