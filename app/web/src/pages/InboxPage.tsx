@@ -113,7 +113,7 @@ function DirectMessageDialog({ onClose, onDone }: { onClose: () => void; onDone:
     return res.channelId;
   }, { done: "Percakapan dibuka" });
 
-  const people = team.filter(m => m.email !== me.email && policy.canSee(m.email) && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
+  const people = team.filter(m => m.email !== me.email && policy.canChatWith(m.email) && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
 
   return (
     <>
@@ -216,13 +216,32 @@ function Notifs() {
 export function InboxPage() {
   const [params, setParams] = useSearchParams();
   const mobile = useIsMobile();
+  const { me, team } = useViewer();
   const chans = useChannels(), list = useMemo(() => chans.data ?? [], [chans.data]);
   const unread = list.reduce((s, c) => s + c.unread, 0), notif = useInbox(true).data?.unread ?? 0;
   const [newGroup, setNewGroup] = useState(false);
   const [newDm, setNewDm] = useState(false);
   const [tab, setTab] = useState(params.get("tab") === "notif" ? "notif" : "pesan");
   const picked = params.get("c");
-  const active = list.find(c => c.id === picked) ?? (mobile ? null : list[0] ?? null);
+
+  const fallbackDm = useMemo<ChannelDTO | null>(() => {
+    if (!picked || !picked.startsWith("dm:")) return null;
+    const parts = picked.slice(3).split(":");
+    const partnerEmail = parts.find(e => e !== me.email) || parts[0];
+    const partner = team.find(m => m.email === partnerEmail);
+    return {
+      id: picked,
+      kind: "dm",
+      name: partner?.name ?? partnerEmail ?? "Chat Pribadi",
+      projectId: null,
+      color: "lilac",
+      unread: 0,
+      last: null,
+      dmUser: partner ? { email: partner.email, name: partner.name, role: partner.role, hasPhoto: partner.hasPhoto, photoV: partner.photoV } : undefined,
+    };
+  }, [picked, me.email, team]);
+
+  const active = list.find(c => c.id === picked) ?? fallbackDm ?? (mobile ? null : list[0] ?? null);
   const pick = (id: string | null) => setParams(p => { const n = new URLSearchParams(p); if (id) n.set("c", id); else n.delete("c"); return n; });
   const inThread = mobile && tab === "pesan" && !!active;
   return (

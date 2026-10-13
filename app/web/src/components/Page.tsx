@@ -72,8 +72,17 @@ export function TopNav() {
             {m ? <Avatar m={m} /> : <span className="avatar" style={{ background: "var(--ink)", color: "var(--volt)" }}>{me.name[0]}</span>}<ChevronDown size={14} />
           </button>
           {menu && (
-            <div className="popover" role="menu" style={{ minWidth: 220 }}>
-              <div style={{ padding: "8px 12px" }}><b className="clamp1">{m?.name ?? me.name}</b><small className="muted clamp1">{m?.role || (me.owner ? "Superadmin" : me.email)}</small></div>
+            <div className="popover" role="menu" style={{ minWidth: 240, maxWidth: 300 }}>
+              <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
+                <b className="clamp1">{m?.name ?? me.name}</b>
+                <small className="muted clamp1" style={{ display: "block" }}>{m?.role || (me.owner ? "Superadmin" : me.email)}</small>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                  {m?.level && <span className="tag proj" style={{ fontSize: ".7rem" }}>{m.level}</span>}
+                  {m?.group && <span className="tag due" style={{ fontSize: ".7rem" }}>{m.group}</span>}
+                  {m?.accountType === "client" && <span className="tag off" style={{ fontSize: ".7rem" }}>Klien</span>}
+                </div>
+                {m?.jobdesk && <p className="muted clamp2" style={{ fontSize: ".75rem", marginTop: 6, lineHeight: 1.3 }} title={m.jobdesk}>{m.jobdesk}</p>}
+              </div>
               <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/panduan"); }}><BookOpen size={16} /><span>Panduan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { setMenu(false); go("/pengaturan"); }}><Settings size={16} /><span>Pengaturan</span></button>
               <button className="menuitem" role="menuitem" onClick={() => { toggleTheme(); setMenu(false); }}>{getTheme() === "dark" ? <Sun size={16} /> : <Moon size={16} />}<span>{getTheme() === "dark" ? "Mode terang" : "Mode gelap"}</span></button>

@@ -17,24 +17,27 @@ export interface PolicyMember {
 
 export type GuideRole = "karyawan" | "unit" | "admin" | "owner";
 
-export const isBOMember = (m?: { name?: string; role?: string } | null) =>
+export const isBOMember = (m?: { name?: string; role?: string; email?: string } | null) =>
   !!m && (
     m.role?.trim().toUpperCase() === "BO" ||
     m.role?.trim().toLowerCase() === "business owner" ||
-    m.name?.trim().toLowerCase() === "hanief"
+    /hanief/i.test(m.name ?? "") ||
+    /hanief/i.test(m.email ?? "")
   );
 
-export const isDirectorMember = (m?: { name?: string; role?: string } | null) =>
+export const isDirectorMember = (m?: { name?: string; role?: string; email?: string } | null) =>
   !!m && (
     m.role?.trim().toLowerCase().includes("direktur") ||
-    m.name?.trim().toLowerCase() === "aziz"
+    /aziz/i.test(m.name ?? "") ||
+    /aziz/i.test(m.email ?? "")
   );
 
-export const isProjectManagerMember = (m?: { name?: string; role?: string; level?: string } | null) =>
+export const isProjectManagerMember = (m?: { name?: string; role?: string; level?: string; email?: string } | null) =>
   !!m && (
     (!!m.role && /project manager|pm\b/i.test(m.role)) ||
     (!!m.level && /project manager/i.test(m.level)) ||
-    (!!m.name && /vero/i.test(m.name))
+    /vero/i.test(m.name ?? "") ||
+    /vero/i.test(m.email ?? "")
   );
 
 export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMember[]) {
@@ -129,10 +132,29 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
 
   /** Which guide this account reads (and confirms). */
   const guideRole = (): GuideRole => isBO ? "owner" : isOwner ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
+
+  /** Who this person can start a direct message with:
+   *  - Superadmin & Director: anyone on the team.
+   *  - BO: only Director and Superadmin.
+   *  - Client: only team members who manage them.
+   *  - Regular members: any other member except BO (who is isolated) and except Client.
+   */
+  const canChatWith = (email: string) => {
+    if (email === me) return false;
+    const other = target(email);
+    if (!other) return false;
+    if (isOwner || isDirector) return true;
+    if (isBO) return isDirectorMember(other);
+    if (isBOMember(other)) return isDirector;
+    if (isClient) return canManage(email) || other.email === mine?.managerEmail;
+    if (other.accountType === "client") return canManage(email);
+    return true;
+  };
+
   return {
     me, isOwner, isSuper, isBO, isDirector, isPM, isClient, guideRole, isMember, isAdmin, isBoss, isManager,
     groups, manages, canManage, canSee, canCreateMember, canEditMember, canApproveTask, needsTaskApproval,
-    canCreateProject, canCommentTask
+    canCreateProject, canCommentTask, canChatWith
   };
 }
 export type Policy = ReturnType<typeof makePolicy>;

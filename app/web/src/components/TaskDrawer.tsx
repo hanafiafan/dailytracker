@@ -6,7 +6,7 @@ import { loadTemplates, saveTemplates } from "../lib/templates";
 import { PRIORITIES, type ActivityDTO, type TaskDTO } from "@shared/schemas";
 import { useTaskActions } from "../lib/actions";
 import { NEXT, STATUS, fmtShort, fmtTime, host } from "../lib/format";
-import { patchTaskLocally, useMeta, useTask, useTaskActivity } from "../lib/queries";
+import { patchTaskLocally, useMeta, useProjectServices, useTask, useTaskActivity } from "../lib/queries";
 import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Comments } from "./Comments";
@@ -39,6 +39,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const { me, team, policy, projects, labels, member } = useViewer();
   const { closeTask, newTask } = useUi();
   const a = useTaskActions(t);
+  const servicesQ = useProjectServices(t.projectId ?? "");
   const qc = useQueryClient();
   const [proofOpen, setProofOpen] = useState(false);
   const mobile = useIsMobile(), [more, setMore] = useState(false);
@@ -118,8 +119,21 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
             : <span className={"tag " + t.priority} style={{ justifySelf: "start" }}>{PRIORITY_LABEL[t.priority]}</span>}
           <span>Proyek</span>
           {canEdit
-            ? <select className="input" aria-label="Proyek" value={t.projectId ?? ""} onChange={e => a.patch.mutate({ projectId: e.target.value || null })}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived || p.id === t.projectId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+            ? <select className="input" aria-label="Proyek" value={t.projectId ?? ""} onChange={e => a.patch.mutate({ projectId: e.target.value || null, serviceId: null })}><option value="">Tanpa proyek</option>{projects.filter(p => !p.archived || p.id === t.projectId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
             : <b>{projects.find(p => p.id === t.projectId)?.name ?? "—"}</b>}
+          {t.projectId && (
+            <>
+              <span>Layanan</span>
+              {canEdit ? (
+                <select className="input" aria-label="Layanan" value={t.serviceId ?? ""} onChange={e => a.patch.mutate({ serviceId: e.target.value || null })}>
+                  <option value="">Tanpa layanan spesifik</option>
+                  {(servicesQ.data ?? []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              ) : (
+                <b>{(servicesQ.data ?? []).find(s => s.id === t.serviceId)?.name ?? "—"}</b>
+              )}
+            </>
+          )}
           <span>Label</span>
           <div className="chips">
             {labels.length === 0 && <span className="muted">Belum ada label</span>}

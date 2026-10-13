@@ -37,6 +37,7 @@ export function TaskMeta({ t, isLate, time = true, compact, max }: { t: TaskDTO;
   if (time) for (const [k, n] of timeTags(t, compact)) add(k, n, k);
   if (t.priority === "high" || t.priority === "urgent") add("prio", <span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span>, `Prioritas ${PRIORITY_LABEL[t.priority]}`);
   if (p) add("proj", <span className="tag proj" data-c={p.color} title={p.name}>{p.name}</span>, p.name);
+  if (t.serviceId) add("srv", <span className="tag off" style={{ background: "rgba(99, 102, 241, 0.12)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.25)" }} title="Tugas dalam sub-layanan proyek">Sub-layanan</span>, "Sub-layanan");
   if (isLate) add("late", <span className="tag late">Dari {fmtShort(t.date)}</span>, "Tugas hari sebelumnya");
   if (t.returnedAt && t.status !== "done") add("back", <span className="tag late">Dikembalikan</span>, "Dikembalikan admin");
   if (t.revisions > 0) add("rev", <span className="tag off" title="Berapa kali dikembalikan untuk diperbaiki">Revisi {t.revisions}×</span>, `Revisi ${t.revisions} kali`);

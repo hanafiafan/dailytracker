@@ -53,9 +53,9 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
     const body: Record<string, unknown> = {
       name: String(f.get("name")),
       role: String(f.get("role")),
-      jobdesk: String(f.get("jobdesk") ?? "").trim(),
     };
     if (canAdmin) {
+      body.jobdesk = String(f.get("jobdesk") ?? "").trim();
       body.group = String(f.get("group") ?? "").trim().toUpperCase();
       body.managerEmail = String(f.get("manager") ?? "") || null;
       body.level = String(f.get("level") ?? "Staff");
@@ -120,9 +120,18 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
             </div>
           </label>
         )}
-        <label className="field" style={{ gridColumn: "1 / -1" }}><span>Jobdesk / Tanggung Jawab</span>
-          <textarea className="input" name="jobdesk" rows={2} defaultValue={m.jobdesk ?? ""} placeholder="Uraian tanggung jawab atau fokus pekerjaan..." maxLength={500} style={{ resize: "vertical" }} />
-        </label>
+        {canAdmin ? (
+          <label className="field" style={{ gridColumn: "1 / -1" }}><span>Jobdesk / Tanggung Jawab</span>
+            <textarea className="input" name="jobdesk" rows={2} defaultValue={m.jobdesk ?? ""} placeholder="Uraian tanggung jawab atau fokus pekerjaan..." maxLength={500} style={{ resize: "vertical" }} />
+          </label>
+        ) : (
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <span>Jobdesk / Tanggung Jawab</span>
+            <p className="muted" style={{ fontSize: ".88rem", padding: "8px 12px", background: "var(--glass)", borderRadius: "var(--radius)", whiteSpace: "pre-wrap" }}>
+              {m.jobdesk || "Belum ada uraian jobdesk khusus dari manajemen."}
+            </p>
+          </div>
+        )}
         {canAdmin && <label className="field"><span>Atasan langsung (untuk bagan)</span><select className="input" name="manager" defaultValue={m.managerEmail ?? ""}><option value="">Otomatis (kepala unit, atau Superadmin)</option>{team.filter(x => x.email !== m.email).map(x => <option key={x.email} value={x.email}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}</select></label>}
       </div>
 

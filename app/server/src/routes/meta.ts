@@ -9,7 +9,7 @@ import { newId, type AppEnv, type Deps } from "../context.js";
 
 // Projects, labels, entities, and services
 export const metaRoutes = ({ db, bus, env }: Deps) => {
-  const guard = new Hono<AppEnv>().use(async (c, next) => c.var.user.policy.isManager ? next() : c.json({ error: "forbidden" }, 403));
+  const guard = new Hono<AppEnv>().use(async (c, next) => (c.var.user.policy.isManager || c.var.user.policy.canCreateProject()) ? next() : c.json({ error: "forbidden" }, 403));
   return new Hono<AppEnv>()
     .get("/", c => c.json({
       owner: { email: env.OWNER_EMAIL, name: db.select({ n: sessions.name }).from(sessions).where(eq(sessions.email, env.OWNER_EMAIL)).orderBy(desc(sessions.exp)).get()?.n ?? "Hellens" },
