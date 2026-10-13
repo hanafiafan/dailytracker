@@ -83,7 +83,7 @@ const TABS = [
   { to: "#menu", label: "Menu", Icon: Grid2x2 },
 ];
 
-/** Phone shell: Modern floating navigation dock, frosted glass header, and tactile drawer */
+/** Phone shell: Modern docked bottom navigation bar, frosted glass header, and categorized menu drawer */
 export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: number; out: () => void }) {
   const [loc, go] = useLocation();
   const { me, member, policy } = useViewer();
@@ -140,7 +140,7 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
         <Bell_ />
       </header>
 
-      {/* Floating Modern Pill Dock */}
+      {/* Docked Modern Bottom Bar */}
       <nav className="mbar" aria-label="Menu utama">
         <div className="mbar-track">
           <div className="mbar-pill" style={{ transform: `translateX(${idx * 100}%)` }} aria-hidden="true" />
