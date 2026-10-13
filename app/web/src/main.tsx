@@ -9,6 +9,22 @@ import { getTheme, setTheme } from "./lib/theme";
 
 setTheme(getTheme());
 
+// Prevent pinch-to-zoom and gesture zooming on mobile touch devices
+if (typeof window !== "undefined") {
+  document.addEventListener("gesturestart", e => e.preventDefault(), { passive: false });
+  document.addEventListener("gesturechange", e => e.preventDefault(), { passive: false });
+  document.addEventListener("gestureend", e => e.preventDefault(), { passive: false });
+  document.addEventListener(
+    "touchmove",
+    e => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+}
+
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: true, retry: 1 } } });
 // A new build is picked up while the tab stays open: check on every return to the tab and every 10 minutes, then reload by itself.
 if (location.hostname !== "localhost") registerSW({
