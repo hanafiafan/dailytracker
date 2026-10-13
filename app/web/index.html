@@ -13,9 +13,47 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="HAN Task Tracker">
+<style>
+  #app-splash {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #F1F3F7; color: #101114; z-index: 99999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    #app-splash { background: #101114; color: #F1F3F7; }
+  }
+  .splash-brand { position: relative; width: 76px; height: 76px; display: grid; place-items: center; margin-bottom: 16px; }
+  .splash-glow { position: absolute; inset: -6px; border-radius: 50%; background: radial-gradient(circle, #D6F43F 0%, transparent 70%); opacity: 0.45; filter: blur(10px); animation: spPulse 2.2s ease-in-out infinite alternate; }
+  .splash-mark { width: 52px; height: 52px; border-radius: 18px; background: #D6F43F; color: #101114; display: grid; place-items: center; padding: 12px; box-shadow: 0 10px 24px -4px rgba(214, 244, 63, 0.45); animation: spFloat 2.6s ease-in-out infinite; position: relative; z-index: 2; }
+  .splash-spinner { position: absolute; inset: 4px; border-radius: 24px; border: 2.5px solid transparent; border-top-color: #2F6BFF; border-right-color: #D6F43F; animation: spSpin 1.4s cubic-bezier(0.5, 0.15, 0.5, 0.85) infinite; z-index: 3; }
+  .splash-title { font-size: 1.12rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+  .splash-sub { font-size: 0.82rem; opacity: 0.7; font-weight: 600; margin-bottom: 16px; }
+  .splash-bar { width: 150px; height: 4px; border-radius: 99px; background: rgba(120, 120, 120, 0.2); overflow: hidden; position: relative; }
+  .splash-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #D6F43F, #2F6BFF); width: 45%; position: absolute; animation: spSweep 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+  @keyframes spPulse { from { transform: scale(0.85); opacity: 0.25; } to { transform: scale(1.15); opacity: 0.55; } }
+  @keyframes spFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes spSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes spSweep { 0% { left: -45%; width: 30%; } 50% { left: 30%; width: 55%; } 100% { left: 105%; width: 30%; } }
+</style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div id="app-splash" role="status" aria-label="Memuat aplikasi...">
+    <div class="splash-brand">
+      <div class="splash-glow"></div>
+      <div class="splash-mark">
+        <svg viewBox="225 225 575 550" width="100%" height="100%" aria-hidden="true">
+          <path fill="currentColor" fill-rule="evenodd" d="M 330 225 H 665 C 681 225 694 231 706 243 L 800 337 V 663 L 706 757 C 694 769 681 775 665 775 H 330 V 675 H 225 V 325 H 330 Z M 330 325 H 635 C 650 325 660 335 660 350 V 650 C 660 665 650 675 635 675 H 330 Z" />
+        </svg>
+      </div>
+      <div class="splash-spinner"></div>
+    </div>
+    <div class="splash-title">HAN Task Tracker</div>
+    <div class="splash-sub">Memuat alur kerja...</div>
+    <div class="splash-bar">
+      <div class="splash-bar-fill"></div>
+    </div>
+  </div>
+</div>
 <noscript>Aplikasi ini membutuhkan JavaScript.</noscript>
 <script type="module" src="/src/main.tsx"></script>
 </body>

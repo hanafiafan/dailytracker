@@ -13,7 +13,7 @@ import { TaskDrawer } from "./components/TaskDrawer";
 import { Onboarding, needsSetup } from "./components/Onboarding";
 import { GuideGate } from "./components/GuideView";
 import { Legal } from "./components/Legal";
-import { Center, Loading } from "./components/ui";
+import { Center, Loading, PageLoading } from "./components/ui";
 import { today } from "./lib/format";
 import { registerPush, pushSupported } from "./lib/push";
 import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
@@ -94,15 +94,14 @@ function Signed({ me }: { me: MeDTO }) {
   }, [me, teamQ.data, metaQ.data]);
 
   if (!registered) return <NotRegistered email={me.email} />;
-  if (teamQ.isError || metaQ.isError) return <Center><p className="muted">Gagal memuat data. Periksa koneksi lalu muat ulang.</p></Center>;
-  if (!viewer) return <Loading />;
+  if (!viewer) return <Loading label="Menyiapkan data ruang kerja..." />;
   return (
     <ViewerContext value={viewer}>
       <UiContext value={ui}>
         <div className="shell">
           <TopNav />
           <main className="frame">
-            <Suspense fallback={<Loading />}>
+            <Suspense fallback={<PageLoading />}>
             <Switch>
               <Route path="/"><Dashboard /></Route>
               <Route path="/papan"><Board /></Route>
@@ -152,7 +151,7 @@ export function App() {
   const me = useMe();
   return (
     <>
-      {me.isPending ? <Loading /> : me.data ? <Signed me={me.data} /> : <Login />}
+      {me.isPending ? <Loading label="Menghubungkan sesi..." /> : me.data ? <Signed me={me.data} /> : <Login />}
       <Toaster position="bottom-center" richColors closeButton />
     </>
   );

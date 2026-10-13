@@ -44,11 +44,57 @@ export const tally = (list: { status: Status }[]) => {
 };
 
 export const Center = ({ children }: { children: ReactNode }) => <div className="center"><div>{children}</div></div>;
-export const Loading = () => (
-  <div className="shell" aria-busy="true" aria-label="Memuat">
-    <aside className="side"><div className="logo"><i />HAN Task Tracker</div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="sk" style={{ height: 46, borderRadius: 999 }} />)}</aside>
-    <div className="frame"><div className="sk" style={{ height: 44, width: "40%" }} /><div className="sk" style={{ height: 46, borderRadius: 999 }} />
-      <div className="tiles">{[0, 1, 2, 3].map(i => <div key={i} className="sk" style={{ height: 160, borderRadius: 32 }} />)}</div></div>
+/** The brand mark (geometric D), black, to sit on the lime logo tile. */
+export const Mark = () => (
+  <svg viewBox="225 225 575 550" width="100%" height="100%" aria-hidden="true" focusable="false">
+    <path fill="currentColor" fillRule="evenodd" d="M 330 225 H 665 C 681 225 694 231 706 243 L 800 337 V 663 L 706 757 C 694 769 681 775 665 775 H 330 V 675 H 225 V 325 H 330 Z M 330 325 H 635 C 650 325 660 335 660 350 V 650 C 660 665 650 675 635 675 H 330 Z" />
+  </svg>
+);
+
+/** Premium animated full loading screen */
+export const Loading = ({ label = "Memuat data...", full = true }: { label?: string; full?: boolean }) => (
+  <div className={`app-loader ${full ? "full" : ""}`} role="status" aria-label={label}>
+    <div className="loader-card">
+      <div className="loader-brand">
+        <div className="loader-glow" />
+        <div className="loader-mark">
+          <Mark />
+        </div>
+        <div className="loader-spinner" />
+      </div>
+      <div className="loader-text">
+        <div className="loader-title">HAN Task Tracker</div>
+        <div className="loader-subtitle">
+          <span>{label}</span>
+          <span className="loader-dots">
+            <i /><i /><i />
+          </span>
+        </div>
+      </div>
+      <div className="loader-bar-wrap">
+        <div className="loader-bar-track">
+          <div className="loader-bar-fill" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/** Fluid page transition loader with top progress bar and placeholder skeletons */
+export const PageLoading = () => (
+  <div className="page-loader-wrap" role="status" aria-label="Memuat halaman">
+    <div className="top-progress-bar" />
+    <div className="page-skeleton">
+      <div className="psk-head">
+        <div className="sk psk-title" />
+        <div className="sk psk-sub" />
+      </div>
+      <div className="psk-grid">
+        <div className="sk psk-card tall" />
+        <div className="sk psk-card" />
+        <div className="sk psk-card" />
+      </div>
+    </div>
   </div>
 );
 /** Placeholder block while data loads. */
@@ -80,9 +126,4 @@ export function PersonLink({ email, children, className }: { email: string; chil
   return <a href={href} className={"plink " + (className ?? "")} title="Lihat tugasnya" onClick={e => { e.preventDefault(); e.stopPropagation(); go(href); }}>{children}</a>;
 }
 
-/** The brand mark (geometric D), black, to sit on the lime logo tile. */
-export const Mark = () => (
-  <svg viewBox="225 225 575 550" width="100%" height="100%" aria-hidden="true" focusable="false">
-    <path fill="currentColor" fillRule="evenodd" d="M 330 225 H 665 C 681 225 694 231 706 243 L 800 337 V 663 L 706 757 C 694 769 681 775 665 775 H 330 V 675 H 225 V 325 H 330 Z M 330 325 H 635 C 650 325 660 335 660 350 V 650 C 660 665 650 675 635 675 H 330 Z" />
-  </svg>
-);
+
