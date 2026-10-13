@@ -174,7 +174,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
               <h2>{mode === "self" ? "Tugas Diri Sendiri" : "Tugas untuk Tim"}</h2>
               <p className="muted">
                 {mode === "self"
-                  ? "Mode mandiri (advanced) dengan target capaian, estimasi waktu, checklist & referensi."
+                  ? "Fokus kerja pribadi dengan target capaian, estimasi waktu & checklist."
                   : "Bagikan pekerjaan ke satu orang atau beberapa anggota tim."}
               </p>
             </div>
@@ -186,7 +186,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
               <div className="modetab-wrap">
                 <button
                   type="button"
-                  className={"modetab-btn" + (mode === "team" ? " active team" : "")}
+                  className={"modetab-btn" + (mode === "team" ? " active" : "")}
                   onClick={() => {
                     setMode("team");
                     if (sel.size === 1 && sel.has(me.email) && others.length > 0) {
@@ -198,29 +198,29 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                 </button>
                 <button
                   type="button"
-                  className={"modetab-btn" + (mode === "self" ? " active self" : "")}
+                  className={"modetab-btn" + (mode === "self" ? " active" : "")}
                   onClick={() => {
                     setMode("self");
                     setSel(new Set([me.email]));
                   }}
                 >
-                  <Sparkles size={16} /> Tugas Diri Sendiri (Advanced)
+                  <CheckSquare size={16} /> Tugas Diri Sendiri
                 </button>
               </div>
             )}
 
-            {/* MODE: SELF (TUGAS MANDIRI ADVANCED) */}
+            {/* MODE: SELF (TUGAS MANDIRI) */}
             {mode === "self" && (
               <>
                 <section className="dsec" style={{ borderTop: 0, paddingTop: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(139, 92, 246, 0.08)", borderRadius: 10, border: "1px solid rgba(139, 92, 246, 0.2)" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#7c3aed", color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--canvas)", borderRadius: "var(--r-md)", border: "1px solid var(--line)" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--ink)", color: "var(--on-ink)", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 12 }}>
                       {me.name[0]}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                         <span>{me.member?.name ?? me.name} (Anda)</span>
-                        <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 99, background: "rgba(139, 92, 246, 0.15)", color: "#7c3aed", fontWeight: 700 }}>Mandiri · Langsung Aktif</span>
+                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "var(--surface)", border: "1px solid var(--line)", color: "var(--muted)", fontWeight: 600 }}>Tugas Mandiri</span>
                       </div>
                     </div>
                   </div>
@@ -235,7 +235,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                         className="chip"
                         aria-pressed={focusType === "deep"}
                         onClick={() => handleFocusSelect("deep")}
-                        style={focusType === "deep" ? { background: "rgba(139, 92, 246, 0.2)", borderColor: "#7c3aed", color: "#7c3aed" } : {}}
                       >
                         <Zap size={13} /> Deep Work (2 Jam)
                       </button>
@@ -244,7 +243,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                         className="chip"
                         aria-pressed={focusType === "quick"}
                         onClick={() => handleFocusSelect("quick")}
-                        style={focusType === "quick" ? { background: "rgba(16, 185, 129, 0.2)", borderColor: "#10b981", color: "#10b981" } : {}}
                       >
                         ⚡ Quick Task (30 Mnt)
                       </button>
@@ -253,7 +251,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                         className="chip"
                         aria-pressed={focusType === "urgent"}
                         onClick={() => handleFocusSelect("urgent")}
-                        style={focusType === "urgent" ? { background: "rgba(239, 68, 68, 0.2)", borderColor: "#ef4444", color: "#ef4444" } : {}}
                       >
                         <Flame size={13} /> Prioritas Kritis
                       </button>
@@ -262,7 +259,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                         className="chip"
                         aria-pressed={focusType === "routine"}
                         onClick={() => handleFocusSelect("routine")}
-                        style={focusType === "routine" ? { background: "rgba(59, 130, 246, 0.2)", borderColor: "#3b82f6", color: "#3b82f6" } : {}}
                       >
                         <RefreshCw size={13} /> Rutinitas Harian
                       </button>
@@ -279,8 +275,8 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
 
                   <label className="field">
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Target size={14} style={{ color: "#7c3aed" }} />
-                      <b>Target Capaian / Output Akhir (Definition of Done)</b>
+                      <Target size={14} style={{ color: "var(--muted)" }} />
+                      <span>Target Capaian / Output Akhir <em style={{ fontStyle: "normal", fontWeight: 400 }}>(Definition of Done)</em></span>
                     </span>
                     <input
                       className="input"
@@ -293,7 +289,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
 
                   <label className="field">
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Link2 size={14} style={{ color: "#2563eb" }} />
+                      <Link2 size={14} style={{ color: "var(--muted)" }} />
                       <span>Tautan Dokumen / Referensi Kerja <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span>
                     </span>
                     <input

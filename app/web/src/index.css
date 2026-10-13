@@ -299,11 +299,10 @@
   .notif { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); border: 0; background: none; text-align: left; font-size: .85rem; } .notif:hover { background: var(--pill); } .notif i { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; background: transparent; } .notif.unread i { background: var(--volt); box-shadow: 0 0 0 1px var(--ink); } .notif small { color: var(--muted); display: block; }
   @keyframes fade { from { opacity: 0 } } @keyframes slide { from { transform: translateX(24px); opacity: 0 } } @keyframes pop { from { transform: translate(-50%, -48%) scale(.98); opacity: 0 } }
 
-  .modetab-wrap { display: flex; width: 100%; background: var(--canvas); padding: 4px; border-radius: var(--r-md); gap: 4px; margin-bottom: 12px; }
+  .modetab-wrap { display: flex; width: 100%; background: var(--canvas); padding: 4px; border-radius: var(--r-md); gap: 4px; margin-bottom: 14px; border: 1px solid var(--line); }
   .modetab-btn { flex: 1; border: 0; background: none; font-size: .84rem; font-weight: 600; padding: 8px 12px; border-radius: calc(var(--r-md) - 3px); display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); cursor: pointer; transition: all .15s ease; }
-  .modetab-btn.active { background: var(--surface); color: var(--fg); box-shadow: var(--shadow-sm); }
-  .modetab-btn.active.self { color: #7c3aed; }
-  .modetab-btn.active.team { color: #2563eb; }
+  .modetab-btn:hover { color: var(--ink); }
+  .modetab-btn.active { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px rgba(16 17 20 / .08), 0 0 0 1px var(--line); }
 
   .step-list { display: grid; gap: 6px; margin-top: 6px; }
   .step-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--canvas); border-radius: var(--r-sm); font-size: .85rem; }

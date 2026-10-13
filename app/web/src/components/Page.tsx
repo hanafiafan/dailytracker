@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen, Sparkles } from "lucide-react";
+import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen, Sparkles, CheckSquare } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -154,14 +154,11 @@ export function NewTaskHeaderButton() {
             style={{ padding: "10px 12px", borderRadius: 10, display: "flex", gap: 12, alignItems: "center", textAlign: "left", marginTop: 2 }}
             onClick={() => { setOpen(false); newTask({ mode: "self", emails: [me.email] }); }}
           >
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(139, 92, 246, 0.12)", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Sparkles size={18} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--canvas)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <CheckSquare size={18} />
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--fg)" }}>Tugas Diri Sendiri</span>
-                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: "rgba(139, 92, 246, 0.15)", color: "#7c3aed" }}>Advanced</span>
-              </div>
+              <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--ink)" }}>Tugas Diri Sendiri</div>
               <div className="muted" style={{ fontSize: "0.74rem", fontWeight: 400, marginTop: 1 }}>Target, durasi, checklist &amp; referensi mandiri</div>
             </div>
           </button>
