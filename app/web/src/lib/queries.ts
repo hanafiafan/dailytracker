@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ProjectServiceDTO, EntityDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
+import type { AdminOverviewDTO, ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ProjectServiceDTO, EntityDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
   meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const, timer: ["timer"] as const, chat: ["chat"] as const, resources: ["resources"] as const,
+  admin: ["admin"] as const,
 };
 
 /** null = not signed in. */
@@ -60,6 +61,17 @@ export const useTaskActivity = (id: string | null) => useQuery({
 export const useAnalytics = (from: string, to: string, enabled: boolean) => useQuery({
   queryKey: [...keys.analytics, from, to], enabled,
   queryFn: () => ok(api.reports.analytics.$get({ query: { from, to } })) as unknown as Promise<AnalyticsDTO>,
+});
+
+export const useAdminOverview = (enabled: boolean) => useQuery({
+  queryKey: [...keys.admin, "overview"],
+  enabled,
+  queryFn: () => ok(api.admin.overview.$get()) as unknown as Promise<AdminOverviewDTO>,
+});
+export const useAdminAudit = (enabled: boolean, limit = 60) => useQuery({
+  queryKey: [...keys.admin, "audit", limit],
+  enabled,
+  queryFn: () => ok(api.admin.audit.$get({ query: { limit: String(limit) } })) as unknown as Promise<ActivityDTO[]>,
 });
 
 export const windowFrom = (date: string, today: string) => addDays(date < today ? date : today, -30);

@@ -32,6 +32,7 @@ import { Dashboard } from "./pages/Dashboard";
 const ReportsPage = lazy(() => import("./pages/ReportsPage").then(m => ({ default: m.ReportsPage })));
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const TeamPage = lazy(() => import("./pages/TeamPage").then(m => ({ default: m.TeamPage })));
+const SuperadminPage = lazy(() => import("./pages/SuperadminPage").then(m => ({ default: m.SuperadminPage })));
 import { api, ok } from "./lib/api";
 import { keys } from "./lib/queries";
 
@@ -108,6 +109,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/daftar"><TasksPage /></Route>
               <Route path="/kalender"><CalendarPage /></Route>
               <Route path="/tim">{viewer.policy.isManager ? <TeamPage /> : <Redirect to="/" />}</Route>
+              <Route path="/superadmin">{viewer.policy.isSuper ? <SuperadminPage /> : <Redirect to="/" />}</Route>
               <Route path="/proyek"><ProjectsPage /></Route>
               <Route path="/proyek/:id"><ProjectReportPage /></Route>
               <Route path="/riwayat"><HistoryPage /></Route>

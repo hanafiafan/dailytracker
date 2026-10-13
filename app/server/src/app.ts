@@ -25,6 +25,7 @@ import { reportRoutes } from "./routes/reports.js";
 import { routineRoutes } from "./routes/routines.js";
 import { taskRoutes } from "./routes/tasks.js";
 import { teamRoutes } from "./routes/team.js";
+import { adminRoutes } from "./routes/admin.js";
 
 export function createApp(deps: Deps) {
   const { db, env, push, bus } = deps;
@@ -109,6 +110,7 @@ export function createApp(deps: Deps) {
     .use("/meta/*", auth, team).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth, team).route("/inbox", inboxRoutes(deps))
     .use("/reports/*", auth, team).route("/reports", reportRoutes(deps))
+    .use("/admin/*", auth, team).route("/admin", adminRoutes(deps))
     // "I have nothing left to do": tells the admins.
     .post("/ask", auth, team, c => {
       const u = c.var.user;

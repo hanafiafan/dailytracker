@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { getTheme, toggleTheme } from "../lib/theme";
-import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen, Sparkles, CheckSquare } from "lucide-react";
+import { MessageSquare, Camera, CalendarOff, Bell, Moon, Sun, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FolderKanban, History, LayoutDashboard, Columns3, ListChecks, Plus, Search, Settings, Users, BarChart3, LogOut, BookOpen, Sparkles, CheckSquare, ShieldCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays } from "@shared/time";
 import { api, ok } from "../lib/api";
@@ -29,6 +29,7 @@ const NAV = [
   { to: "/izin", label: "Izin", Icon: CalendarOff },
   { to: "/laporan", label: "Laporan", Icon: BarChart3 },
   { to: "/riwayat", label: "Riwayat", Icon: History },
+  { to: "/superadmin", label: "Superadmin", Icon: ShieldCheck, superadmin: true },
 ];
 
 /** Floating pill header: logo, page menu, search, bell and the account menu. */
@@ -57,7 +58,7 @@ export function TopNav() {
     <header className="topnav">
       <div className="logo"><i><Mark /></i><span className="t">HAN Task Tracker</span></div>
       <nav className="pillnav" aria-label="Menu utama" ref={navRef}>
-        {NAV.filter(n => !n.manager || policy.isManager).map(({ to, label, Icon }) => (
+        {NAV.filter(n => (!n.manager || policy.isManager) && (!n.superadmin || policy.isSuper)).map(({ to, label, Icon }) => (
           <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
             onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot">{msgs > 99 ? "99+" : msgs}</i>}</a>
         ))}

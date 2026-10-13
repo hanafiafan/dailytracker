@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { MessageSquare, ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2, BookOpen } from "lucide-react";
+import { MessageSquare, ArrowUpRight, BarChart3, CalendarDays, CalendarOff, Camera, Columns3, FolderKanban, History, LayoutDashboard, ListChecks, LogOut, Moon, Plus, Search, Settings, Sun, Users, Grid2x2, BookOpen, ShieldCheck } from "lucide-react";
 import { getTheme, toggleTheme } from "../lib/theme";
 import { useUi, useViewer } from "../lib/viewer";
 import { Bell_ } from "./Bell";
@@ -12,6 +12,7 @@ const MORE = [
   { to: "/daftar", label: "Daftar tugas", Icon: ListChecks, tone: "lime" },
   { to: "/proyek", label: "Proyek", Icon: FolderKanban, tone: "dark" },
   { to: "/tim", label: "Tim", Icon: Users, manager: true, tone: "gray" },
+  { to: "/superadmin", label: "Superadmin", Icon: ShieldCheck, superadmin: true, tone: "dark" },
   { to: "/alat", label: "Alat & studio", Icon: Camera, tone: "gray" },
   { to: "/izin", label: "Izin & cuti", Icon: CalendarOff, tone: "coral" },
   { to: "/laporan", label: "Laporan", Icon: BarChart3, tone: "dark" },
@@ -61,7 +62,7 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
       </nav>
       <Sheet open={menu} onClose={() => setMenu(false)} title="Semua halaman">
         <div className="mtiles">
-          {MORE.filter(x => !x.manager || policy.isManager).map(({ to, label, Icon, tone }) => (
+          {MORE.filter(x => (!x.manager || policy.isManager) && (!x.superadmin || policy.isSuper)).map(({ to, label, Icon, tone }) => (
             <button key={to} className={"mtile " + tone} onClick={() => { setMenu(false); go(to); }}>
               <span className="mt-ico"><Icon size={20} /></span><b>{label}</b><span className="mt-go"><ArrowUpRight size={16} /></span>
               {to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot">{msgs}</i>}

@@ -178,6 +178,27 @@ export interface BookingDTO { id: string; resourceId: string; email: string; tas
 export interface ChatRefDTO { type: "member" | "task" | "project"; id: string; label: string; ok: boolean }
 export interface AttachmentDTO { id: string; name: string; mime: string; size: number }
 export interface MessageDTO { id: string; channel: string; email: string; name: string; text: string; refs: ChatRefDTO[]; attachments: AttachmentDTO[]; createdAt: number; deleted: boolean }
+export interface AdminOverviewDTO {
+  owner: string;
+  counts: {
+    totalMembers: number;
+    employees: number;
+    clients: number;
+    admins: number;
+    canCreateProjects: number;
+    totalProjects: number;
+    activeProjects: number;
+    closedProjects: number;
+    totalTasks: number;
+    doneTasks: number;
+    doingTasks: number;
+    todoTasks: number;
+    pendingApprovalTasks: number;
+    totalEntities: number;
+    totalMessages: number;
+  };
+  entityCounts: Record<string, number>;
+}
 export interface ChannelDTO {
   id: string;
   kind: "general" | "project" | "group" | "dm";
