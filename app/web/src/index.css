@@ -1280,17 +1280,20 @@
 
   /* Bottom Sheets */
   .sheet-scrim {
-    z-index: 59;
-    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    inset: 0;
+    z-index: 80 !important;
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    animation: fade 0.18s ease-out;
   }
   .sheet {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 60;
+    z-index: 85 !important;
     max-height: 90dvh;
     display: flex;
     flex-direction: column;
@@ -1300,6 +1303,7 @@
     box-shadow: 0 -16px 50px -10px rgba(0, 0, 0, 0.45);
     border-top: 1px solid var(--line);
     animation: sheetup 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    isolation: isolate;
   }
   @keyframes sheetup {
     from { transform: translateY(100%); opacity: 0.7; }
@@ -1778,7 +1782,8 @@
 @layer components {
   @media (max-width: 820px) {
     /* task detail on phones: back button on the left feel, big plain title, labelled fields stacked, one primary action */
-    .scrim { z-index: 68 !important; }
+    .scrim { z-index: 60 !important; }
+    .sheet-scrim { z-index: 80 !important; }
     .drawer {
       position: fixed !important;
       top: 0 !important;
@@ -1825,9 +1830,13 @@
     }
     .drawer-f > .btn:first-child { flex: 1; height: 48px; font-size: .92rem; } .drawer-f .btn { height: 48px; }
     .sheetacts .btn, .sheetacts .menuitem { width: 100%; justify-content: flex-start; height: 50px; border-radius: 16px; font-size: .95rem; box-shadow: none; background: var(--canvas); margin-bottom: 8px; gap: 10px; }
-    .dialog { left: 0; right: 0; top: auto; bottom: 0; transform: none; width: 100%; max-height: 92dvh; border-radius: 28px 28px 0 0; animation: sheetup .22s ease-out; z-index: 75 !important; }
+    .sheet { z-index: 85 !important; }
+    .dialog { left: 0; right: 0; top: auto; bottom: 0; transform: none; width: 100%; max-height: 92dvh; border-radius: 28px 28px 0 0; animation: sheetup .22s ease-out; z-index: 90 !important; }
+    .cmdk.dialog { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; transform: none !important; width: 100% !important; border-radius: 28px 28px 0 0 !important; }
     .dialog-b .chip { height: 36px; } .dialog-f { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
     .dialog .input { height: 46px; border-radius: 14px; } .dialog textarea.input { height: auto; }
+    .lightbox { z-index: 95 !important; }
+    .popover { z-index: 55 !important; }
   }
 }
 
