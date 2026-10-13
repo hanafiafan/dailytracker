@@ -21,7 +21,12 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     if (!u.policy.canCreateMember()) return c.json({ error: "forbidden" }, 403);
     if (db.select().from(members).where(eq(members.email, b.email)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
     const order = Math.max(0, ...loadTeam(db).map(m => m.sortOrder)) + 1;
-    db.insert(members).values({ email: b.email, name: b.name, role: b.role, group: b.group, sortOrder: order }).run();
+    db.insert(members).values({
+      email: b.email, name: b.name, role: b.role, group: b.group, sortOrder: order,
+      jobdesk: b.jobdesk, level: b.level, accountType: b.accountType,
+      canCreateProject: b.canCreateProject, canCommentAllProjects: b.canCommentAllProjects,
+      allowedCommentProjectIds: b.allowedCommentProjectIds
+    }).run();
     bus.emit("team");
     return c.json({ ok: true }, 201);
   })

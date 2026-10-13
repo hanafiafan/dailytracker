@@ -1,11 +1,11 @@
-import type { Priority } from "@shared/schemas";
+import type { EntityDTO, LabelDTO, MeDTO, MemberDTO, Priority, ProjectDTO } from "@shared/schemas";
 import { createContext, useContext } from "react";
-import type { LabelDTO, MeDTO, MemberDTO, ProjectDTO } from "@shared/schemas";
 import type { Policy } from "@shared/policy";
 
 export interface Viewer {
   me: MeDTO; team: MemberDTO[]; policy: Policy;
   projects: ProjectDTO[]; labels: LabelDTO[];
+  entities?: EntityDTO[];
   member: (email: string) => MemberDTO | undefined;
   project: (id: string | null) => ProjectDTO | undefined;
   label: (id: string) => LabelDTO | undefined;
@@ -31,6 +31,7 @@ export interface NewTaskPrefill {
   start?: string;
   due?: string;
   projectId?: string;
+  serviceId?: string;
   title?: string;
   note?: string;
   priority?: Priority;

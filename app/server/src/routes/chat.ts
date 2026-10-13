@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { bodyLimit } from "hono/body-limit";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-orm";
@@ -60,6 +61,10 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       }
       return false;
     }
+    if (channel.startsWith("dm:")) {
+      const parts = channel.slice(3).split(":");
+      return parts.includes(email) || owner;
+    }
     if (channel === GENERAL) return true;
     if (channel.startsWith("g-")) return groupAccess(email, channel.slice(2));
     const proj = projectOf(channel);
@@ -120,7 +125,42 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, g.id)).all().map(x => x.email);
         out.push({ id, kind: "group", name: g.name, projectId: null, color: null, ...info(id), group: { members: ms, createdBy: g.createdBy, canManage: u.owner || g.createdBy === u.email } });
       }
+
+      // Direct Message (DM) channels
+      const dmRows = db.select({ channel: messages.channel }).from(messages)
+        .where(and(sql`${messages.channel} LIKE 'dm:%'`, isNull(messages.deletedAt)))
+        .groupBy(messages.channel)
+        .all();
+
+      const allTeam = team();
+      for (const row of dmRows) {
+        const parts = row.channel.slice(3).split(":");
+        if (!parts.includes(u.email) && !u.owner) continue;
+        const otherEmail = parts[0] === u.email ? parts[1] : parts[0];
+        const other = allTeam.find(m => m.email === otherEmail);
+        const name = other?.name ?? otherEmail ?? "Chat Pribadi";
+        out.push({
+          id: row.channel,
+          kind: "dm",
+          name,
+          projectId: null,
+          color: "lilac",
+          dmUser: other ? { email: other.email, name: other.name, role: other.role, hasPhoto: other.photoV > 0, photoV: other.photoV } : undefined,
+          ...info(row.channel),
+        });
+      }
+
       return c.json(out);
+    })
+    .post("/dm", zValidator("json", z.object({ targetEmail: z.string().email() })), c => {
+      const u = c.var.user, { targetEmail } = c.req.valid("json");
+      const t = team();
+      const target = t.find(m => m.email === targetEmail);
+      if (!target && targetEmail !== env.OWNER_EMAIL) return c.json({ error: "Anggota tidak ditemukan" }, 404);
+      const pair = [u.email, targetEmail].sort();
+      const channelId = `dm:${pair[0]}:${pair[1]}`;
+      bus.emit("chat");
+      return c.json({ channelId, name: target?.name ?? targetEmail });
     })
     // ---- groups: any team member can start one and pick who is in it
     .post("/groups", zValidator("json", groupInput), c => {

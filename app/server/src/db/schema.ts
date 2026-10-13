@@ -2,6 +2,14 @@ import { sqliteTable, text, integer, blob, index, primaryKey, type AnySQLiteColu
 
 const bool = (name: string) => integer(name, { mode: "boolean" });
 
+export const entities = sqliteTable("entities", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  color: text("color").notNull().default("lilac"),
+  createdAt: integer("created_at").notNull(),
+});
+
 export const members = sqliteTable("members", {
   email: text("email").primaryKey(),
   name: text("name").notNull(),
@@ -16,6 +24,12 @@ export const members = sqliteTable("members", {
   askAt: integer("ask_at"),
   /** Direct manager in the org chart (separate from admin rights); null = the unit head, else the owner. */
   managerEmail: text("manager_email").references((): AnySQLiteColumn => members.email, { onDelete: "set null", onUpdate: "cascade" }),
+  jobdesk: text("jobdesk").notNull().default(""),
+  level: text("level").notNull().default("Staff"),
+  accountType: text("account_type", { enum: ["employee", "client"] }).notNull().default("employee"),
+  canCreateProject: bool("can_create_project").notNull().default(false),
+  canCommentAllProjects: bool("can_comment_all_projects").notNull().default(false),
+  allowedCommentProjectIds: text("allowed_comment_project_ids", { mode: "json" }).$type<string[]>().notNull().default([])
 });
 
 export const projects = sqliteTable("projects", {
@@ -30,6 +44,15 @@ export const projects = sqliteTable("projects", {
   closedBy: text("closed_by"),
   summary: text("summary").notNull().default(""),
   resultLinks: text("result_links", { mode: "json" }).$type<string[]>().notNull().default([]),
+});
+
+export const projectServices = sqliteTable("project_services", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  status: text("status", { enum: ["todo", "doing", "done"] }).notNull().default("todo"),
+  createdAt: integer("created_at").notNull(),
 });
 
 export const labels = sqliteTable("labels", {
@@ -52,6 +75,7 @@ export const tasks = sqliteTable("tasks", {
   hot: bool("hot").notNull().default(false),
   priority: text("priority", { enum: ["low", "normal", "high", "urgent"] }).notNull().default("normal"),
   projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
+  serviceId: text("service_id").references(() => projectServices.id, { onDelete: "set null" }),
   needProof: bool("need_proof").notNull().default(true),
   by: text("by", { enum: ["owner", "self"] }).notNull().default("owner"),
   fromAdmin: text("from_admin"),

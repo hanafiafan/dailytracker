@@ -19,9 +19,23 @@ export function openDb(path: string) {
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: migrationsDir });
   try {
-    sqlite.prepare("UPDATE members SET role = 'BO' WHERE lower(name) = 'hanief' AND role != 'BO'").run();
-    sqlite.prepare("UPDATE members SET role = 'Direktur' WHERE lower(name) = 'aziz' AND role != 'Direktur'").run();
+    sqlite.prepare("UPDATE members SET role = 'BO', level = 'Director' WHERE lower(name) = 'hanief' AND role != 'BO'").run();
+    sqlite.prepare("UPDATE members SET role = 'Direktur', level = 'Director' WHERE lower(name) = 'aziz' AND role != 'Direktur'").run();
     sqlite.prepare("UPDATE members SET manager_email = (SELECT email FROM members WHERE lower(name) = 'hanief' LIMIT 1) WHERE lower(name) = 'aziz' AND (manager_email IS NULL OR manager_email = '')").run();
+    sqlite.prepare("UPDATE members SET role = 'Project Manager', level = 'Project Manager', can_create_project = 1 WHERE lower(name) LIKE '%vero%' AND (role = '' OR role = 'Staff' OR level = 'Staff')").run();
+
+    const entCount = (sqlite.prepare("SELECT count(*) as c FROM entities").get() as { c: number })?.c ?? 0;
+    if (entCount === 0) {
+      const distinctGroups = sqlite.prepare("SELECT DISTINCT grp FROM members WHERE grp IS NOT NULL AND grp != ''").all() as { grp: string }[];
+      const now = Date.now();
+      const insert = sqlite.prepare("INSERT OR IGNORE INTO entities (id, name, description, color, created_at) VALUES (?, ?, ?, ?, ?)");
+      const defaultUnits = ["HCS", "HCM", "HUC"];
+      const allToSeed = Array.from(new Set([...defaultUnits, ...distinctGroups.map(g => g.grp.toUpperCase())]));
+      const colors = ["lilac", "pink", "sky", "mint", "yellow", "lime", "peach"];
+      allToSeed.forEach((u, i) => {
+        insert.run(u, u, `Unit Bisnis & Entitas ${u}`, colors[i % colors.length]!, now);
+      });
+    }
   } catch {}
   return Object.assign(db, { sqlite });
 }

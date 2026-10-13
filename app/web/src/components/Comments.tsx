@@ -59,27 +59,33 @@ export function Comments({ t, ownerName, ownerEmail }: { t: TaskDTO; ownerName: 
           {(c.byEmail === me.email || policy.canManage(t.email)) && <ConfirmButton className="" ariaLabel="Hapus komentar" label="✕" armed="Hapus?" onConfirm={() => a.removeComment.mutate(c.id)} />}
         </div>
       ))}
-      <form onSubmit={e => { e.preventDefault(); submit(); }}>
-        {matches.length > 0 && (
-          <div className="mentionpop" role="listbox">
-            {matches.map((p, i) => (
-              <button key={p.email} type="button" role="option" aria-selected={i === sel} onMouseDown={e => { e.preventDefault(); choose(p); }}>
-                {p.member ? <Avatar m={p.member} /> : <span className="avatar" style={{ background: "var(--tile)", color: "var(--ink)" }}>{p.name[0]}</span>}{p.name}
-              </button>
-            ))}
-          </div>
-        )}
-        <input ref={ref} className="input" value={text} placeholder="Tulis komentar… ketik @ untuk menyebut orang" maxLength={600} aria-label={"Komentar untuk " + t.title}
-          onChange={e => onChange(e.target.value)}
-          onKeyDown={e => {
-            if (!matches.length) return;
-            if (e.key === "ArrowDown") { e.preventDefault(); setSel(s => (s + 1) % matches.length); }
-            else if (e.key === "ArrowUp") { e.preventDefault(); setSel(s => (s + matches.length - 1) % matches.length); }
-            else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); choose(matches[sel]!); }
-            else if (e.key === "Escape") setQ(null);
-          }} />
-        <button className="btn small primary" type="submit" disabled={a.comment.isPending || !text.trim()}>Kirim</button>
-      </form>
+      {policy.canCommentTask(t) ? (
+        <form onSubmit={e => { e.preventDefault(); submit(); }}>
+          {matches.length > 0 && (
+            <div className="mentionpop" role="listbox">
+              {matches.map((p, i) => (
+                <button key={p.email} type="button" role="option" aria-selected={i === sel} onMouseDown={e => { e.preventDefault(); choose(p); }}>
+                  {p.member ? <Avatar m={p.member} /> : <span className="avatar" style={{ background: "var(--tile)", color: "var(--ink)" }}>{p.name[0]}</span>}{p.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <input ref={ref} className="input" value={text} placeholder="Tulis komentar… ketik @ untuk menyebut orang" maxLength={600} aria-label={"Komentar untuk " + t.title}
+            onChange={e => onChange(e.target.value)}
+            onKeyDown={e => {
+              if (!matches.length) return;
+              if (e.key === "ArrowDown") { e.preventDefault(); setSel(s => (s + 1) % matches.length); }
+              else if (e.key === "ArrowUp") { e.preventDefault(); setSel(s => (s + matches.length - 1) % matches.length); }
+              else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); choose(matches[sel]!); }
+              else if (e.key === "Escape") setQ(null);
+            }} />
+          <button className="btn small primary" type="submit" disabled={a.comment.isPending || !text.trim()}>Kirim</button>
+        </form>
+      ) : (
+        <p className="muted" style={{ fontSize: ".78rem", fontStyle: "italic", margin: "8px 0" }}>
+          Hanya pembuat tugas, Direktur (Aziz), penerima tugas, atau anggota berizin yang dapat berkomentar di tugas ini.
+        </p>
+      )}
     </div>
   );
 }

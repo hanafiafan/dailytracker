@@ -85,9 +85,9 @@ function Signed({ me }: { me: MeDTO }) {
 
   const viewer = useMemo<Viewer | null>(() => {
     if (!teamQ.data || !metaQ.data) return null;
-    const team = teamQ.data, { projects, labels } = metaQ.data;
+    const team = teamQ.data, { projects, labels, entities } = metaQ.data;
     return {
-      me, team, policy: makePolicy(me.email, me.owner, team), projects, labels,
+      me, team, policy: makePolicy(me.email, me.owner, team), projects, labels, entities: entities ?? [],
       member: e => team.find(m => m.email === e), project: id => (id ? projects.find(p => p.id === id) : undefined), label: id => labels.find(l => l.id === id),
     };
   }, [me, teamQ.data, metaQ.data]);

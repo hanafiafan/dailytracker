@@ -67,7 +67,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
           const approvalStatus = "approved" as const;
           const base = {
             email, title: b.title, note: b.note ?? "", start: b.start ?? null, due: b.due ?? null, hot: isHot(priority), priority,
-            projectId: b.projectId ?? null, needProof: isSelf ? false : b.needProof, warnMin: isSelf ? null : b.warnMin ?? null, by: isSelf ? "self" as const : "owner" as const,
+            projectId: b.projectId ?? null, serviceId: b.serviceId ?? null, needProof: isSelf ? false : b.needProof, warnMin: isSelf ? null : b.warnMin ?? null, by: isSelf ? "self" as const : "owner" as const,
             fromAdmin: isSelf ? null : u.member?.name ?? u.name,
             approvalStatus,
             approvedBy: isSelf ? who(u) : null,
@@ -290,6 +290,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     .post("/:id/comments", zValidator("json", commentCreate), c => {
       const u = c.var.user, t = find(c.req.param("id")), b = c.req.valid("json");
       if (!t || !u.policy.canSee(t.email)) return c.json({ error: "not found" }, 404);
+      if (!u.policy.canCommentTask(t)) return c.json({ error: "Anda tidak memiliki izin untuk mengomentari tugas ini" }, 403);
       const row = { id: newId(), taskId: t.id, by: who(u), byEmail: u.email, text: b.text, at: Date.now() };
       db.insert(comments).values(row).run();
       log(u, t.id, "comment", "menulis komentar");

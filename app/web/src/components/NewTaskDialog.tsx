@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { PRIORITIES, type Priority } from "@shared/schemas";
 import { api, ok } from "../lib/api";
 import { DAYN } from "../lib/format";
-import { keys, useAction } from "../lib/queries";
+import { keys, useAction, useProjectServices } from "../lib/queries";
 import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
 import { useViewer, type NewTaskPrefill } from "../lib/viewer";
 
@@ -32,6 +32,9 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
 
   const [sel, setSel] = useState(() => new Set(prefill.emails && prefill.emails.length > 0 ? prefill.emails : [me.email]));
   const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
+  const [chosenProject, setChosenProject] = useState(prefill.projectId ?? "");
+  const servicesQ = useProjectServices(chosenProject || null);
+  const services = servicesQ.data ?? [];
   const [proof, setProof] = useState(true);
   const [proofSelf, setProofSelf] = useState(false);
   const [warn, setWarn] = useState(30);
@@ -138,6 +141,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
       due: due || null,
       priority,
       projectId: String(f.get("project") || "") || null,
+      serviceId: String(f.get("service") || "") || null,
       labelIds: [...lab],
       subtasks: finalSubtasks,
       needProof: isSelf ? proofSelf : proof,
@@ -314,11 +318,20 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                     </div>
                     <label className="field">
                       <span>Proyek</span>
-                      <select className="input" name="project" defaultValue={prefill.projectId ?? ""}>
+                      <select className="input" name="project" value={chosenProject} onChange={e => setChosenProject(e.target.value)}>
                         <option value="">Tanpa proyek</option>
                         {projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                     </label>
+                    {services.length > 0 && (
+                      <label className="field" style={{ gridColumn: "1 / -1" }}>
+                        <span>Layanan Proyek (Customer)</span>
+                        <select className="input" name="service" defaultValue={prefill.serviceId ?? ""}>
+                          <option value="">Umum (Tanpa Layanan Khusus)</option>
+                          {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
+                        </select>
+                      </label>
+                    )}
                   </div>
 
                   {labels.length > 0 && (
@@ -556,11 +569,20 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                     </div>
                     <label className="field">
                       <span>Proyek</span>
-                      <select className="input" name="project" defaultValue={prefill.projectId ?? ""}>
+                      <select className="input" name="project" value={chosenProject} onChange={e => setChosenProject(e.target.value)}>
                         <option value="">Tanpa proyek</option>
                         {projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                     </label>
+                    {services.length > 0 && (
+                      <label className="field" style={{ gridColumn: "1 / -1" }}>
+                        <span>Layanan Proyek (Customer)</span>
+                        <select className="input" name="service" defaultValue={prefill.serviceId ?? ""}>
+                          <option value="">Umum (Tanpa Layanan Khusus)</option>
+                          {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
+                        </select>
+                      </label>
+                    )}
                   </div>
                   {labels.length > 0 && (
                     <div className="field">

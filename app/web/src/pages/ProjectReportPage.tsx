@@ -143,6 +143,151 @@ function Activity({ ids }: { ids: Set<string> }) {
   );
 }
 
+import { toast } from "sonner";
+import { ConfirmButton } from "../components/ui";
+import { useProjectServices } from "../lib/queries";
+
+function ServicesSection({ projectId, tasks }: { projectId: string; tasks: T[] }) {
+  const { policy } = useViewer();
+  const { newTask, openTask } = useUi();
+  const q = useProjectServices(projectId);
+  const services = q.data ?? [];
+  const [adding, setAdding] = useState(false);
+
+  const addS = useAction((f: FormData) => ok(api.meta.projects[":id"].services.$post({
+    param: { id: projectId },
+    json: {
+      name: String(f.get("name")).trim(),
+      description: String(f.get("description") ?? "").trim(),
+      status: "doing",
+    }
+  })), { done: "Layanan proyek ditambahkan", refresh: [[...keys.meta, "services", projectId]] });
+
+  const patchS = useAction(({ sid, json }: { sid: string; json: any }) => ok(api.meta.projects[":id"].services[":sid"].$patch({
+    param: { id: projectId, sid },
+    json,
+  })), { done: "Layanan diperbarui", refresh: [[...keys.meta, "services", projectId]] });
+
+  const delS = useAction((sid: string) => ok(api.meta.projects[":id"].services[":sid"].$delete({
+    param: { id: projectId, sid },
+  })), { done: "Layanan dihapus", refresh: [[...keys.meta, "services", projectId]] });
+
+  return (
+    <section className="bc">
+      <div className="bc-h" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2>Kategori Layanan Proyek</h2>
+          <small className="muted">Layanan per kebutuhan customer (Web Development, SEO, dll.) dan tugas di dalamnya</small>
+        </div>
+        {policy.canCreateProject() && (
+          <button className="btn small primary" onClick={() => setAdding(!adding)}>
+            {adding ? "Tutup" : "+ Tambah Layanan"}
+          </button>
+        )}
+      </div>
+
+      {adding && (
+        <form className="row" style={{ padding: 12, background: "var(--glass)", borderRadius: "var(--radius)", marginBottom: 16 }} onSubmit={e => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          if (!String(f.get("name")).trim()) return void toast.error("Nama layanan harus diisi");
+          addS.mutate(f, { onSuccess: () => { (e.target as HTMLFormElement).reset(); setAdding(false); } });
+        }}>
+          <label className="field" style={{ flex: "1 1 200px" }}><span>Nama Layanan</span><input className="input" name="name" placeholder="mis. Web Development, SEO, Branding" maxLength={80} required autoFocus /></label>
+          <label className="field" style={{ flex: "2 1 280px" }}><span>Deskripsi</span><input className="input" name="description" placeholder="Cakupan layanan untuk customer" maxLength={300} /></label>
+          <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
+            <button className="btn small primary" type="submit" disabled={addS.isPending}>Simpan Layanan</button>
+          </div>
+        </form>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {services.map(s => {
+          const sTasks = tasks.filter(t => t.serviceId === s.id);
+          const doneCount = sTasks.filter(t => t.status === "done").length;
+          return (
+            <div key={s.id} style={{ padding: 16, background: "var(--tile)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <b style={{ fontSize: "1.05rem" }}>{s.name}</b>
+                    <span className={"stpill " + s.status}>{ST[s.status]}</span>
+                    <span className="tag off">{doneCount}/{sTasks.length} tugas selesai</span>
+                  </div>
+                  {s.description && <p className="muted" style={{ margin: "4px 0 0", fontSize: ".85rem" }}>{s.description}</p>}
+                </div>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <button className="btn small blue" onClick={() => newTask({ projectId, serviceId: s.id })}>
+                    <Plus size={14} /> Tugas Baru
+                  </button>
+                  {policy.canCreateProject() && (
+                    <>
+                      <select className="input" style={{ width: "auto", fontSize: ".8rem", padding: "4px 8px" }} value={s.status} onChange={e => patchS.mutate({ sid: s.id, json: { status: e.target.value } })}>
+                        <option value="todo">Belum</option>
+                        <option value="doing">Dikerjakan</option>
+                        <option value="done">Selesai</option>
+                      </select>
+                      <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus layanan?" onConfirm={() => delS.mutate(s.id)} />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {sTasks.length > 0 ? (
+                <div style={{ display: "grid", gap: 6 }}>
+                  {sTasks.map(t => (
+                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--surface)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+                      <button className="linkbtn clamp1" style={{ textAlign: "left", textDecoration: "none", fontWeight: 600 }} onClick={() => openTask(t.id)}>
+                        {t.title}
+                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <small className="muted">{t.name}</small>
+                        <span className={"stpill " + t.status}>{ST[t.status]}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted" style={{ fontSize: ".82rem", fontStyle: "italic", margin: "6px 0 0" }}>Belum ada tugas di dalam layanan ini. Klik '+ Tugas Baru' untuk menambahkan.</p>
+              )}
+            </div>
+          );
+        })}
+
+        {tasks.filter(t => !t.serviceId).length > 0 && (
+          <div style={{ padding: 16, background: "var(--tile)", borderRadius: "var(--radius)", border: "1px dashed var(--border)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div>
+                <b style={{ fontSize: "1rem" }}>Tugas Umum (Tanpa Layanan Khusus)</b>
+                <span className="tag off" style={{ marginLeft: 8 }}>{tasks.filter(t => !t.serviceId).length} tugas</span>
+              </div>
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              {tasks.filter(t => !t.serviceId).map(t => (
+                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--surface)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+                  <button className="linkbtn clamp1" style={{ textAlign: "left", textDecoration: "none", fontWeight: 600 }} onClick={() => openTask(t.id)}>
+                    {t.title}
+                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <small className="muted">{t.name}</small>
+                    <span className={"stpill " + t.status}>{ST[t.status]}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {services.length === 0 && (
+          <Empty art="tasks" title="Belum ada layanan di proyek ini">
+            Tambahkan kategori layanan yang diambil customer (seperti Web Development, Desain, SEO) untuk mengelompokkan tugas di dalamnya.
+          </Empty>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /** Project detail: header card with progress and actions, then Overview / Tasks / Proof / Activity. Closed projects read as the final report. */
 export function ProjectReportPage() {
   const [, params] = useRoute("/proyek/:id");
@@ -160,7 +305,14 @@ export function ProjectReportPage() {
   const progress = pct(s.done, s.total);
   return (
     <Page noNew back="/proyek" title={p.name} sub={<Link href="/proyek" className="plink back-desktop" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><ArrowLeft size={14} />Semua proyek</Link>}
-      tabs={[{ id: "ringkas", label: "Ringkasan" }, { id: "tugas", label: `Tugas (${s.total})` }, { id: "bukti", label: "Bukti" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
+      tabs={[
+        { id: "ringkas", label: "Ringkasan" },
+        { id: "layanan", label: "Layanan & Task" },
+        { id: "tugas", label: `Semua Tugas (${s.total})` },
+        { id: "bukti", label: "Bukti" },
+        { id: "aktivitas", label: "Aktivitas" }
+      ]}
+      tab={tab} onTab={setTab}
       actions={<button className="btn small" onClick={() => window.print()}><Printer size={14} />Cetak</button>}>
       <section className="projhead" data-c={p.color}>
         <Ring value={progress} />
@@ -180,6 +332,7 @@ export function ProjectReportPage() {
         </div>
       </section>
       {tab === "ringkas" && <Overview d={d} />}
+      {tab === "layanan" && <ServicesSection projectId={p.id} tasks={tasks} />}
       {tab === "tugas" && <Tasks tasks={tasks} />}
       {tab === "bukti" && <Proofs tasks={tasks} />}
       {tab === "aktivitas" && <Activity ids={new Set(tasks.map(t => t.id))} />}

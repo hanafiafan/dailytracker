@@ -6,6 +6,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { MemberDTO } from "@shared/schemas";
+import { COLORS } from "@shared/schemas";
+import { COLOR_LABEL } from "../lib/tasks";
 import { api, ok, putImage } from "../lib/api";
 import { fmtShort } from "../lib/format";
 import { squarePhoto } from "../lib/image";
@@ -17,31 +19,57 @@ import { useIsMobile } from "../lib/useMedia";
 import { MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
 import { ymd } from "@shared/time";
 
-const units = (team: MemberDTO[]) => [...new Set(team.map(m => m.group).filter(Boolean))].sort();
+const LEVELS = ["Director", "Project Manager", "Lead", "Senior", "Staff", "Intern", "Client"] as const;
+
+const units = (team: MemberDTO[], entities?: { id: string; name: string }[]) => {
+  const set = new Set(team.map(m => m.group).filter(Boolean));
+  entities?.forEach(e => set.add(e.id));
+  return [...set].sort();
+};
 
 function UnitField({ name, defaultValue }: { name: string; defaultValue?: string }) {
-  const { team, policy } = useViewer();
-  if (!policy.isSuper) return <label className="field"><span>Unit</span><select className="input" name={name} defaultValue={defaultValue || policy.groups[0]}>{policy.groups.map(g => <option key={g}>{g}</option>)}</select></label>;
-  return <label className="field"><span>Unit (mis. HCS, HCM)</span>
-    <input className="input" name={name} list="unit-list" maxLength={20} placeholder="Kosongkan kalau tidak ada" defaultValue={defaultValue} />
-    <datalist id="unit-list">{units(team).map(g => <option key={g} value={g} />)}</datalist></label>;
+  const { team, policy, entities } = useViewer();
+  const allUnits = units(team, entities);
+  if (!policy.isSuper) return <label className="field"><span>Unit / Entitas</span><select className="input" name={name} defaultValue={defaultValue || policy.groups[0]}>{policy.groups.map(g => <option key={g}>{g}</option>)}</select></label>;
+  return <label className="field"><span>Unit / Entitas (mis. HCS, HCM, HUC)</span>
+    <input className="input" name={name} list="unit-list" maxLength={20} placeholder="Pilih atau ketik entitas" defaultValue={defaultValue} />
+    <datalist id="unit-list">{allUnits.map(g => <option key={g} value={g} />)}</datalist></label>;
 }
 
 export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void }) {
-  const { me, team, policy } = useViewer();
+  const { me, team, policy, projects } = useViewer();
   const qc = useQueryClient();
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null | undefined>(undefined); // undefined = unchanged, null = remove
+  const [canCreateProj, setCanCreateProj] = useState(m.canCreateProject ?? false);
+  const [canCommentAll, setCanCommentAll] = useState(m.canCommentAllProjects ?? false);
+  const [allowedProjects, setAllowedProjects] = useState<string[]>(m.allowedCommentProjectIds ?? []);
+  const [accType, setAccType] = useState<"employee" | "client">(m.accountType ?? "employee");
+
   const self = m.email === me.email;
-  const canAdmin = policy.isSuper && !self; // unit and email changes belong to the superadmin
+  const canAdmin = policy.isSuper && !self; // unit and role permissions belong to the superadmin
+
   const save = useAction(async (f: FormData) => {
     const email = String(f.get("email") ?? m.email).trim().toLowerCase();
-    const body: { name: string; role: string; group?: string; managerEmail?: string | null } = { name: String(f.get("name")), role: String(f.get("role")) };
-    if (canAdmin) { body.group = String(f.get("group") ?? "").trim().toUpperCase(); body.managerEmail = String(f.get("manager") ?? "") || null; }
+    const body: Record<string, unknown> = {
+      name: String(f.get("name")),
+      role: String(f.get("role")),
+      jobdesk: String(f.get("jobdesk") ?? "").trim(),
+    };
+    if (canAdmin) {
+      body.group = String(f.get("group") ?? "").trim().toUpperCase();
+      body.managerEmail = String(f.get("manager") ?? "") || null;
+      body.level = String(f.get("level") ?? "Staff");
+      body.accountType = accType;
+      body.canCreateProject = canCreateProj;
+      body.canCommentAllProjects = canCommentAll;
+      body.allowedCommentProjectIds = allowedProjects;
+    }
     await ok(api.team[":email"].$patch({ param: { email: m.email }, json: body }));
     if (photo === null) await ok(api.team[":email"].photo.$delete({ param: { email: m.email } }));
     else if (photo) await putImage(`/api/team/${encodeURIComponent(m.email)}/photo`, photo.blob);
     if (canAdmin && email !== m.email) await ok(api.team[":email"].move.$post({ param: { email: m.email }, json: { email } }));
   }, { done: "Profil disimpan", refresh: [keys.team, keys.tasks, keys.me, keys.routines] });
+
   const preview = photo === undefined ? undefined : photo ? photo.url : null;
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,6 +77,11 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
     if (!String(f.get("name")).trim()) return void toast.error("Nama tidak boleh kosong");
     save.mutate(f, { onSuccess: () => { if (self) void qc.invalidateQueries({ queryKey: keys.me }); onClose(); } });
   };
+
+  const toggleProj = (pid: string) => {
+    setAllowedProjects(prev => prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid]);
+  };
+
   return (
     <form className="pform" onSubmit={submit}>
       <div className="prow">
@@ -63,11 +96,64 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
       </div>
       <div className="row">
         <label className="field"><span>Nama</span><input className="input" name="name" defaultValue={m.name} maxLength={40} autoFocus /></label>
-        <label className="field"><span>Divisi</span><input className="input" name="role" defaultValue={m.role} maxLength={60} /></label>
+        <label className="field"><span>Jabatan</span><input className="input" name="role" defaultValue={m.role} maxLength={60} /></label>
         {canAdmin && <label className="field"><span>Email Google</span><input className="input" name="email" type="email" defaultValue={m.email} maxLength={120} /></label>}
         {canAdmin && <UnitField name="group" defaultValue={m.group} />}
+        {canAdmin && (
+          <label className="field"><span>Tingkatan / Level</span>
+            <select className="input" name="level" defaultValue={m.level ?? "Staff"}>
+              {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </label>
+        )}
+        {canAdmin && (
+          <label className="field"><span>Tipe Akun</span>
+            <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: ".88rem", cursor: "pointer" }}>
+                <input type="radio" name="accType" checked={accType === "employee"} onChange={() => setAccType("employee")} />
+                <span>Karyawan / Tim</span>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: ".88rem", cursor: "pointer" }}>
+                <input type="radio" name="accType" checked={accType === "client"} onChange={() => setAccType("client")} />
+                <span>Client (Pantau Proyek Sendiri)</span>
+              </label>
+            </div>
+          </label>
+        )}
+        <label className="field" style={{ gridColumn: "1 / -1" }}><span>Jobdesk / Tanggung Jawab</span>
+          <textarea className="input" name="jobdesk" rows={2} defaultValue={m.jobdesk ?? ""} placeholder="Uraian tanggung jawab atau fokus pekerjaan..." maxLength={500} style={{ resize: "vertical" }} />
+        </label>
         {canAdmin && <label className="field"><span>Atasan langsung (untuk bagan)</span><select className="input" name="manager" defaultValue={m.managerEmail ?? ""}><option value="">Otomatis (kepala unit, atau Superadmin)</option>{team.filter(x => x.email !== m.email).map(x => <option key={x.email} value={x.email}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}</select></label>}
       </div>
+
+      {canAdmin && (
+        <div style={{ marginTop: 12, padding: "12px", background: "var(--glass)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+          <b style={{ display: "block", marginBottom: 8, fontSize: ".85rem" }}>Pengaturan Izin Khusus (Superadmin)</b>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: ".84rem" }}>
+              <input type="checkbox" checked={canCreateProj} onChange={e => setCanCreateProj(e.target.checked)} />
+              <span>Bisa membuat / menambah proyek baru (Switch Izin Proyek)</span>
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: ".84rem" }}>
+              <input type="checkbox" checked={canCommentAll} onChange={e => setCanCommentAll(e.target.checked)} />
+              <span>Bisa memberi komentar di semua proyek</span>
+            </label>
+            {!canCommentAll && projects.length > 0 && (
+              <div style={{ marginTop: 6, paddingLeft: 24 }}>
+                <span className="muted" style={{ fontSize: ".78rem", display: "block", marginBottom: 4 }}>Atau pilih proyek tertentu yang boleh dikomentari:</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {projects.map(p => (
+                    <button key={p.id} type="button" className={"chip" + (allowedProjects.includes(p.id) ? " on" : "")} onClick={() => toggleProj(p.id)}>
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="actions"><button type="button" className="btn small ghost" onClick={onClose}>Batal</button><button type="submit" className="btn small primary" disabled={save.isPending}>Simpan profil</button></div>
     </form>
   );
@@ -99,7 +185,14 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
         <button className="mcr-main" onClick={() => setSheet(true)} aria-label={`Kelola ${m.name}`}>
           <Avatar m={m} />
           <span className="mcr-who"><b className="clamp1">{m.name}</b><small className="muted clamp1">{m.role || "—"}</small>
-            <span className="mcr-tags">{m.group && <span className="tag due">{m.group}</span>}{m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}{!m.seenAt && <span className="tag off">Belum masuk</span>}</span></span>
+            <span className="mcr-tags">
+              {m.group && <span className="tag due">{m.group}</span>}
+              {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
+              {m.accountType === "client" && <span className="tag warn">Klien</span>}
+              {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
+              {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
+              {!m.seenAt && <span className="tag off">Belum masuk</span>}
+            </span></span>
           <MoreHorizontal size={20} />
         </button>
       </div>
@@ -120,9 +213,17 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
       <div ref={setNodeRef} className={"mrow" + (isDragging ? " dragging" : "")} style={{ transform: CSS.Translate.toString(transform), transition }}>
         {policy.isSuper ? <button className="handle" type="button" aria-label={`Geser ${m.name}. Pakai spasi lalu panah atas atau bawah.`} title="Tarik untuk memindah" {...attributes} {...listeners}>⠿</button> : <span className="handle" aria-hidden="true" />}
         <Avatar m={m} />
-        <div className="who"><b><PersonLink email={m.email}>{m.name}</PersonLink></b><small>{m.role || "—"}</small><small>{m.email}</small></div>
+        <div className="who">
+          <b><PersonLink email={m.email}>{m.name}</PersonLink></b>
+          <small>{m.role || "—"}</small>
+          {m.jobdesk && <small className="muted clamp1" title={m.jobdesk}>{m.jobdesk}</small>}
+          <small className="muted">{m.email}</small>
+        </div>
         <div className="mtags">
           {m.group && <span className="tag due">{m.group}</span>}
+          {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
+          {m.accountType === "client" && <span className="tag warn">Klien</span>}
+          {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
           {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
           {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
         </div>
@@ -135,6 +236,72 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
       </div>
       {editing && <ProfileForm m={m} onClose={() => onEdit(false)} />}
     </>
+  );
+}
+
+function EntityManager() {
+  const { entities } = useViewer();
+  const [adding, setAdding] = useState(false);
+  const addEntity = useAction((f: FormData) => ok(api.meta.entities.$post({ json: {
+    id: String(f.get("id")).trim().toUpperCase(),
+    name: String(f.get("name")).trim(),
+    description: String(f.get("description") ?? "").trim(),
+    color: (String(f.get("color") ?? "lilac") as any),
+  } })), { done: "Entitas berhasil ditambahkan", refresh: [keys.meta, keys.team] });
+
+  const delEntity = useAction((id: string) => ok(api.meta.entities[":id"].$delete({ param: { id } })), { done: "Entitas dihapus", refresh: [keys.meta, keys.team] });
+
+  return (
+    <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: "1rem" }}>Kelola Entitas Dinamis (HCS, HCM, HUC, dll.)</h3>
+          <small className="muted">Penambahan dan penyesuaian entitas unit kerja perusahaan (Superadmin)</small>
+        </div>
+        <button type="button" className="btn small primary" onClick={() => setAdding(!adding)}>
+          {adding ? "Tutup" : "+ Tambah Entitas"}
+        </button>
+      </div>
+
+      {adding && (
+        <form className="row" style={{ padding: 12, background: "var(--glass)", borderRadius: "var(--radius)", marginBottom: 16 }} onSubmit={e => {
+          e.preventDefault(); const f = new FormData(e.currentTarget);
+          if (!String(f.get("id")).trim()) return void toast.error("Kode entitas harus diisi (mis. HUC)");
+          if (!String(f.get("name")).trim()) return void toast.error("Nama entitas harus diisi");
+          addEntity.mutate(f, { onSuccess: () => { (e.target as HTMLFormElement).reset(); setAdding(false); } });
+        }}>
+          <label className="field" style={{ flex: "0 0 100px" }}><span>Kode</span><input className="input" name="id" placeholder="mis. HUC" maxLength={10} required /></label>
+          <label className="field" style={{ flex: "1 1 180px" }}><span>Nama Entitas</span><input className="input" name="name" placeholder="mis. Halal Umrah Club" maxLength={80} required /></label>
+          <label className="field" style={{ flex: "1 1 200px" }}><span>Deskripsi</span><input className="input" name="description" placeholder="Keterangan singkat" maxLength={200} /></label>
+          <label className="field" style={{ flex: "0 0 120px" }}><span>Warna</span>
+            <select className="input" name="color" defaultValue="lilac">
+              {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
+            </select>
+          </label>
+          <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
+            <button className="btn primary small" type="submit" disabled={addEntity.isPending}>Simpan</button>
+          </div>
+        </form>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+        {entities?.map(ent => (
+          <div key={ent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--tile)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="tag due" style={{ fontWeight: 700 }}>{ent.id}</span>
+                <b style={{ fontSize: ".9rem" }}>{ent.name}</b>
+              </div>
+              {ent.description && <small className="muted clamp1" style={{ display: "block", marginTop: 2 }}>{ent.description}</small>}
+            </div>
+            <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus entitas?" onConfirm={() => delEntity.mutate(ent.id)} />
+          </div>
+        ))}
+        {(!entities || entities.length === 0) && (
+          <p className="muted" style={{ fontSize: ".85rem", fontStyle: "italic" }}>Belum ada entitas khusus yang ditambahkan.</p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -178,6 +345,7 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
         <UnitField name="group" />
         <button className="btn primary" type="submit" disabled={add.isPending}>Tambah anggota</button>
       </form>}
+      {policy.isSuper && <EntityManager />}
     </details>
   );
 }

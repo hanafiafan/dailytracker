@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
+import type { ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ProjectServiceDTO, EntityDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
@@ -38,6 +38,11 @@ export const useRunning = (enabled: boolean) => useQuery({ queryKey: keys.timer,
 export const useTaskTime = (id: string) => useQuery({ queryKey: [...keys.timer, "task", id], queryFn: () => ok(api.time.task[":taskId"].$get({ param: { taskId: id } })) as unknown as Promise<{ entries: TimeEntryDTO[]; totalMin: number }> });
 export const useTimeReport = (from: string, to: string) => useQuery({ queryKey: [...keys.timer, "report", from, to], queryFn: () => ok(api.time.report.$get({ query: { from, to } })) as unknown as Promise<TimeReportDTO> });
 export const useProjectReport = (id: string) => useQuery({ queryKey: [...keys.analytics, "project", id], queryFn: () => ok(api.reports.project[":id"].$get({ param: { id } })) as unknown as Promise<ProjectReportDTO> });
+export const useProjectServices = (projectId: string | null) => useQuery({
+  queryKey: [...keys.meta, "services", projectId],
+  enabled: !!projectId,
+  queryFn: () => ok(api.meta.projects[":id"].services.$get({ param: { id: projectId! } })) as unknown as Promise<ProjectServiceDTO[]>,
+});
 export const useResources = (enabled: boolean) => useQuery({ queryKey: [...keys.resources, "list"], enabled, queryFn: () => ok(api.resources.$get()) as unknown as Promise<ResourceDTO[]> });
 export const useBookings = (from: string, to: string) => useQuery({ queryKey: [...keys.resources, "bookings", from, to], placeholderData: prev => prev, queryFn: () => ok(api.bookings.$get({ query: { from, to } })) as unknown as Promise<BookingDTO[]> });
 export const useChannels = (enabled = true) => useQuery({ queryKey: [...keys.chat, "channels"], enabled, queryFn: () => ok(api.chat.channels.$get()) as unknown as Promise<ChannelDTO[]> });

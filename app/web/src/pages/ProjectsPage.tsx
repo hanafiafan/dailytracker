@@ -8,7 +8,6 @@ import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
 import { today } from "../lib/format";
 import { useLocation } from "wouter";
-import { ArrowUpRight } from "lucide-react";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useTasks, windowFrom } from "../lib/queries";
@@ -57,49 +56,173 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
   );
 }
 
+import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
+import { COLORS, type Color } from "@shared/schemas";
+import { COLOR_LABEL } from "../lib/tasks";
+
 export function ProjectsPage() {
-  const { projects, policy, member } = useViewer();
+  const { me, projects, policy, member } = useViewer();
   const { date } = useUi();
   const [tab, setTab] = useState("ringkas"), [closing, setClosing] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
+  const [showAddProject, setShowAddProject] = useState(false);
   const [, go] = useLocation();
   const mobile = useIsMobile();
   const reopen = useAction((id: string) => ok(api.meta.projects[":id"].reopen.$post({ param: { id } })), { done: "Proyek dibuka kembali", refresh: [keys.meta] });
+  const addProject = useAction((f: FormData) => ok(api.meta.projects.$post({ json: {
+    name: String(f.get("name")).trim(),
+    description: String(f.get("description") ?? "").trim(),
+    color: (String(f.get("color") ?? "lilac") as Color),
+  } })), { done: "Proyek baru berhasil dibuat", refresh: [keys.meta] });
+
   const tq = useTasks(windowFrom(date, today()), true);
+
   const rows = useMemo(() => {
     const all = tq.data ?? [];
-    return projects.filter(p => !p.archived).sort((a, b) => Number(!!a.closedAt) - Number(!!b.closedAt)).map(p => {
-      const l = all.filter(t => t.projectId === p.id), done = l.filter(t => t.status === "done").length;
-      const late = l.filter(t => t.status !== "done" && t.date < today()).length;
-      const who = [...new Set(l.map(t => t.email))].map(e => member(e)).filter(Boolean);
-      return { p, total: l.length, done, late, open: l.length - done, pct: l.length ? Math.round(done / l.length * 100) : 0, who };
-    }).sort((a, b) => b.open - a.open);
-  }, [tq.data, projects, member]);
+    return projects
+      .filter(p => {
+        // If client, only show projects they have tasks in or client's assigned
+        if (policy.isClient) {
+          const hasTask = all.some(t => t.projectId === p.id && t.email === me.email);
+          if (!hasTask) return false;
+        }
+        // Status filter
+        if (statusFilter === "active" && (p.closedAt || p.archived)) return false;
+        if (statusFilter === "archived" && !p.closedAt && !p.archived) return false;
+        // Search query
+        if (q.trim()) {
+          const term = q.trim().toLowerCase();
+          const matchName = p.name.toLowerCase().includes(term);
+          const matchDesc = p.description?.toLowerCase().includes(term) ?? false;
+          if (!matchName && !matchDesc) return false;
+        }
+        return true;
+      })
+      .map(p => {
+        const l = all.filter(t => t.projectId === p.id), done = l.filter(t => t.status === "done").length;
+        const late = l.filter(t => t.status !== "done" && t.date < today()).length;
+        const who = [...new Set(l.map(t => t.email))].map(e => member(e)).filter(Boolean);
+        return { p, total: l.length, done, late, open: l.length - done, pct: l.length ? Math.round(done / l.length * 100) : 0, who };
+      })
+      .sort((a, b) => b.open - a.open);
+  }, [tq.data, projects, member, statusFilter, q, policy.isClient, me.email]);
+
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
-      tabs={[{ id: "ringkas", label: "Ringkasan" }, { id: "waktu", label: "Garis waktu" }, ...(policy.isManager ? [{ id: "kelola", label: "Kelola proyek & label" }] : [])]} tab={tab} onTab={setTab}>
-      {tab === "kelola" && policy.isManager ? <ProjectsLabels /> : tab === "waktu" ? <Gantt tasks={tq.data ?? []} /> : rows.length && mobile ? (
-        <div className="mpgrid">{rows.map(({ p, total, late, open, pct }, i) => (
-          <button key={p.id} className={"mproj " + (p.closedAt ? "" : i % 3 === 0 ? "lime" : i % 3 === 1 ? "dark" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-            <span className="mt-go"><ArrowUpRight size={16} /></span><small className="clamp2">{p.name}{p.closedAt ? " · selesai" : ""}</small><b>{pct}<span>%</span></b>
-            <em>{open} terbuka · {total} tugas{late ? ` · ${late} terlambat` : ""}</em><span className="mprog"><i style={{ width: `${pct}%` }} /></span>
-          </button>))}</div>
-      ) : rows.length ? (
-        <div className="pcards">
-          {rows.map(({ p, total, done, late, open, pct, who }) => (
-            <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-              <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
-              <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
-                <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
+      tabs={[
+        { id: "ringkas", label: "Ringkasan" },
+        { id: "waktu", label: "Garis waktu" },
+        ...(policy.canCreateProject() ? [{ id: "kelola", label: "Kelola proyek & label" }] : [])
+      ]}
+      tab={tab} onTab={setTab}>
+
+      {tab === "kelola" && policy.canCreateProject() ? (
+        <ProjectsLabels />
+      ) : tab === "waktu" ? (
+        <Gantt tasks={tq.data ?? []} />
+      ) : (
+        <>
+          {/* Controls: Search, Filter Tabs, Add Button */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 240px", maxWidth: 360, position: "relative" }}>
+              <Search size={16} className="muted" style={{ position: "absolute", left: 10 }} />
+              <input
+                className="input"
+                style={{ paddingLeft: 32, width: "100%" }}
+                placeholder="Cari nama atau deskripsi proyek..."
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="seg" role="group" aria-label="Filter status">
+                <button aria-pressed={statusFilter === "active"} onClick={() => setStatusFilter("active")}>
+                  Aktif ({projects.filter(p => !p.closedAt && !p.archived).length})
+                </button>
+                <button aria-pressed={statusFilter === "archived"} onClick={() => setStatusFilter("archived")}>
+                  Arsip ({projects.filter(p => p.closedAt || p.archived).length})
+                </button>
+                <button aria-pressed={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
+                  Semua ({projects.length})
+                </button>
               </div>
-              <div className="chips">
-                <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
-                {policy.isManager && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
+
+              {policy.canCreateProject() && (
+                <button className="btn primary small" style={{ display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => setShowAddProject(!showAddProject)}>
+                  <Plus size={15} />
+                  <span>Tambah Proyek</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Create Project Form */}
+          {showAddProject && policy.canCreateProject() && (
+            <form
+              className="row"
+              style={{ padding: 14, background: "var(--glass)", borderRadius: "var(--radius)", border: "1px solid var(--border)", marginBottom: 18 }}
+              onSubmit={e => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                if (!String(f.get("name")).trim()) return;
+                addProject.mutate(f, { onSuccess: () => { (e.target as HTMLFormElement).reset(); setShowAddProject(false); } });
+              }}
+            >
+              <label className="field" style={{ flex: "1 1 200px" }}>
+                <span>Nama Proyek</span>
+                <input className="input" name="name" placeholder="mis. Redesign Website 2026" required maxLength={60} autoFocus />
+              </label>
+              <label className="field" style={{ flex: "1 1 240px" }}>
+                <span>Deskripsi Proyek</span>
+                <input className="input" name="description" placeholder="Tujuan atau cakupan proyek" maxLength={200} />
+              </label>
+              <label className="field" style={{ flex: "0 0 130px" }}>
+                <span>Warna</span>
+                <select className="input" name="color" defaultValue="lilac">
+                  {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
+                </select>
+              </label>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 2 }}>
+                <button type="button" className="btn small ghost" onClick={() => setShowAddProject(false)}>Batal</button>
+                <button type="submit" className="btn small primary" disabled={addProject.isPending}>Simpan Proyek</button>
               </div>
-            </article>))}
-        </div>
-      ) : <div className="bc"><Empty art="tasks" title="Belum ada proyek">{policy.isManager ? "Buat proyek di tab Kelola untuk mengelompokkan tugas." : "Proyek akan muncul di sini."}</Empty></div>}
+            </form>
+          )}
+
+          {rows.length && mobile ? (
+            <div className="mpgrid">{rows.map(({ p, total, late, open, pct }, i) => (
+              <button key={p.id} className={"mproj " + (p.closedAt ? "" : i % 3 === 0 ? "lime" : i % 3 === 1 ? "dark" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
+                <span className="mt-go"><ArrowUpRight size={16} /></span><small className="clamp2">{p.name}{p.closedAt ? " · selesai" : ""}</small><b>{pct}<span>%</span></b>
+                <em>{open} terbuka · {total} tugas{late ? ` · ${late} terlambat` : ""}</em><span className="mprog"><i style={{ width: `${pct}%` }} /></span>
+              </button>))}</div>
+          ) : rows.length ? (
+            <div className="pcards">
+              {rows.map(({ p, total, done, late, open, pct, who }) => (
+                <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
+                  <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
+                  <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
+                    <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
+                  </div>
+                  <div className="chips">
+                    <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
+                    {policy.isManager && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
+                  </div>
+                </article>))}
+            </div>
+          ) : (
+            <div className="bc">
+              <Empty art="tasks" title={statusFilter === "archived" ? "Tidak ada arsip proyek" : q ? "Proyek tidak ditemukan" : "Belum ada proyek"}>
+                {statusFilter === "archived" ? "Proyek yang sudah selesai atau ditutup akan tersimpan rapi di sini." : q ? `Tidak ada proyek yang cocok dengan "${q}".` : policy.canCreateProject() ? "Mulai dengan membuat proyek baru untuk mengatur tugas tim." : "Proyek akan muncul di sini."}
+              </Empty>
+            </div>
+          )}
+        </>
+      )}
+
       {closing && <CloseProject p={projects.find(x => x.id === closing)!} openTasks={rows.find(r => r.p.id === closing)?.open ?? 0} onClose={() => setClosing(null)} />}
     </Page>
   );

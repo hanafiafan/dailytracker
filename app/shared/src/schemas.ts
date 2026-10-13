@@ -13,12 +13,52 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const email = z.string().trim().toLowerCase().email().max(120);
 const unit = z.string().trim().toUpperCase().max(20);
 
+export const LEVELS = ["Director", "Project Manager", "Lead", "Senior", "Staff", "Intern", "Client"] as const;
+export type Level = (typeof LEVELS)[number];
+
+export const ACCOUNT_TYPES = ["employee", "client"] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+
+export const entityInput = z.object({
+  id: z.string().trim().min(1).max(20).toUpperCase(),
+  name: z.string().trim().min(1).max(60),
+  description: z.string().trim().max(200).default(""),
+  color: z.enum(COLORS).default("lilac"),
+});
+export const entityPatch = entityInput.partial();
+
+export const projectServiceInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(300).default(""),
+  status: z.enum(STATUSES).default("todo"),
+});
+export const projectServicePatch = projectServiceInput.partial();
+
 export const memberCreate = z.object({
-  email, name: z.string().trim().min(1).max(40), role: z.string().trim().max(60).default(""), group: unit.default(""),
+  email,
+  name: z.string().trim().min(1).max(40),
+  role: z.string().trim().max(60).default(""),
+  group: unit.default(""),
+  jobdesk: z.string().trim().max(500).default(""),
+  level: z.string().trim().max(40).default("Staff"),
+  accountType: z.enum(ACCOUNT_TYPES).default("employee"),
+  canCreateProject: z.boolean().default(false),
+  canCommentAllProjects: z.boolean().default(false),
+  allowedCommentProjectIds: z.array(z.string()).max(100).default([]),
 });
 export const memberPatch = z.object({
-  name: z.string().trim().min(1).max(40), role: z.string().trim().max(60), group: unit,
-  isAdmin: z.boolean(), adminGroups: z.array(unit).max(20), managerEmail: email.nullable(),
+  name: z.string().trim().min(1).max(40),
+  role: z.string().trim().max(60),
+  group: unit,
+  isAdmin: z.boolean(),
+  adminGroups: z.array(unit).max(20),
+  managerEmail: email.nullable(),
+  jobdesk: z.string().trim().max(500),
+  level: z.string().trim().max(40),
+  accountType: z.enum(ACCOUNT_TYPES),
+  canCreateProject: z.boolean(),
+  canCommentAllProjects: z.boolean(),
+  allowedCommentProjectIds: z.array(z.string()).max(100),
 }).partial();
 export const memberMove = z.object({ email });
 export const memberOrder = z.object({ emails: z.array(z.string()).max(200) });
@@ -32,6 +72,7 @@ export const taskCreate = z.object({
   hot: z.boolean().default(false),
   priority: z.enum(PRIORITIES).default("normal"),
   projectId: z.string().nullish(),
+  serviceId: z.string().nullish(),
   labelIds: z.array(z.string()).max(10).default([]),
   subtasks: z.array(z.string().trim().min(1).max(160)).max(30).default([]),
   needProof: z.boolean().default(true),
@@ -43,7 +84,7 @@ export const taskCreate = z.object({
 export const taskPatch = z.object({
   title: z.string().trim().min(1).max(120), note: z.string().trim().max(600),
   date, start: hm.nullable(), due: hm.nullable(),
-  priority: z.enum(PRIORITIES), projectId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
+  priority: z.enum(PRIORITIES), projectId: z.string().nullable(), serviceId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
   needProof: z.boolean(), email, warnMin: z.number().int().min(15).max(1440).nullable(),
 }).partial();
 export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
@@ -77,10 +118,14 @@ export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p
 
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });
 
+export interface EntityDTO { id: string; name: string; description: string; color: Color; createdAt: number }
+export interface ProjectServiceDTO { id: string; projectId: string; name: string; description: string; status: Status; createdAt: number }
+
 // ---- shapes returned by the API ----
 export interface MemberDTO {
   email: string; name: string; role: string; group: string; isAdmin: boolean; adminGroups: string[];
   sortOrder: number; hasPhoto: boolean; photoV: number; seenAt: number | null; askAt: number | null; managerEmail: string | null;
+  jobdesk: string; level: string; accountType: AccountType; canCreateProject: boolean; canCommentAllProjects: boolean; allowedCommentProjectIds: string[];
 }
 export interface CommentDTO { id: string; by: string; byEmail: string; text: string; at: number }
 export interface SubtaskDTO { id: string; title: string; done: boolean }
@@ -100,7 +145,7 @@ export interface AnalyticsDTO {
 }
 export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
-  status: Status; hot: boolean; priority: Priority; projectId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
+  status: Status; hot: boolean; priority: Priority; projectId: string | null; serviceId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   approvalStatus: "pending" | "approved" | "rejected"; approvedBy: string | null; approvedAt: number | null;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
@@ -108,7 +153,7 @@ export interface TaskDTO {
 }
 export interface RoutineDTO { id: string; email: string; title: string; note: string; start: string | null; due: string | null; days: number[]; hot: boolean; needProof: boolean; byName: string | null }
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
-export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[] }
+export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[]; entities?: EntityDTO[] }
 /** Bump when the guide or its terms change materially: everyone is asked to confirm again. */
 export const GUIDE_VERSION = 1;
 export const guideAck = z.object({ version: z.number().int() });
@@ -124,12 +169,23 @@ export interface TimeReportDTO {
 }
 export interface ProjectReportDTO {
   project: ProjectDTO;
+  services?: ProjectServiceDTO[];
   stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number; revisions: number };
-  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number }[];
+  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null }[];
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }
 export interface ChatRefDTO { type: "member" | "task" | "project"; id: string; label: string; ok: boolean }
 export interface AttachmentDTO { id: string; name: string; mime: string; size: number }
 export interface MessageDTO { id: string; channel: string; email: string; name: string; text: string; refs: ChatRefDTO[]; attachments: AttachmentDTO[]; createdAt: number; deleted: boolean }
-export interface ChannelDTO { id: string; kind: "general" | "project" | "group"; name: string; projectId: string | null; color: Color | null; unread: number; last: { text: string; name: string; at: number } | null; group?: { members: string[]; createdBy: string; canManage: boolean } }
+export interface ChannelDTO {
+  id: string;
+  kind: "general" | "project" | "group" | "dm";
+  name: string;
+  projectId: string | null;
+  color: Color | null;
+  unread: number;
+  last: { text: string; name: string; at: number } | null;
+  group?: { members: string[]; createdBy: string; canManage: boolean };
+  dmUser?: { email: string; name: string; role: string; hasPhoto: boolean; photoV: number };
+}

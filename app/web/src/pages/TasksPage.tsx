@@ -26,7 +26,7 @@ export function TasksPage() {
   const qc = useQueryClient();
   const tq = useTasks(windowFrom(date, today()), true);
   const [params] = useSearchParams();
-  const initSt = params.get("st"), [q, setQ] = useState(""), [st, setSt] = useState<Status | "open">(initSt === "done" || initSt === "todo" || initSt === "doing" || initSt === "open" ? initSt : "open"), [who, setWho] = useState(params.get("who") ?? "");
+  const initSt = params.get("st"), [q, setQ] = useState(""), [st, setSt] = useState<Status | "open" | "all">(initSt === "done" || initSt === "todo" || initSt === "doing" || initSt === "open" || initSt === "all" ? initSt : "open"), [who, setWho] = useState(params.get("who") ?? "");
   const [sort, setSort] = useState<{ k: Key; asc: boolean }>({ k: "date", asc: true });
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -35,7 +35,7 @@ export function TasksPage() {
   const saveView = () => {
     const name = prompt("Nama tampilan ini?")?.trim();
     if (!name) return;
-    const next = [{ name, st, who, q, sort, group }, ...views.filter(v => v.name !== name)];
+    const next = [{ name, st: st as any, who, q, sort, group }, ...views.filter(v => v.name !== name)];
     setViews(next); storeViews(next);
   };
   const dropView = (name: string) => { const next = views.filter(v => v.name !== name); setViews(next); storeViews(next); };
@@ -48,7 +48,21 @@ export function TasksPage() {
       priority: String(PRIORITY_RANK[t.priority]), date: t.date + (t.start ?? t.due ?? ""), status: String(STATUSES.indexOf(t.status)),
     })[sort.k];
     return (tq.data ?? [])
-      .filter(t => (st === "open" ? t.status !== "done" : t.status === st) && (!who || t.email === who) && (!s || t.title.toLowerCase().includes(s)))
+      .filter(t => {
+        if (st === "open" && t.status === "done") return false;
+        if (st === "done" && t.status !== "done") return false;
+        if (st === "todo" && t.status !== "todo") return false;
+        if (st === "doing" && t.status !== "doing") return false;
+        if (who && t.email !== who) return false;
+        if (s) {
+          const mTitle = t.title.toLowerCase().includes(s);
+          const mNote = t.note?.toLowerCase().includes(s) ?? false;
+          const mWho = (member(t.email)?.name ?? "").toLowerCase().includes(s);
+          const mProj = (project(t.projectId)?.name ?? "").toLowerCase().includes(s);
+          if (!mTitle && !mNote && !mWho && !mProj) return false;
+        }
+        return true;
+      })
       .sort((a, b) => d * val(a).localeCompare(val(b)));
   }, [tq.data, q, st, who, sort, member, project]);
 
@@ -76,12 +90,20 @@ export function TasksPage() {
   const canAll = picked.every(i => { const t = rows.find(r => r.id === i); return t && policy.canManage(t.email); });
 
   return (
-    <Page title="Daftar tugas" sub="Semua tugas dalam satu tabel. Pilih beberapa baris untuk mengubah sekaligus.">
+    <Page title="Daftar tugas" sub="Semua tugas dalam satu tabel. Filter per status, cari arsip selesai, atau ubah massal.">
       <div className="toolbar">
         <div className="seg" role="group" aria-label="Status">
-          {([["open", "Belum selesai"], ...STATUSES.map(s => [s, STATUS[s]])] as [string, string][]).map(([k, l]) => <button key={k} aria-pressed={st === k} onClick={() => setSt(k as Status | "open")}>{l}</button>)}
+          {[
+            ["open", "Tugas Aktif"],
+            ["done", "Arsip Selesai"],
+            ["todo", "Belum"],
+            ["doing", "Dikerjakan"],
+            ["all", "Semua"]
+          ].map(([k, l]) => (
+            <button key={k} aria-pressed={st === k} onClick={() => setSt(k as any)}>{l}</button>
+          ))}
         </div>
-        <input className="input" style={{ width: 200 }} placeholder="Cari judul…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari judul" />
+        <input className="input" style={{ width: 220 }} placeholder="Cari judul, catatan, proyek…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari tugas" />
         {policy.isManager && <select className="input" value={who} onChange={e => setWho(e.target.value)} aria-label="Orang"><option value="">Semua orang</option>{people.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>}
         <select className="input" value={group} onChange={e => setGroup(e.target.value as Group)} aria-label="Kelompokkan"><option value="">Tanpa kelompok</option><option value="status">Per status</option>{policy.isManager && <option value="who">Per orang</option>}<option value="project">Per proyek</option><option value="date">Per tanggal</option></select>
         <span className="muted" style={{ marginLeft: "auto", fontSize: ".8rem" }}>{rows.length} tugas</span>
