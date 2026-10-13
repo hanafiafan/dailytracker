@@ -71,6 +71,8 @@ describe("authorization matrix", () => {
       ["GET", "/routines", undefined, [null]],
       ["GET", "/push/devices", undefined, [null]],
       ["POST", "/push/test", undefined, [null]],
+      ["GET", "/admin/overview", undefined, ["a@x.id", "b@x.id", "hcs@x.id", "out@x.id", null]],
+      ["GET", "/admin/audit", undefined, ["a@x.id", "b@x.id", "hcs@x.id", "out@x.id", null]],
     ];
     const leaks: string[] = [];
     for (const [method, path, body, who] of guarded) {
@@ -87,6 +89,12 @@ describe("authorization matrix", () => {
     expect(task).toMatchObject({ title: "Milik A", status: "doing" });
     expect(task.subtasks).toHaveLength(1);
     expect(task.comments).toHaveLength(1);
+
+    // superadmin has access to admin endpoints
+    const adminOverview = await t.call(OWNER, "GET", "/admin/overview");
+    expect(adminOverview.status).toBe(200);
+    const adminAudit = await t.call(OWNER, "GET", "/admin/audit");
+    expect(adminAudit.status).toBe(200);
   });
 
   it("people cannot see tasks of others in lists, search, activity, or exports", async () => {
