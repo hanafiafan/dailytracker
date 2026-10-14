@@ -255,7 +255,7 @@ describe("10 Revisi Features", () => {
 
     // Verify description returned in channels
     const channels = (await json(await t.call("a@x.id", "GET", "/chat/channels"))) as unknown as J[];
-    const grpChan = channels.find(c => c.id === "g-" + gid);
+    const grpChan = channels.find(c => c.id === "g-" + gid)!;
     expect(grpChan).toBeDefined();
     expect(grpChan.group.description).toBe("Grup koordinasi desain");
 
@@ -269,7 +269,7 @@ describe("10 Revisi Features", () => {
 
     // Check updated members
     const updatedChans = (await json(await t.call("a@x.id", "GET", "/chat/channels"))) as unknown as J[];
-    const updatedChan = updatedChans.find(c => c.id === "g-" + gid);
+    const updatedChan = updatedChans.find(c => c.id === "g-" + gid)!;
     expect(updatedChan.name).toBe("Tim Desain & UI/UX");
     expect(updatedChan.group.description).toBe("Deskripsi baru tim desain");
     expect(updatedChan.group.members).toContain("hcs@x.id");
