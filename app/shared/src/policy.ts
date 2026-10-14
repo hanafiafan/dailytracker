@@ -21,6 +21,8 @@ export const isBOMember = (m?: { name?: string; role?: string; email?: string } 
   !!m && (
     m.role?.trim().toUpperCase() === "BO" ||
     m.role?.trim().toLowerCase() === "business owner" ||
+    m.role?.trim().toLowerCase() === "brand owner" ||
+    /brand owner/i.test(m.role ?? "") ||
     /hanief/i.test(m.name ?? "") ||
     /hanief/i.test(m.email ?? "")
   );
@@ -44,13 +46,13 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   const mine = team.find(m => m.email === me);
   const isMember = !!mine;
   const isBO = isBOMember(mine);
-  const isDirector = isDirectorMember(mine) || isOwner;
+  const isDirector = isDirectorMember(mine);
   const isPM = isProjectManagerMember(mine);
   const isClient = mine?.accountType === "client";
   const isAdmin = !!mine?.isAdmin;
   const groups = isAdmin ? mine!.adminGroups : [];
   /** Owner, or an admin without a unit limit. BO is kept distinct from isBoss to maintain isolation. */
-  const isBoss = isOwner || (isAdmin && groups.length === 0);
+  const isBoss = !isBO && (isOwner || (isAdmin && groups.length === 0));
   const isManager = isOwner || isAdmin || isBO || isPM;
   const manages = (group: string) => isAdmin && !!group && groups.includes(group);
   const target = (email: string) => team.find(m => m.email === email);
@@ -65,6 +67,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   const canManage = (email: string) => {
     if (isOwner) return true;
     if (isBO) {
+      if (email === me) return true;
       const t = target(email);
       return isDirectorMember(t);
     }
@@ -87,18 +90,13 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   const needsTaskApproval = () => false;
 
   /** Visibility:
-   *  - Superadmin (Hellens / isOwner): full visibility of everyone.
-   *  - Project Manager: sees all team members to coordinate cross-entity projects.
-   *  - BO only sees Director (Aziz) and self.
+   *  - Superadmin (Hellens / isOwner) & PM: full visibility of everyone.
+   *  - Brand Owner (Hanief): view only for all data.
    *  - Other members cannot see BO; only Director, Superadmin, and BO can see BO.
    */
   const canSee = (email: string) => {
     if (email === me) return true;
-    if (isOwner || isPM) return true;
-    if (isBO) {
-      const t = target(email);
-      return isDirectorMember(t);
-    }
+    if (isOwner || isPM || isBO) return true;
     const t = target(email);
     if (isBOMember(t)) {
       return isDirector;
@@ -106,16 +104,16 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     return canManage(email) || (isMember && me === email);
   };
 
-  /** Superadmin: the owner account or BO. */
-  const isSuper = isOwner || isBO;
+  /** Superadmin: the owner account (Hellens). Brand Owner is separated from Superadmin. */
+  const isSuper = isOwner;
   const canCreateMember = () => isSuper;
 
   /** Project creation switch: Managers (Owner, Admin, PM, BO) or members with canCreateProject switch enabled */
   const canCreateProject = () => isManager || !!mine?.canCreateProject;
 
-  /** Comment authorization on tasks: Creator, Director (Aziz), Assignee, Supervisor, or Superadmin switch */
+  /** Comment authorization on tasks: Creator, Director (Aziz), Assignee, Supervisor, BO, or Superadmin switch */
   const canCommentTask = (task: { fromAdmin?: string | null; email: string; projectId?: string | null }) => {
-    if (isSuper || isDirector || isOwner) return true;
+    if (isSuper || isDirector || isOwner || isBO) return true;
     if (task.email === me) return true;
     if (task.fromAdmin && (task.fromAdmin === me || (mine?.name && task.fromAdmin === mine.name))) return true;
     if (canManage(task.email)) return true;
@@ -131,7 +129,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   };
 
   /** Which guide this account reads (and confirms). */
-  const guideRole = (): GuideRole => isBO ? "owner" : isOwner ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
+  const guideRole = (): GuideRole => isOwner ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
 
   /** Who this person can start a direct message with:
    *  - Superadmin & Director: anyone on the team.

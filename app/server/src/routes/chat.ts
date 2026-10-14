@@ -69,6 +69,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
   const canAccess = (email: string, owner: boolean, channel: string) => {
     const isSuperadmin = owner || email.toLowerCase() === env.OWNER_EMAIL.toLowerCase();
     if (isSuperadmin) {
+      if (channel === GENERAL) return true; // Kanal Umum terbuka untuk semuanya
       if (channel.startsWith("dm:")) {
         const parts = channel.slice(3).split(":").map(p => p.toLowerCase());
         return parts.includes(email.toLowerCase());
@@ -76,17 +77,21 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (channel.startsWith("g-")) {
         return groupAccess(email, channel.slice(2));
       }
-      if (channel === "bo-direktur") return true;
-      return false; // Kanal Umum dan Proyek disembunyikan sepenuhnya dari Superadmin
+      // bo-direktur dan kanal proyek disembunyikan sepenuhnya dari Superadmin
+      return false;
     }
     const t = team(), p = makePolicy(email, owner, t), me = t.find(m => m.email === email);
     if (!me) return false;
+    if (channel === GENERAL) return true; // Kanal Umum terbuka untuk semuanya
     if (channel === "bo-direktur") return p.isBO || p.isDirector;
     if (p.isBO) {
-      if (channel === GENERAL) return false;
+      if (channel.startsWith("dm:")) {
+        const parts = channel.slice(3).split(":");
+        return parts.includes(email);
+      }
       if (channel.startsWith("g-")) {
         const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, channel.slice(2))).all().map(x => x.email);
-        return ms.every(e => e === email || isDirectorMember(t.find(x => x.email === e)) || e === env.OWNER_EMAIL);
+        return ms.every(e => e === email || isDirectorMember(t.find(x => x.email === e)));
       }
       return false;
     }
@@ -94,7 +99,6 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const parts = channel.slice(3).split(":");
       return parts.includes(email);
     }
-    if (channel === GENERAL) return true;
     if (channel.startsWith("g-")) return groupAccess(email, channel.slice(2));
     const proj = projectOf(channel);
     if (!proj) return false;
@@ -135,9 +139,9 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
           color: "yellow",
           ...info("bo-direktur"),
           group: {
-            members: team().filter(x => isBOMember(x) || isDirectorMember(x) || x.email === env.OWNER_EMAIL).map(x => x.email),
+            members: team().filter(x => isBOMember(x) || isDirectorMember(x)).map(x => x.email),
             createdBy: u.email,
-            canManage: u.owner,
+            canManage: false,
           },
         });
       }
@@ -197,7 +201,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, b = c.req.valid("json"), t = team();
       if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
       if (b.emails.some(e => !t.some(m => m.email === e) && e !== env.OWNER_EMAIL)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
-      if (!u.owner && u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)) && e !== env.OWNER_EMAIL)) {
+      if (!u.owner && u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)))) {
         return c.json({ error: "BO hanya dapat terhubung dengan Direktur" }, 403);
       }
       if (!u.owner && !u.policy.isDirector && !u.policy.isBO && b.emails.some(e => isBOMember(t.find(x => x.email === e)))) {

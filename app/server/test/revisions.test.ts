@@ -158,18 +158,24 @@ describe("10 Revisi Features", () => {
     const ownerChannels = (await json(await t.call(OWNER, "GET", "/chat/channels"))) as unknown as J[];
     const ownerChanIds = ownerChannels.map(c => c.id);
 
-    // Superadmin should NOT see others' group, others' DM, General, or Project channels
+    // Superadmin CAN see General ("general bisa semuanya")
+    expect(ownerChanIds).toContain("general");
+    // Superadmin should NOT see others' group, others' DM, bo-direktur, or Project channels
     expect(ownerChanIds).not.toContain(grpChanId);
     expect(ownerChanIds).not.toContain(dmChanId);
-    expect(ownerChanIds).not.toContain("general");
+    expect(ownerChanIds).not.toContain("bo-direktur");
     expect(ownerChanIds.some(id => id.startsWith("p-"))).toBe(false);
 
-    // Superadmin forbidden from reading or posting in others' chats or General
+    // Superadmin forbidden from reading or posting in others' chats or bo-direktur
     expect((await t.call(OWNER, "GET", `/chat/channels/${grpChanId}/messages`)).status).toBe(403);
     expect((await t.call(OWNER, "POST", `/chat/channels/${grpChanId}/messages`, { text: "snoop", refs: [], attachmentIds: [] })).status).toBe(403);
     expect((await t.call(OWNER, "GET", `/chat/channels/${dmChanId}/messages`)).status).toBe(403);
     expect((await t.call(OWNER, "POST", `/chat/channels/${dmChanId}/messages`, { text: "snoop", refs: [], attachmentIds: [] })).status).toBe(403);
-    expect((await t.call(OWNER, "GET", `/chat/channels/general/messages`)).status).toBe(403);
+    expect((await t.call(OWNER, "GET", `/chat/channels/bo-direktur/messages`)).status).toBe(403);
+
+    // Superadmin CAN read and post in General
+    expect((await t.call(OWNER, "GET", `/chat/channels/general/messages`)).status).toBe(200);
+    expect((await t.call(OWNER, "POST", `/chat/channels/general/messages`, { text: "halo dari superadmin", refs: [], attachmentIds: [] })).status).toBe(201);
 
     // 3. Superadmin is invited to a group by a@x.id
     const inviteRes = await t.call("a@x.id", "POST", "/chat/groups", { name: "Grup Bersama Superadmin", emails: [OWNER] });

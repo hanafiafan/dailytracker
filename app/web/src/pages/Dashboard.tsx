@@ -23,6 +23,7 @@ import { Attention, attention } from "../components/Attention";
 import { Achievements } from "../components/Achievements";
 import { Bento } from "../components/Bento";
 import { MobileHome } from "../components/MobileHome";
+import { isDirectorMember } from "@shared/policy";
 import { useIsMobile } from "../lib/useMedia";
 import { fmtTime } from "../lib/format";
 
@@ -77,7 +78,7 @@ function ManagerDashboard() {
   const byPerson = useMemo(() => Map.groupBy(tasks, t => t.email), [tasks]);
   const units = [...new Set(team.map(m => m.group).filter(Boolean))].sort();
   const myUnits = policy.isBoss ? units : policy.groups;
-  const workers = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email) && (!unit || m.group === unit));
+  const workers = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && isDirectorMember(m))) && policy.canManage(m.email) && (!unit || m.group === unit));
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
   const leaves = useLeaves(true).data ?? [];
   const idle = loaded && date === today() ? workers.filter(m => !m.isAdmin && !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];

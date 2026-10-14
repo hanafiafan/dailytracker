@@ -52,20 +52,25 @@ describe("policy", () => {
     expect(p.isMember).toBe(false);
     expect(p.canSee("a@x.id")).toBe(false);
   });
-  it("BO (Hanief) connects only with Director (Aziz) and sits above Aziz", () => {
+  it("BO (Hanief) has view-only for all data, connects only with Director (Aziz) and is separated from Superadmin", () => {
     const bo = as("hanief@x.id");
     expect(bo.isBO).toBe(true);
     expect(bo.isManager).toBe(true);
-    expect(bo.isSuper).toBe(true);
-    // BO can see and manage Director (Aziz) and self
+    expect(bo.isSuper).toBe(false);
+    // BO can see all data (view only)
     expect(bo.canSee("hanief@x.id")).toBe(true);
     expect(bo.canSee("aziz@x.id")).toBe(true);
+    expect(bo.canSee("a@x.id")).toBe(true);
+    expect(bo.canSee("b@x.id")).toBe(true);
+    expect(bo.canSee("hcs@x.id")).toBe(true);
+
+    // BO can only manage Director (Aziz) and self
+    expect(bo.canManage("hanief@x.id")).toBe(true);
     expect(bo.canManage("aziz@x.id")).toBe(true);
-    // BO cannot see or manage ordinary staff or unit admins
-    expect(bo.canSee("a@x.id")).toBe(false);
-    expect(bo.canSee("b@x.id")).toBe(false);
-    expect(bo.canSee("hcs@x.id")).toBe(false);
+    // BO cannot manage ordinary staff or unit admins (strictly view only)
     expect(bo.canManage("a@x.id")).toBe(false);
+    expect(bo.canManage("b@x.id")).toBe(false);
+    expect(bo.canManage("hcs@x.id")).toBe(false);
 
     // Ordinary members cannot see or manage BO
     const staff = as("a@x.id");

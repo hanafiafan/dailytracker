@@ -39,7 +39,7 @@ export function TasksPage() {
     setViews(next); storeViews(next);
   };
   const dropView = (name: string) => { const next = views.filter(v => v.name !== name); setViews(next); storeViews(next); };
-  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss) && policy.canSee(m.email));
+  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss || policy.isBO) && policy.canSee(m.email));
 
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase(), d = sort.asc ? 1 : -1;

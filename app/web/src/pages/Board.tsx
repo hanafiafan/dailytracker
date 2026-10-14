@@ -77,7 +77,7 @@ export function Board() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }));
   const move = useAction((v: { id: string; status: Status }) => ok(api.tasks[":id"].status.$patch({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
 
-  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss) && policy.canSee(m.email));
+  const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss || policy.isBO) && policy.canSee(m.email));
   const wk = weekStart(date);
   const tasks = useMemo(() => {
     const s = q.trim().toLowerCase();

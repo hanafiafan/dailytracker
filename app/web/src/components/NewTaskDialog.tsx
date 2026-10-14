@@ -7,6 +7,7 @@ import { api, ok } from "../lib/api";
 import { DAYN } from "../lib/format";
 import { keys, useAction, useProjectServices } from "../lib/queries";
 import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
+import { isDirectorMember } from "@shared/policy";
 import { useViewer, type NewTaskPrefill } from "../lib/viewer";
 
 const PRESETS: [string, string, string][] = [["Pagi", "08:00", "12:00"], ["Siang", "13:00", "17:00"], ["Sore", "15:00", "17:00"], ["Malam", "19:00", "21:00"], ["Tanpa jam", "", ""]];
@@ -18,7 +19,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const templates = loadTemplates();
   const { me, team, policy, projects, labels } = useViewer();
   const manager = policy.isManager;
-  const people = team.filter(m => m.email === me.email || ((!m.isAdmin || (policy.isBoss && m.email !== policy.me)) && policy.canManage(m.email)));
+  const people = team.filter(m => m.email === me.email || ((!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && isDirectorMember(m))) && policy.canManage(m.email)));
 
   // Mode: "team" vs "self"
   const [mode, setMode] = useState<"team" | "self">(() => {
