@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import type { MessageDTO, PollDTO, Priority, TaskRefDetailDTO } from "@shared/schemas";
+import type { MessageDTO, PollDTO, Priority, TaskRefDetailDTO, ProjectRefDetailDTO } from "@shared/schemas";
 import { api, ok } from "../lib/api";
 import { keys, useAction } from "../lib/queries";
 import { useViewer, useUi } from "../lib/viewer";
@@ -89,6 +89,84 @@ export function ChatTaskCard({
             {detail.assigneeName}
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Lark-style interactive Project Card inside chat message */
+export function ChatProjectCard({
+  detail,
+  onOpen,
+}: {
+  detail: ProjectRefDetailDTO;
+  onOpen: (id: string) => void;
+}) {
+  const percent = detail.totalTasks && detail.totalTasks > 0
+    ? Math.round(((detail.doneTasks || 0) / detail.totalTasks) * 100)
+    : 0;
+
+  return (
+    <div className="chat-task-card chat-project-card" onClick={() => onOpen(detail.id)} style={{ cursor: "pointer" }}>
+      <div className="chat-task-card-h">
+        <div
+          className="chat-proj-icon"
+          data-c={detail.color}
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            display: "grid",
+            placeItems: "center",
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          <FolderKanban size={15} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <span style={{ fontSize: ".72rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em" }}>
+              Proyek Terintegrasi
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: ".76rem", color: "var(--blue)" }}>
+              Buka <ExternalLink size={12} />
+            </span>
+          </div>
+          <b style={{ display: "block", fontSize: ".92rem", marginTop: 2 }}>
+            {detail.name}
+          </b>
+          {detail.description && (
+            <p className="clamp1 muted" style={{ fontSize: ".78rem", margin: "2px 0 0" }}>
+              {detail.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="chat-task-meta" style={{ alignItems: "center" }}>
+        <span className={`tag ${detail.archived ? "" : "done"}`} style={{ fontSize: ".72rem" }}>
+          {detail.archived ? "Diarsipkan" : "Aktif"}
+        </span>
+
+        {detail.totalTasks !== undefined && detail.totalTasks > 0 ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 120, maxWidth: 200 }}>
+            <div style={{ flex: 1, height: 6, background: "var(--line)", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ width: `${percent}%`, height: "100%", background: "var(--volt)", borderRadius: 99 }} />
+            </div>
+            <span style={{ fontSize: ".72rem", color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>
+              {detail.doneTasks}/{detail.totalTasks} ({percent}%)
+            </span>
+          </div>
+        ) : (
+          <span style={{ fontSize: ".74rem", color: "var(--muted)" }}>
+            Belum ada tugas
+          </span>
+        )}
+
+        <span className="tag proj" data-c={detail.color} style={{ fontSize: ".72rem", marginLeft: "auto" }}>
+          #{detail.name}
+        </span>
       </div>
     </div>
   );
@@ -529,20 +607,20 @@ export function PinnedBar({
 
   return (
     <div className="pinned-bar" onClick={() => onJumpTo(latest.id)}>
-      <Pin size={15} style={{ color: "#F59E0B", flexShrink: 0 }} />
+      <Pin size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6 }}>
-        <b style={{ fontSize: ".78rem", color: "#B45309", flexShrink: 0 }}>
-          Pesan Disematkan {pinnedMessages.length > 1 ? `(${pinnedMessages.length})` : ""}:
+        <b style={{ fontSize: ".76rem", color: "var(--ink)", flexShrink: 0 }}>
+          Disematkan{pinnedMessages.length > 1 ? ` (${pinnedMessages.length})` : ""}:
         </b>
-        <span className="clamp1" style={{ fontSize: ".82rem" }}>
-          <b>{latest.name}:</b> {snippet}
+        <span className="clamp1 muted" style={{ fontSize: ".82rem" }}>
+          <b style={{ color: "var(--ink)" }}>{latest.name}:</b> {snippet}
         </span>
       </div>
       <button
         type="button"
         className="iconbtn"
         style={{ padding: 4, width: 24, height: 24 }}
-        title="Lepas pin"
+        title="Lepas sematan"
         onClick={e => {
           e.stopPropagation();
           onUnpin(latest.id);

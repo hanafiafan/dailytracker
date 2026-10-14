@@ -194,12 +194,23 @@ export interface TaskRefDetailDTO {
   projectColor?: string;
 }
 
+export interface ProjectRefDetailDTO {
+  id: string;
+  name: string;
+  color: Color | string;
+  description?: string;
+  archived: boolean;
+  totalTasks?: number;
+  doneTasks?: number;
+}
+
 export interface ChatRefDTO {
   type: "member" | "task" | "project";
   id: string;
   label: string;
   ok: boolean;
   taskDetails?: TaskRefDetailDTO;
+  projectDetails?: ProjectRefDetailDTO;
 }
 
 export interface PollOptionDTO {

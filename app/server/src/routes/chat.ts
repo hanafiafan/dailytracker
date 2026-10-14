@@ -117,7 +117,27 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     const t = team();
     return refs.map(r => {
       if (r.type === "member") { const m = t.find(x => x.email === r.id); return { ...r, label: m?.name ?? r.id, ok: !!m }; }
-      if (r.type === "project") { const p = db.select().from(projects).where(eq(projects.id, r.id)).get(); return { ...r, label: p?.name ?? "Proyek dihapus", ok: !!p }; }
+      if (r.type === "project") {
+        const p = db.select().from(projects).where(eq(projects.id, r.id)).get();
+        if (!p) return { ...r, label: "Proyek dihapus", ok: false };
+        const pTasks = db.select({ status: tasks.status }).from(tasks).where(eq(tasks.projectId, p.id)).all();
+        const totalTasks = pTasks.length;
+        const doneTasks = pTasks.filter(x => x.status === "done").length;
+        return {
+          ...r,
+          label: p.name,
+          ok: true,
+          projectDetails: {
+            id: p.id,
+            name: p.name,
+            color: p.color,
+            description: p.description,
+            archived: p.archived,
+            totalTasks,
+            doneTasks,
+          },
+        };
+      }
       const k = db.select().from(tasks).where(eq(tasks.id, r.id)).get();
       if (!k || !viewer.policy.canSee(k.email)) return { ...r, label: "Tugas", ok: false };
       const assignee = t.find(m => m.email === k.email);

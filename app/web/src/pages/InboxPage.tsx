@@ -34,7 +34,7 @@ import { ChatComposer } from "../components/ChatComposer";
 import { Page } from "../components/Page";
 import { Avatar, ConfirmButton, Empty } from "../components/ui";
 import { GroupDialog } from "../components/GroupDialog";
-import { ChatTaskCard, ChatPollCard, ConvertMessageToTaskModal, PinnedBar } from "../components/ChatFeatures";
+import { ChatTaskCard, ChatProjectCard, ChatPollCard, ConvertMessageToTaskModal, PinnedBar } from "../components/ChatFeatures";
 import { api, ok, putImage } from "../lib/api";
 import { fmtTime } from "../lib/format";
 import { squarePhoto } from "../lib/image";
@@ -85,14 +85,18 @@ function Body({ m }: { m: MessageDTO }) {
     : r.type === "project" ? <button key={r.id} className="rchip proj" onClick={() => go("/proyek/" + r.id)}><Hash size={12} />{r.label}</button>
     : r.ok ? <button key={r.id} className="rchip task" onClick={() => openTask(r.id)}><FileText size={12} />{r.label}</button> : <span key={r.id} className="rchip off" title="Kamu tidak punya akses ke tugas ini"><FileText size={12} />Tugas pribadi</span>;
 
-  // Integrated task details for Lark-style task cards
+  // Integrated task & project details for Lark-style interactive cards
   const taskCards = m.refs.filter(r => r.type === "task" && r.taskDetails);
+  const projectCards = m.refs.filter(r => r.type === "project" && r.projectDetails);
 
   return (
     <>
       <p className="mtext">{parts.map((p, i) => { const k = /^\[\[(\d+)\]\]$/.exec(p); const r = k ? m.refs[Number(k[1])] : undefined; return r ? <Fragment key={i}>{chip(r)}</Fragment> : <Fragment key={i}>{p}</Fragment>; })}</p>
       {taskCards.map(r => (
         <ChatTaskCard key={r.id} detail={r.taskDetails!} onOpen={openTask} />
+      ))}
+      {projectCards.map(r => (
+        <ChatProjectCard key={r.id} detail={r.projectDetails!} onOpen={id => go("/proyek/" + id)} />
       ))}
       {m.poll && (
         <ChatPollCard
@@ -846,16 +850,6 @@ function Thread({
         )}
       </header>
 
-      {isSuperSession && (
-        <div className="thread-superadmin-banner">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Crown size={16} style={{ color: "#F59E0B" }} />
-            <span>Sesi Khusus Superadmin (Hellens)</span>
-          </div>
-          <span className="superadmin-tag"><ShieldCheck size={11} /> Prioritas</span>
-        </div>
-      )}
-
       {pinnedMessages.length > 0 && (
         <PinnedBar
           pinnedMessages={pinnedMessages}
@@ -891,9 +885,9 @@ function Thread({
                   ) : (
                     <span
                       className="avatar"
-                      style={isSuperMsg ? { background: "linear-gradient(135deg, #F59E0B, #10B981)", color: "#fff", fontWeight: 800 } : undefined}
+                      style={isSuperMsg ? { background: "var(--ink)", color: "#fff" } : undefined}
                     >
-                      {isSuperMsg ? <Crown size={15} /> : m.name[0]}
+                      {isSuperMsg ? <Crown size={14} /> : m.name[0]}
                     </span>
                   )
                 )}
@@ -1045,12 +1039,12 @@ function Channels({ list, active, onPick }: { list: ChannelDTO[]; active: string
           onClick={() => onPick(c.id)}
           aria-current={c.id === active ? "true" : undefined}
         >
-          {isSuper ? (
-            <span className="chdot" style={{ background: "linear-gradient(135deg, #F59E0B, #10B981)", color: "#fff" }}>
-              <Crown size={18} />
-            </span>
-          ) : isDm && mem ? (
+          {isDm && mem ? (
             <Avatar m={mem} />
+          ) : isSuper ? (
+            <span className="chdot" style={{ background: "var(--ink)", color: "#fff" }}>
+              <Crown size={16} />
+            </span>
           ) : c.kind === "group" && c.group?.hasPhoto ? (
             <img
               src={`/api/chat/groups/${c.id.slice(2)}/photo?v=${c.group.photoV || 0}`}
