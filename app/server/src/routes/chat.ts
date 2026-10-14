@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { makePolicy, isBOMember, isDirectorMember } from "@shared/policy";
 import { groupInput, groupPatch, messageCreate, type ChannelDTO, type ChatRefDTO, type MessageDTO } from "@shared/schemas";
-import { attachments, channelReads, chatGroupMembers, chatGroups, messages, projects, tasks } from "../db/schema.js";
+import { attachments, channelReads, chatGroupMembers, chatGroups, members, messages, projects, tasks } from "../db/schema.js";
 import { loadTeam, newId, type AppEnv, type Deps } from "../context.js";
 import type { Notify } from "../notify.js";
 
@@ -37,19 +37,48 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
   /** May this person read and write in this channel? Managers: every channel. Members: general, and projects they have a task in. */
   const groupAccess = (email: string, gid: string) => {
     const g = db.select().from(chatGroups).where(eq(chatGroups.id, gid)).get();
-    return !!g && (g.createdBy === email || !!db.select().from(chatGroupMembers).where(and(eq(chatGroupMembers.groupId, gid), eq(chatGroupMembers.email, email))).get());
+    if (!g) return false;
+    if (g.createdBy.toLowerCase() === email.toLowerCase()) return true;
+    const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, gid)).all();
+    return ms.some(m => m.email.toLowerCase() === email.toLowerCase());
   };
   /** Rename, change members, delete: the creator or the superadmin. */
   const groupAdmin = (u: { email: string; owner: boolean }, gid: string) => {
     const g = db.select().from(chatGroups).where(eq(chatGroups.id, gid)).get();
-    return g && (u.owner || g.createdBy === u.email) ? g : undefined;
+    return g && (u.owner || g.createdBy.toLowerCase() === u.email.toLowerCase()) ? g : undefined;
   };
   const setMembers = (tx: Pick<typeof db, "delete" | "insert">, gid: string, emails: string[]) => {
     tx.delete(chatGroupMembers).where(eq(chatGroupMembers.groupId, gid)).run();
-    for (const email of new Set(emails)) tx.insert(chatGroupMembers).values({ groupId: gid, email }).run();
+    for (const email of new Set(emails)) {
+      if (!db.select().from(members).where(eq(members.email, email)).get()) {
+        if (email.toLowerCase() === env.OWNER_EMAIL.toLowerCase()) {
+          db.insert(members).values({
+            email,
+            name: "Superadmin",
+            role: "Superadmin",
+            sortOrder: 0,
+            isAdmin: true,
+          }).onConflictDoNothing().run();
+        }
+      }
+      if (db.select().from(members).where(eq(members.email, email)).get()) {
+        tx.insert(chatGroupMembers).values({ groupId: gid, email }).run();
+      }
+    }
   };
   const canAccess = (email: string, owner: boolean, channel: string) => {
-    if (owner) return true; // Superadmin has full access to all channels
+    const isSuperadmin = owner || email.toLowerCase() === env.OWNER_EMAIL.toLowerCase();
+    if (isSuperadmin) {
+      if (channel.startsWith("dm:")) {
+        const parts = channel.slice(3).split(":").map(p => p.toLowerCase());
+        return parts.includes(email.toLowerCase());
+      }
+      if (channel.startsWith("g-")) {
+        return groupAccess(email, channel.slice(2));
+      }
+      if (channel === "bo-direktur") return true;
+      return false; // Kanal Umum dan Proyek disembunyikan sepenuhnya dari Superadmin
+    }
     const t = team(), p = makePolicy(email, owner, t), me = t.find(m => m.email === email);
     if (!me) return false;
     if (channel === "bo-direktur") return p.isBO || p.isDirector;
@@ -63,7 +92,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     }
     if (channel.startsWith("dm:")) {
       const parts = channel.slice(3).split(":");
-      return parts.includes(email) || owner;
+      return parts.includes(email);
     }
     if (channel === GENERAL) return true;
     if (channel.startsWith("g-")) return groupAccess(email, channel.slice(2));
@@ -135,9 +164,10 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const allTeam = team();
       for (const row of dmRows) {
         const parts = row.channel.slice(3).split(":");
-        if (!parts.includes(u.email) && !u.owner) continue;
-        const otherEmail = parts[0] === u.email ? parts[1] : parts[0];
-        const other = allTeam.find(m => m.email === otherEmail);
+        if (parts.length < 2 || !parts.some(p => p.toLowerCase() === u.email.toLowerCase())) continue;
+        const otherEmail = (parts[0]?.toLowerCase() === u.email.toLowerCase() ? parts[1] : parts[0]) ?? "";
+        if (!otherEmail) continue;
+        const other = allTeam.find(m => m.email.toLowerCase() === otherEmail.toLowerCase());
         const name = other?.name ?? otherEmail ?? "Chat Pribadi";
         out.push({
           id: row.channel,
@@ -166,7 +196,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     .post("/groups", zValidator("json", groupInput), c => {
       const u = c.var.user, b = c.req.valid("json"), t = team();
       if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
-      if (b.emails.some(e => !t.some(m => m.email === e))) return c.json({ error: "Anggota tidak ditemukan" }, 404);
+      if (b.emails.some(e => !t.some(m => m.email === e) && e !== env.OWNER_EMAIL)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
       if (!u.owner && u.policy.isBO && b.emails.some(e => !isDirectorMember(t.find(x => x.email === e)) && e !== env.OWNER_EMAIL)) {
         return c.json({ error: "BO hanya dapat terhubung dengan Direktur" }, 403);
       }
@@ -176,7 +206,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const id = newId();
       db.transaction(tx => {
         tx.insert(chatGroups).values({ id, name: b.name, createdBy: u.email, createdAt: Date.now() }).run();
-        setMembers(tx, id, [...b.emails, ...(u.member ? [u.email] : [])]);
+        setMembers(tx, id, [...b.emails, u.email]);
       });
       bus.emit("chat");
       return c.json({ id: "g-" + id }, 201);
@@ -185,10 +215,10 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, gid = c.req.param("id"), b = c.req.valid("json");
       const g = groupAdmin(u, gid);
       if (!g) return c.json({ error: "forbidden" }, 403);
-      if (b.emails && b.emails.some(e => !team().some(m => m.email === e))) return c.json({ error: "Anggota tidak ditemukan" }, 404);
+      if (b.emails && b.emails.some(e => !team().some(m => m.email === e) && e !== env.OWNER_EMAIL)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
       db.transaction(tx => {
         if (b.name) tx.update(chatGroups).set({ name: b.name }).where(eq(chatGroups.id, gid)).run();
-        if (b.emails) setMembers(tx, gid, [...b.emails, ...(team().some(m => m.email === g.createdBy) ? [g.createdBy] : [])]);
+        if (b.emails) setMembers(tx, gid, [...b.emails, g.createdBy]);
       });
       bus.emit("chat");
       return c.json({ ok: true });

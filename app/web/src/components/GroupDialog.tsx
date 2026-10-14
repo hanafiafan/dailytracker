@@ -1,21 +1,46 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import type { ChannelDTO } from "@shared/schemas";
 import { api, ok } from "../lib/api";
-import { errorText, keys, useAction } from "../lib/queries";
+import { errorText, keys, useAction, useMeta } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
 import { ConfirmButton } from "./ui";
 
 /** Create a chat group, or (with `ch`) rename it and change who is in it. */
 export function GroupDialog({ ch, onClose, onDone }: { ch?: ChannelDTO; onClose: () => void; onDone: (id: string | null) => void }) {
   const { me, team, policy } = useViewer();
+  const meta = useMeta(true);
+  const owner = meta.data?.owner;
+  const allTeam = useMemo(() => {
+    if (!owner || team.some(m => m.email === owner.email)) return team;
+    return [...team, {
+      email: owner.email,
+      name: owner.name || "Superadmin",
+      role: "Superadmin",
+      group: "",
+      isAdmin: true,
+      adminGroups: [],
+      sortOrder: 0,
+      hasPhoto: false,
+      photoV: 0,
+      seenAt: null,
+      askAt: null,
+      managerEmail: null,
+      jobdesk: "",
+      level: "superadmin",
+      accountType: "employee" as const,
+      canCreateProject: true,
+      canCommentAllProjects: true,
+      allowedCommentProjectIds: [],
+    }];
+  }, [team, owner]);
   const g = ch?.group;
   const [name, setName] = useState(ch?.name ?? "");
   const [sel, setSel] = useState(new Set((g?.members ?? []).filter(e => e !== me.email)));
   const [q, setQ] = useState("");
   const manage = !g || g.canManage;
-  const people = team.filter(m => m.email !== me.email && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
+  const people = allTeam.filter(m => m.email !== me.email && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
   const refresh = [[...keys.chat, "channels"]];
   const save = useAction(async () => {
     const json = { name: name.trim(), emails: [...sel] };
@@ -48,7 +73,7 @@ export function GroupDialog({ ch, onClose, onDone }: { ch?: ChannelDTO; onClose:
           </section></div>
           <footer className="dialog-f">
             {ch && manage && <ConfirmButton className="btn danger" label="Hapus grup" armed="Yakin hapus semua pesan?" onConfirm={() => del.mutate(undefined, { onSuccess: () => { onDone(null); onClose(); } })} />}
-            {ch && g && g.createdBy !== me.email && !policy.isOwner && <button type="button" className="btn ghost" onClick={() => leave.mutate(undefined, { onSuccess: () => { onDone(null); onClose(); } })}>Keluar dari grup</button>}
+            {ch && g && g.createdBy !== me.email && <button type="button" className="btn ghost" onClick={() => leave.mutate(undefined, { onSuccess: () => { onDone(null); onClose(); } })}>Keluar dari grup</button>}
             <span style={{ flex: 1 }} />
             <button type="button" className="btn ghost" onClick={onClose}>Tutup</button>
             {manage && <button className="btn primary" disabled={save.isPending}>{ch ? "Simpan" : "Buat grup"}</button>}

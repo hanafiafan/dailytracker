@@ -9,7 +9,7 @@ import { Avatar, Empty } from "../components/ui";
 import { GroupDialog } from "../components/GroupDialog";
 import { api, ok } from "../lib/api";
 import { fmtTime } from "../lib/format";
-import { keys, useAction, useChannels, useInbox, useMessages } from "../lib/queries";
+import { keys, useAction, useChannels, useInbox, useMessages, useMeta } from "../lib/queries";
 import { useIsMobile } from "../lib/useMedia";
 import { useUi, useViewer } from "../lib/viewer";
 
@@ -104,6 +104,31 @@ function Thread({ ch, onBack }: { ch: ChannelDTO; onBack?: () => void }) {
 
 function DirectMessageDialog({ onClose, onDone }: { onClose: () => void; onDone: (id: string) => void }) {
   const { me, team, policy } = useViewer();
+  const meta = useMeta(true);
+  const owner = meta.data?.owner;
+  const allTeam = useMemo(() => {
+    if (!owner || team.some(m => m.email === owner.email)) return team;
+    return [...team, {
+      email: owner.email,
+      name: owner.name || "Superadmin",
+      role: "Superadmin",
+      group: "",
+      isAdmin: true,
+      adminGroups: [],
+      sortOrder: 0,
+      hasPhoto: false,
+      photoV: 0,
+      seenAt: null,
+      askAt: null,
+      managerEmail: null,
+      jobdesk: "",
+      level: "superadmin",
+      accountType: "employee" as const,
+      canCreateProject: true,
+      canCommentAllProjects: true,
+      allowedCommentProjectIds: [],
+    }];
+  }, [team, owner]);
   const [q, setQ] = useState("");
   const qc = useQueryClient();
 
@@ -113,7 +138,7 @@ function DirectMessageDialog({ onClose, onDone }: { onClose: () => void; onDone:
     return res.channelId;
   }, { done: "Percakapan dibuka" });
 
-  const people = team.filter(m => m.email !== me.email && policy.canChatWith(m.email) && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
+  const people = allTeam.filter(m => m.email !== me.email && policy.canChatWith(m.email) && (!q.trim() || `${m.name} ${m.role} ${m.group}`.toLowerCase().includes(q.trim().toLowerCase())));
 
   return (
     <>
@@ -227,6 +252,7 @@ export function InboxPage() {
   const fallbackDm = useMemo<ChannelDTO | null>(() => {
     if (!picked || !picked.startsWith("dm:")) return null;
     const parts = picked.slice(3).split(":");
+    if (!parts.includes(me.email)) return null;
     const partnerEmail = parts.find(e => e !== me.email) || parts[0];
     const partner = team.find(m => m.email === partnerEmail);
     return {

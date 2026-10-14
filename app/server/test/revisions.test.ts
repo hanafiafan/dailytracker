@@ -138,4 +138,66 @@ describe("10 Revisi Features", () => {
     const delRes = await t.call(OWNER, "DELETE", "/meta/entities/NEW");
     expect(delRes.status).toBe(200);
   });
+
+  it("Superadmin chat privacy: only sees groups and DMs with their account, not general, projects, or others' chats", async () => {
+    // 1. Group created by a@x.id with b@x.id (OWNER not included)
+    const grpRes = await t.call("a@x.id", "POST", "/chat/groups", { name: "Rahasia Tim", emails: ["b@x.id"] });
+    expect(grpRes.status).toBe(201);
+    const grpChanId = (await json(grpRes)).id as string;
+
+    // 2. DM between a@x.id and b@x.id
+    const dmRes = await t.call("a@x.id", "POST", "/chat/dm", { targetEmail: "b@x.id" });
+    expect(dmRes.status).toBe(200);
+    const dmChanId = (await json(dmRes)).channelId as string;
+
+    // Send messages in both
+    await t.call("a@x.id", "POST", `/chat/channels/${grpChanId}/messages`, { text: "pesan grup", refs: [], attachmentIds: [] });
+    await t.call("a@x.id", "POST", `/chat/channels/${dmChanId}/messages`, { text: "pesan dm", refs: [], attachmentIds: [] });
+
+    // Superadmin lists channels
+    const ownerChannels = (await json(await t.call(OWNER, "GET", "/chat/channels"))) as unknown as J[];
+    const ownerChanIds = ownerChannels.map(c => c.id);
+
+    // Superadmin should NOT see others' group, others' DM, General, or Project channels
+    expect(ownerChanIds).not.toContain(grpChanId);
+    expect(ownerChanIds).not.toContain(dmChanId);
+    expect(ownerChanIds).not.toContain("general");
+    expect(ownerChanIds.some(id => id.startsWith("p-"))).toBe(false);
+
+    // Superadmin forbidden from reading or posting in others' chats or General
+    expect((await t.call(OWNER, "GET", `/chat/channels/${grpChanId}/messages`)).status).toBe(403);
+    expect((await t.call(OWNER, "POST", `/chat/channels/${grpChanId}/messages`, { text: "snoop", refs: [], attachmentIds: [] })).status).toBe(403);
+    expect((await t.call(OWNER, "GET", `/chat/channels/${dmChanId}/messages`)).status).toBe(403);
+    expect((await t.call(OWNER, "POST", `/chat/channels/${dmChanId}/messages`, { text: "snoop", refs: [], attachmentIds: [] })).status).toBe(403);
+    expect((await t.call(OWNER, "GET", `/chat/channels/general/messages`)).status).toBe(403);
+
+    // 3. Superadmin is invited to a group by a@x.id
+    const inviteRes = await t.call("a@x.id", "POST", "/chat/groups", { name: "Grup Bersama Superadmin", emails: [OWNER] });
+    expect(inviteRes.status).toBe(201);
+    const sharedGrpId = (await json(inviteRes)).id as string;
+
+    // 4. DM with Superadmin
+    const ownerDmRes = await t.call("a@x.id", "POST", "/chat/dm", { targetEmail: OWNER });
+    expect(ownerDmRes.status).toBe(200);
+    const ownerDmId = (await json(ownerDmRes)).channelId as string;
+    await t.call("a@x.id", "POST", `/chat/channels/${ownerDmId}/messages`, { text: "halo superadmin", refs: [], attachmentIds: [] });
+
+    // Superadmin lists channels again
+    const updatedOwnerChannels = (await json(await t.call(OWNER, "GET", "/chat/channels"))) as unknown as J[];
+    const updatedOwnerChanIds = updatedOwnerChannels.map(c => c.id);
+
+    // Superadmin CAN see the group they are in and their DM
+    expect(updatedOwnerChanIds).toContain(sharedGrpId);
+    expect(updatedOwnerChanIds).toContain(ownerDmId);
+
+    // Superadmin CAN read and send messages in their group and DM
+    expect((await t.call(OWNER, "GET", `/chat/channels/${sharedGrpId}/messages`)).status).toBe(200);
+    const postGrp = await t.call(OWNER, "POST", `/chat/channels/${sharedGrpId}/messages`, { text: "halo semua", refs: [], attachmentIds: [] });
+    expect(postGrp.status).toBe(201);
+
+    expect((await t.call(OWNER, "GET", `/chat/channels/${ownerDmId}/messages`)).status).toBe(200);
+    const postDm = await t.call(OWNER, "POST", `/chat/channels/${ownerDmId}/messages`, { text: "halo a", refs: [], attachmentIds: [] });
+    expect(postDm.status).toBe(201);
+  });
 });
+
