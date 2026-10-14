@@ -59,6 +59,7 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
 import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
 import { COLORS, type Color } from "@shared/schemas";
 import { COLOR_LABEL } from "../lib/tasks";
+import { ColorPicker } from "../components/ColorPicker";
 
 export function ProjectsPage() {
   const { me, projects, policy, member } = useViewer();
@@ -178,11 +179,9 @@ export function ProjectsPage() {
                 <span>Deskripsi Proyek</span>
                 <input className="input" name="description" placeholder="Tujuan atau cakupan proyek" maxLength={200} />
               </label>
-              <label className="field" style={{ flex: "0 0 130px" }}>
+              <label className="field" style={{ flex: "0 0 auto" }}>
                 <span>Warna</span>
-                <select className="input" name="color" defaultValue="lilac">
-                  {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
-                </select>
+                <ColorPicker name="color" defaultValue="lilac" />
               </label>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 2 }}>
                 <button type="button" className="btn small ghost" onClick={() => setShowAddProject(false)}>Batal</button>

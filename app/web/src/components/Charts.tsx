@@ -1,4 +1,5 @@
 import type { Color } from "@shared/schemas";
+import { colorHex } from "../lib/tasks";
 
 /** Paired bars per day: created (grey) and done (lime). */
 export function DayBars({ data }: { data: { date: string; created: number; done: number }[] }) {
@@ -39,11 +40,12 @@ export function Donut({ slices, center }: { slices: Slice[]; center: string }) {
 
 /** Horizontal stacked bar row: label, track (done / rest), value. */
 export function HBar({ label, done, total, max, tint }: { label: string; done: number; total: number; max: number; tint?: Color }) {
+  const c = tint ? colorHex(tint) : "var(--blue)";
   return (
     <div className="hbar">
       <span title={label} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
       <div className="track" style={{ width: `${(total / Math.max(1, max)) * 100}%`, minWidth: total ? 8 : 0 }}>
-        <i style={{ width: `${total ? (done / total) * 100 : 0}%`, background: "var(--blue)" }} />
+        <i style={{ width: `${total ? (done / total) * 100 : 0}%`, background: c }} />
         <i style={{ flex: 1, background: "var(--line)" }} />
       </div>
       <b>{done}/{total}</b>

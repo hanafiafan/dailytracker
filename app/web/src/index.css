@@ -2236,6 +2236,75 @@
   .info-doc-item:hover {
     background: var(--hover);
   }
+
+  /* ---- universal custom color picker ---- */
+  .color-picker-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .color-picker-wrap.compact {
+    gap: 4px;
+  }
+  .color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .color-swatch-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+    flex: none;
+  }
+  .color-swatch-btn:hover {
+    transform: scale(1.15);
+  }
+  .color-swatch-btn.selected {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+    transform: scale(1.1);
+  }
+  .color-swatch-custom {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    position: relative;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    flex: none;
+  }
+  .color-swatch-custom:hover {
+    transform: scale(1.15);
+  }
+  .color-swatch-custom.selected {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+    transform: scale(1.1);
+  }
+  .color-native-input {
+    position: absolute;
+    inset: -10px;
+    width: 200%;
+    height: 200%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .color-custom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 2px;
+  }
 }
 @layer components { .cdot { display: grid; place-items: center; color: var(--ink); } .cdot.task { background: var(--glass); box-shadow: none; } .cdot[data-c] { color: var(--d); } .inbox, .thread, .msgs, .inbox-l { min-width: 0; } .msgs { overflow-x: hidden; } }
 @layer components {

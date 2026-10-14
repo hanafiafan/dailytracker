@@ -14,7 +14,8 @@ import { useAdminOverview, useAdminAudit, keys, useAction } from "../lib/queries
 import { useViewer } from "../lib/viewer";
 import { api, ok } from "../lib/api";
 import { fmtTime } from "../lib/format";
-import { COLOR_LABEL } from "../lib/tasks";
+import { COLOR_LABEL, colorLabel } from "../lib/tasks";
+import { ColorPicker } from "../components/ColorPicker";
 
 const ago = (ms: number) => {
   const m = Math.round((Date.now() - ms) / 60000);
@@ -399,7 +400,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
 
               <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className="muted" style={{ fontSize: ".8rem" }}>{membersInUnit.length} anggota tim</span>
-                <span className="tag proj" data-c={e.color}>{COLOR_LABEL[e.color]}</span>
+                <span className="tag proj" data-c={e.color}>{colorLabel(e.color)}</span>
               </div>
             </div>
           );
@@ -421,9 +422,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
                 <label className="field"><span>Nama Lengkap Entitas</span><input className="input" name="name" required maxLength={60} placeholder="HAN Creative Studio" /></label>
                 <label className="field"><span>Deskripsi</span><input className="input" name="description" maxLength={200} placeholder="Fokus pada layanan konten visual dan branding..." /></label>
                 <label className="field"><span>Warna Identitas</span>
-                  <select className="input" name="color" defaultValue="blue">
-                    {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
-                  </select>
+                  <ColorPicker name="color" defaultValue="blue" />
                 </label>
               </div>
               <footer className="dialog-f">
@@ -449,9 +448,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
                 <label className="field"><span>Nama Lengkap Entitas</span><input className="input" name="name" defaultValue={editing.name} required maxLength={60} /></label>
                 <label className="field"><span>Deskripsi</span><input className="input" name="description" defaultValue={editing.description} maxLength={200} /></label>
                 <label className="field"><span>Warna Identitas</span>
-                  <select className="input" name="color" defaultValue={editing.color}>
-                    {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
-                  </select>
+                  <ColorPicker name="color" defaultValue={editing.color} />
                 </label>
               </div>
               <footer className="dialog-f">

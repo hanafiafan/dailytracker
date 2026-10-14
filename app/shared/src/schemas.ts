@@ -6,7 +6,7 @@ export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 /** Colour tokens for projects and labels; the web app maps each to a pastel surface. */
 export const COLORS = ["lilac", "pink", "yellow", "lime", "mint", "sky", "peach", "gray"] as const;
-export type Color = (typeof COLORS)[number];
+export type Color = (typeof COLORS)[number] | (string & {});
 
 const hm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -23,7 +23,7 @@ export const entityInput = z.object({
   id: z.string().trim().min(1).max(20).toUpperCase(),
   name: z.string().trim().min(1).max(60),
   description: z.string().trim().max(200).default(""),
-  color: z.enum(COLORS).default("lilac"),
+  color: z.string().trim().min(1).max(35).default("lilac"),
 });
 export const entityPatch = entityInput.partial();
 
@@ -89,13 +89,13 @@ export const taskPatch = z.object({
 }).partial();
 export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
-export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.enum(COLORS).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
+export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(35).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
 export const projectClose = z.object({
   summary: z.string().trim().max(1000).default(""),
   links: z.array(z.string().trim().url().max(500).refine(u => /^https?:\/\//i.test(u), "Hanya tautan http(s)")).max(10).default([]),
   force: z.boolean().default(false),
 });
-export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.enum(COLORS).default("gray") });
+export const labelInput = z.object({ name: z.string().trim().min(1).max(30), color: z.string().trim().min(1).max(35).default("gray") });
 export const LEAVE_KINDS = ["cuti", "izin", "sakit"] as const;
 export type LeaveKind = (typeof LEAVE_KINDS)[number];
 export const httpUrl = z.string().trim().url().max(500).refine(u => /^https?:\/\//i.test(u), "Hanya tautan http(s)");

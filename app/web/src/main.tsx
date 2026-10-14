@@ -23,6 +23,22 @@ if (typeof window !== "undefined") {
     },
     { passive: false }
   );
+
+  // Sync custom RGB / HEX colors on any element with data-c to CSS variable --d
+  const syncCustomColors = () => {
+    document.querySelectorAll<HTMLElement>("[data-c]").forEach(el => {
+      const c = el.getAttribute("data-c");
+      if (c && (c.startsWith("#") || c.startsWith("rgb") || c.startsWith("hsl"))) {
+        if (el.style.getPropertyValue("--d") !== c) {
+          el.style.setProperty("--d", c);
+        }
+      }
+    });
+  };
+  const obs = new MutationObserver(syncCustomColors);
+  obs.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-c"] });
+  window.addEventListener("DOMContentLoaded", syncCustomColors);
+  syncCustomColors();
 }
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: true, retry: 1 } } });

@@ -5,9 +5,9 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { MemberDTO } from "@shared/schemas";
-import { COLORS } from "@shared/schemas";
+import { COLORS, type MemberDTO } from "@shared/schemas";
 import { COLOR_LABEL } from "../lib/tasks";
+import { ColorPicker } from "./ColorPicker";
 import { api, ok, putImage } from "../lib/api";
 import { fmtShort } from "../lib/format";
 import { squarePhoto } from "../lib/image";
@@ -282,10 +282,8 @@ function EntityManager() {
           <label className="field" style={{ flex: "0 0 100px" }}><span>Kode</span><input className="input" name="id" placeholder="mis. HUC" maxLength={10} required /></label>
           <label className="field" style={{ flex: "1 1 180px" }}><span>Nama Entitas</span><input className="input" name="name" placeholder="mis. Halal Umrah Club" maxLength={80} required /></label>
           <label className="field" style={{ flex: "1 1 200px" }}><span>Deskripsi</span><input className="input" name="description" placeholder="Keterangan singkat" maxLength={200} /></label>
-          <label className="field" style={{ flex: "0 0 120px" }}><span>Warna</span>
-            <select className="input" name="color" defaultValue="lilac">
-              {COLORS.map(c => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
-            </select>
+          <label className="field" style={{ flex: "0 0 auto" }}><span>Warna</span>
+            <ColorPicker name="color" defaultValue="lilac" />
           </label>
           <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
             <button className="btn primary small" type="submit" disabled={addEntity.isPending}>Simpan</button>
@@ -298,7 +296,7 @@ function EntityManager() {
           <div key={ent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--tile)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="tag due" style={{ fontWeight: 700 }}>{ent.id}</span>
+                <span className="tag proj" data-c={ent.color} style={{ fontWeight: 700 }}>{ent.id}</span>
                 <b style={{ fontSize: ".9rem" }}>{ent.name}</b>
               </div>
               {ent.description && <small className="muted clamp1" style={{ display: "block", marginTop: 2 }}>{ent.description}</small>}
