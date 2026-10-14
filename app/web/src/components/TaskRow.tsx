@@ -7,6 +7,7 @@ import { useUi, useViewer } from "../lib/viewer";
 import { ProofPanel } from "./ProofPanel";
 import { TaskMeta } from "./TaskTags";
 import { ConfirmButton } from "./ui";
+import { ReturnTaskModal } from "./TaskDrawer";
 
 /** A task in a list. Tapping the title opens the detail drawer. */
 export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boolean; isLate?: boolean }) {
@@ -14,6 +15,7 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
   const { openTask } = useUi();
   const [proofOpen, setProofOpen] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
   const a = useTaskActions(t);
   const manager = policy.isManager;
 
@@ -40,8 +42,9 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
             <div className="pmeta">
               <span>Bukti · {fmtTime(t.proofAt)}</span>
               {t.proofLink && <a href={t.proofLink} target="_blank" rel="noopener noreferrer">{host(t.proofLink)}</a>}
-              {manager && t.status === "done" && t.by !== "self" && policy.canManage(t.email) &&
-                <ConfirmButton className="linkbtn" label="Kembalikan" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+              {manager && t.status === "done" && t.by !== "self" && policy.canManage(t.email) && (
+                <button type="button" className="linkbtn" onClick={() => setReturnOpen(true)}>Kembalikan</button>
+              )}
             </div>
           </div>
         )}
@@ -55,6 +58,18 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
         <div className="lightbox" role="dialog" aria-label="Foto bukti" onClick={() => setLightbox(false)} onKeyDown={e => e.key === "Escape" && setLightbox(false)}>
           <img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup">✕</button>
         </div>
+      )}
+      {returnOpen && (
+        <ReturnTaskModal
+          taskTitle={t.title}
+          onClose={() => setReturnOpen(false)}
+          onSubmit={reason => {
+            a.giveBack.mutate(reason, {
+              onSuccess: () => setReturnOpen(false),
+            });
+          }}
+          isPending={a.giveBack.isPending}
+        />
       )}
     </li>
   );

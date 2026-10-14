@@ -19,8 +19,8 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
       deliver([t.email], "task_new", t.id, t.due && t.date === wib().date && atMs(t.date, t.due) - Date.now() <= (t.warnMin ?? 30) * 60000 ? "Tugas baru, tenggat mepet" : "Tugas baru", t.title + (t.date === wib().date ? "" : ` (${t.date})`), "new-" + t.id),
     assigned: (t: TaskRow, by: string) =>
       deliver([t.email], "assigned", t.id, "Tugas dialihkan ke kamu", `${t.title} (oleh ${by})`, "assign-" + t.id),
-    returned: (t: TaskRow) =>
-      deliver([t.email], "returned", t.id, "Tugas dikembalikan", `${t.title}. Cek catatan dari admin.`, "back-" + t.id),
+    returned: (t: TaskRow, reason?: string) =>
+      deliver([t.email], "returned", t.id, "Tugas dikembalikan", `${t.title}. ${reason ? `Revisi: ${reason}` : "Cek catatan dari admin."}`, "back-" + t.id),
     nudged: (t: TaskRow, by: string) =>
       deliver([t.email], "nudge", t.id, `${by} mengingatkan tugasmu`, t.title, "nudge-" + t.id),
     leaveRequested: (email: string, name: string, kind: string, from: string, to: string) =>

@@ -25,7 +25,7 @@ export const toTask = (t: TaskRow, x: TaskExtras = {}): TaskDTO => ({
   id: t.id, email: t.email, date: t.date, title: t.title, note: t.note, start: t.start, due: t.due, status: t.status,
   hot: t.hot, priority: t.priority, projectId: t.projectId, serviceId: t.serviceId ?? null, labelIds: x.labelIds ?? [], subtasks: x.subtasks ?? [], needProof: t.needProof, warnMin: t.warnMin, by: t.by, fromAdmin: t.fromAdmin, routineId: t.routineId, createdAt: t.createdAt,
   approvalStatus: (t.approvalStatus ?? "approved") as TaskDTO["approvalStatus"], approvedBy: t.approvedBy ?? null, approvedAt: t.approvedAt ?? null,
-  startedAt: t.startedAt, doneAt: t.doneAt, returnedAt: t.returnedAt, revisions: t.revisions, proofLink: t.proofLink, proofAt: t.proofAt,
+  startedAt: t.startedAt, doneAt: t.doneAt, returnedAt: t.returnedAt, revisions: t.revisions, revisionNote: t.revisionNote ?? null, proofLink: t.proofLink, proofAt: t.proofAt,
   hasPhoto: t.hasPhoto, report: t.report, reportAt: t.reportAt, comments: (x.comments ?? []).map(toComment),
 });
 export const toRoutine = (r: RoutineRow): RoutineDTO => ({

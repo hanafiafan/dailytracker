@@ -87,6 +87,7 @@ export const tasks = sqliteTable("tasks", {
   startedAt: integer("started_at"),
   doneAt: integer("done_at"),
   returnedAt: integer("returned_at"),
+  revisionNote: text("revision_note"),
   proofLink: text("proof_link"),
   proofAt: integer("proof_at"),
   hasPhoto: bool("has_photo").notNull().default(false),

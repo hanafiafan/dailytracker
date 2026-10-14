@@ -153,6 +153,7 @@ export interface TaskDTO {
   status: Status; hot: boolean; priority: Priority; projectId: string | null; serviceId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   approvalStatus: "pending" | "approved" | "rejected"; approvedBy: string | null; approvedAt: number | null;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
+  revisionNote?: string | null;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];
 }

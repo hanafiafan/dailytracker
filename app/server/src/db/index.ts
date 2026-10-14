@@ -44,6 +44,7 @@ export function openDb(path: string) {
     try { sqlite.prepare("ALTER TABLE messages ADD COLUMN is_pinned integer DEFAULT 0 NOT NULL").run(); } catch {}
     try { sqlite.prepare("ALTER TABLE messages ADD COLUMN pinned_at integer").run(); } catch {}
     try { sqlite.prepare("ALTER TABLE messages ADD COLUMN pinned_by text").run(); } catch {}
+    try { sqlite.prepare("ALTER TABLE tasks ADD COLUMN revision_note text").run(); } catch {}
     try {
       sqlite.prepare(`CREATE TABLE IF NOT EXISTS chat_polls (
         id text PRIMARY KEY NOT NULL,

@@ -113,6 +113,13 @@
       "when": 1791998000000,
       "tag": "0015_chat_pins_and_polls",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1792002000000,
+      "tag": "0016_revision_note",
+      "breakpoints": true
     }
   ]
 }

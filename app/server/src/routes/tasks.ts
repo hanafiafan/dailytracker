@@ -211,14 +211,31 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       void notify.done({ ...t, status: "done" }, u.email);
       return c.json({ ok: true });
     })
-    .post("/:id/return", c => {
+    .post("/:id/return", async c => {
       const u = c.var.user, t = find(c.req.param("id"));
       if (!t) return c.json({ error: "not found" }, 404);
       if (!u.policy.canManage(t.email) || t.status !== "done" || t.by === "self") return c.json({ error: "forbidden" }, 403);
-      db.update(tasks).set({ status: "doing", doneAt: null, returnedAt: Date.now(), revisions: t.revisions + 1 }).where(eq(tasks.id, t.id)).run();
-      log(u, t.id, "returned", "mengembalikan tugas untuk diperbaiki");
+      let reason = "";
+      if (c.req.header("content-type")?.includes("application/json")) {
+        try {
+          const body = await c.req.json();
+          if (body && typeof body.reason === "string") reason = body.reason.trim();
+        } catch {}
+      }
+      const now = Date.now();
+      db.update(tasks).set({
+        status: "doing",
+        doneAt: null,
+        returnedAt: now,
+        revisions: t.revisions + 1,
+        revisionNote: reason || null,
+      }).where(eq(tasks.id, t.id)).run();
+      const logText = reason
+        ? `mengembalikan tugas untuk diperbaiki: "${reason}"`
+        : "mengembalikan tugas untuk diperbaiki";
+      log(u, t.id, "returned", logText);
       touch();
-      void notify.returned(t);
+      void notify.returned(t, reason);
       return c.json({ ok: true });
     })
     // A manager's reminder to the assignee. At most one per task per hour, so it can't be used to spam.

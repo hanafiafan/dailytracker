@@ -12,7 +12,7 @@ export function useTaskActions(t: Pick<TaskDTO, "id">) {
     approve: useAction((status: "approved" | "rejected") => ok(api.tasks[":id"].approve.$post({ param, json: { status } })), { done: "Keputusan persetujuan disimpan", refresh }),
     remove: useAction(() => ok(api.tasks[":id"].$delete({ param })), { done: "Tugas dihapus", refresh }),
     nudge: useAction(() => ok(api.tasks[":id"].nudge.$post({ param })), { done: "Pengingat terkirim", refresh: [keys.activity, keys.inbox] }),
-    giveBack: useAction(() => ok(api.tasks[":id"].return.$post({ param })), { done: "Tugas dikembalikan. Tulis alasannya di komentar.", refresh }),
+    giveBack: useAction((reason?: string) => ok(api.tasks[":id"].return.$post({ param, json: { reason: reason || "" } } as any)), { done: "Tugas dikembalikan untuk direvisi", refresh }),
     saveReport: useAction((report: string) => ok(api.tasks[":id"].report.$put({ param, json: { report } })), { done: "Catatan disimpan", refresh }),
     patch: useAction((json: Parameters<(typeof api.tasks)[":id"]["$patch"]>[0]["json"]) => ok(api.tasks[":id"].$patch({ param, json })), { refresh }),
     addSubtask: useAction((title: string) => ok(api.tasks[":id"].subtasks.$post({ param, json: { title } })), { refresh }),

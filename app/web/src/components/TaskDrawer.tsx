@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { BellRing, Bookmark, MoreHorizontal, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
+import { AlertCircle, BellRing, Bookmark, MoreHorizontal, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { loadTemplates, saveTemplates } from "../lib/templates";
@@ -9,7 +9,6 @@ import { NEXT, STATUS, fmtShort, fmtTime, host } from "../lib/format";
 import { patchTaskLocally, useMeta, useProjectServices, useTask, useTaskActivity } from "../lib/queries";
 import { PRIORITY_LABEL, WARN_OPTIONS } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
-import { Comments } from "./Comments";
 import { TaskTimer } from "./TimeTracker";
 import { ProofPanel } from "./ProofPanel";
 import { TimeTags } from "./TaskTags";
@@ -42,6 +41,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const servicesQ = useProjectServices(t.projectId ?? "");
   const qc = useQueryClient();
   const [proofOpen, setProofOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
   const mobile = useIsMobile(), [more, setMore] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [sub, setSub] = useState("");
@@ -96,6 +96,23 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           <div className="surface" style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: 10, padding: "10px 14px", display: "grid", gap: 2 }}>
             <b style={{ color: "#dc2626", fontSize: 13 }}>Tugas mandiri ini ditolak</b>
             <small className="muted">{t.approvedBy ? `Ditolak oleh ${t.approvedBy}` : "Ditolak oleh atasan"}. Kamu bisa menghapus tugas ini.</small>
+          </div>
+        )}
+        {t.returnedAt && t.status !== "done" && (
+          <div className="surface" style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", borderRadius: 10, padding: "10px 14px", display: "grid", gap: 3 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--bad)", fontWeight: 700, fontSize: "0.85rem" }}>
+              <Undo2 size={14} />
+              <span>Perlu Perbaikan / Revisi {t.revisions > 1 ? `(Revisi ke-${t.revisions})` : ""}</span>
+            </div>
+            {t.revisionNote ? (
+              <p style={{ margin: "2px 0 0", fontSize: "0.86rem", whiteSpace: "pre-wrap", color: "var(--ink)", lineHeight: 1.45 }}>
+                <b>Catatan Revisi:</b> {t.revisionNote}
+              </p>
+            ) : (
+              <p className="muted" style={{ margin: 0, fontSize: "0.82rem" }}>
+                Tugas ini dikembalikan oleh atasan untuk diperbaiki.
+              </p>
+            )}
           </div>
         )}
         <section className="props">
@@ -182,11 +199,6 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           {proofOpen && <ProofPanel t={t} onClose={() => setProofOpen(false)} />}
         </section>
 
-        <section>
-          <span className="lbl">Komentar</span>
-          <Comments t={t} ownerName={owner.name} ownerEmail={owner.email} />
-        </section>
-
         <section className="timeline">
           <span className="lbl">Aktivitas</span>
           <ul>{activity.map(x => (
@@ -205,19 +217,112 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         {mobile ? <><button className="btn" onClick={() => setMore(true)}><MoreHorizontal size={16} />Lainnya</button>
           <Sheet open={more} onClose={() => setMore(false)} title="Aksi tugas"><div className="alist sheetacts" onClick={() => setMore(false)}>
         {manager && t.status !== "done" && t.email !== me.email && <button className="btn" onClick={() => a.nudge.mutate()} disabled={a.nudge.isPending}><BellRing size={14} />Ingatkan</button>}
-        {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+        {manager && t.status === "done" && t.by !== "self" && (
+          <button type="button" className="btn" onClick={() => { setMore(false); setReturnOpen(true); }}>
+            <Undo2 size={14} style={{ marginRight: 6 }} />Kembalikan untuk diperbaiki
+          </button>
+        )}
         {(manager || me.member) && <button className="btn" onClick={() => { newTask({ emails: [t.email], title: t.title.slice(0, 108) + " (salinan)", note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }); closeTask(); }}><Copy size={14} />Duplikat</button>}
         <button className="btn" onClick={() => { saveTemplates([{ title: t.title, note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }, ...loadTemplates().filter(x => x.title !== t.title)]); toast.success("Disimpan sebagai templat"); }}><Bookmark size={14} />Simpan templat</button>
         {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
           </div></Sheet></> : <>
         {manager && t.status !== "done" && t.email !== me.email && <button className="btn" onClick={() => a.nudge.mutate()} disabled={a.nudge.isPending}><BellRing size={14} />Ingatkan</button>}
-        {manager && t.status === "done" && t.by !== "self" && <ConfirmButton className="btn" label="Kembalikan untuk diperbaiki" armed="Yakin kembalikan?" onConfirm={() => a.giveBack.mutate()} />}
+        {manager && t.status === "done" && t.by !== "self" && (
+          <button type="button" className="btn" onClick={() => setReturnOpen(true)}>
+            <Undo2 size={14} style={{ marginRight: 6 }} />Kembalikan untuk diperbaiki
+          </button>
+        )}
         {(manager || me.member) && <button className="btn" onClick={() => { newTask({ emails: [t.email], title: t.title.slice(0, 108) + " (salinan)", note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }); closeTask(); }}><Copy size={14} />Duplikat</button>}
         <button className="btn" onClick={() => { saveTemplates([{ title: t.title, note: t.note, priority: t.priority, projectId: t.projectId ?? undefined, labelIds: t.labelIds, steps: t.subtasks.map(s => s.title), start: t.start ?? undefined, due: t.due ?? undefined }, ...loadTemplates().filter(x => x.title !== t.title)]); toast.success("Disimpan sebagai templat"); }}><Bookmark size={14} />Simpan templat</button>
         {canEdit && <ConfirmButton className="btn danger" label="Hapus tugas" armed="Yakin hapus?" onConfirm={() => a.remove.mutate(undefined, { onSuccess: closeTask })} />}
         </>}
       </footer>
       {lightbox && photo && <div className="lightbox" role="dialog" onClick={() => setLightbox(false)}><img src={photo} alt="Foto bukti" /><button className="iconbtn" aria-label="Tutup"><X size={18} /></button></div>}
+      {returnOpen && (
+        <ReturnTaskModal
+          taskTitle={t.title}
+          onClose={() => setReturnOpen(false)}
+          onSubmit={reason => {
+            a.giveBack.mutate(reason, {
+              onSuccess: () => setReturnOpen(false),
+            });
+          }}
+          isPending={a.giveBack.isPending}
+        />
+      )}
+    </>
+  );
+}
+
+export function ReturnTaskModal({
+  taskTitle,
+  onClose,
+  onSubmit,
+  isPending,
+}: {
+  taskTitle: string;
+  onClose: () => void;
+  onSubmit: (reason: string) => void;
+  isPending?: boolean;
+}) {
+  const [reason, setReason] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = reason.trim();
+    if (!clean) {
+      toast.error("Deskripsi apa saja yang perlu direvisi wajib diisi!");
+      return;
+    }
+    onSubmit(clean);
+  };
+
+  return (
+    <>
+      <div className="scrim" onClick={onClose} />
+      <div className="dialog" role="dialog" aria-label="Kembalikan untuk Direvisi" style={{ maxWidth: 460 }}>
+        <div className="dialog-h">
+          <div>
+            <h2>Kembalikan untuk Direvisi</h2>
+            <p className="muted clamp1">{taskTitle}</p>
+          </div>
+          <button type="button" className="iconbtn" onClick={onClose} aria-label="Tutup"><X size={16} /></button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="dialog-b" style={{ display: "grid", gap: 12 }}>
+            <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: 10, padding: "10px 12px", fontSize: "0.82rem", color: "var(--ink)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <AlertCircle size={16} style={{ color: "var(--bad)", flexShrink: 0, marginTop: 2 }} />
+              <div>
+                Status tugas akan dikembalikan ke <b>Dikerjakan</b>. Wajib tuliskan rincian apa saja yang harus diperbaiki oleh staf.
+              </div>
+            </div>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              <span className="lbl" style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Deskripsi yang Perlu Direvisi <b style={{ color: "var(--bad)" }}>*</b></span>
+                <small className="muted">{reason.length}/1000</small>
+              </span>
+              <textarea
+                className="input"
+                rows={4}
+                maxLength={1000}
+                required
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="Tuliskan dengan jelas apa saja yang perlu diperbaiki, kekurangan laporan/bukti, dll..."
+                autoFocus
+                style={{ resize: "vertical" }}
+              />
+            </label>
+          </div>
+          <footer className="dialog-f">
+            <button type="button" className="btn ghost" onClick={onClose} disabled={isPending}>Batal</button>
+            <button type="submit" className="btn danger" disabled={!reason.trim() || isPending}>
+              <Undo2 size={14} style={{ marginRight: 6 }} /> Kembalikan Tugas
+            </button>
+          </footer>
+        </form>
+      </div>
     </>
   );
 }
