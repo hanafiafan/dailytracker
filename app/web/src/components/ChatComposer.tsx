@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AtSign, FileText, Hash, Paperclip, SendHorizontal, X } from "lucide-react";
+import { AtSign, BarChart2, FileText, Hash, Paperclip, SendHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import type { AttachmentDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
@@ -10,6 +10,7 @@ import { errorText, keys, useTasks } from "../lib/queries";
 import { useIsMobile } from "../lib/useMedia";
 import { useViewer } from "../lib/viewer";
 import { Avatar } from "./ui";
+import { CreatePollModal } from "./ChatFeatures";
 
 type Ref = { type: "member" | "task" | "project"; id: string; label: string; lit: string };
 type Pick = { key: string; ref: Ref; hint: string; color?: string };
@@ -22,6 +23,7 @@ export function ChatComposer({ channel, onSent }: { channel: string; onSent: () 
   const box = useRef<HTMLTextAreaElement>(null), file = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(""), [refs, setRefs] = useState<Ref[]>([]), [files, setFiles] = useState<AttachmentDTO[]>([]);
   const [trig, setTrig] = useState<{ ch: "@" | "#"; q: string; at: number } | null>(null), [sel, setSel] = useState(0), [busy, setBusy] = useState(false), [up, setUp] = useState(0);
+  const [showPoll, setShowPoll] = useState(false);
   const tasks = useTasks(addDays(today(), -14), !!trig && trig.ch === "#").data ?? [];
 
   const picks: Pick[] = useMemo(() => {
@@ -105,8 +107,10 @@ export function ChatComposer({ channel, onSent }: { channel: string; onSent: () 
           }} />
         <button className="rbtn" aria-label="Sebut orang" onClick={() => insert("@")}><AtSign size={18} /></button>
         <button className="rbtn" aria-label="Tautkan tugas atau proyek" onClick={() => insert("#")}><Hash size={18} /></button>
+        <button type="button" className="rbtn" aria-label="Buat polling" title="Buat polling" onClick={() => setShowPoll(true)}><BarChart2 size={18} /></button>
         <button className="rbtn send" aria-label="Kirim" disabled={busy || !!up || (!text.trim() && !files.length)} onClick={() => void send()}><SendHorizontal size={18} /></button>
       </div>
+      {showPoll && <CreatePollModal channel={channel} onClose={() => setShowPoll(false)} />}
     </div>
   );
 }

@@ -242,7 +242,10 @@ export const messages = sqliteTable("messages", {
   refs: text("refs", { mode: "json" }).$type<{ type: "member" | "task" | "project"; id: string }[]>().notNull().default([]),
   createdAt: integer("created_at").notNull(),
   deletedAt: integer("deleted_at"),
-}, t => [index("messages_channel").on(t.channel, t.createdAt)]);
+  isPinned: bool("is_pinned").notNull().default(false),
+  pinnedAt: integer("pinned_at"),
+  pinnedBy: text("pinned_by"),
+}, t => [index("messages_channel").on(t.channel, t.createdAt), index("messages_pinned").on(t.channel, t.isPinned)]);
 export const attachments = sqliteTable("attachments", {
   id: text("id").primaryKey(),
   messageId: text("message_id").references(() => messages.id, { onDelete: "cascade" }),
@@ -254,6 +257,27 @@ export const attachments = sqliteTable("attachments", {
   data: blob("data", { mode: "buffer" }).notNull(),
   createdAt: integer("created_at").notNull(),
 }, t => [index("attachments_message").on(t.messageId)]);
+
+export const chatPolls = sqliteTable("chat_polls", {
+  id: text("id").primaryKey(),
+  messageId: text("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  creatorEmail: text("creator_email").notNull(),
+  question: text("question").notNull(),
+  options: text("options", { mode: "json" }).$type<string[]>().notNull(),
+  allowMultiple: bool("allow_multiple").notNull().default(false),
+  isClosed: bool("is_closed").notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+}, t => [index("chat_polls_message").on(t.messageId), index("chat_polls_channel").on(t.channel)]);
+
+export const chatPollVotes = sqliteTable("chat_poll_votes", {
+  id: text("id").primaryKey(),
+  pollId: text("poll_id").notNull().references(() => chatPolls.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  optionIndex: integer("option_index").notNull(),
+  createdAt: integer("created_at").notNull(),
+}, t => [index("chat_poll_votes_poll").on(t.pollId), index("chat_poll_votes_user").on(t.pollId, t.email)]);
+
 /** Who confirmed reading the guide and accepting the terms, for which role and version. */
 export const guideAcks = sqliteTable("guide_acks", {
   email: text("email").primaryKey(),

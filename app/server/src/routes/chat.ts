@@ -4,8 +4,8 @@ import { bodyLimit } from "hono/body-limit";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { makePolicy, isBOMember, isDirectorMember } from "@shared/policy";
-import { groupInput, groupPatch, messageCreate, type ChannelDTO, type ChatRefDTO, type MessageDTO } from "@shared/schemas";
-import { attachments, channelReads, chatGroupMembers, chatGroups, members, messages, projects, tasks } from "../db/schema.js";
+import { groupInput, groupPatch, messageCreate, pollCreate, type ChannelDTO, type ChatRefDTO, type MessageDTO, type PollDTO } from "@shared/schemas";
+import { attachments, channelReads, chatGroupMembers, chatGroups, chatPolls, chatPollVotes, members, messages, projects, tasks } from "../db/schema.js";
 import { loadTeam, newId, type AppEnv, type Deps, type User } from "../context.js";
 import type { Notify } from "../notify.js";
 
@@ -119,13 +119,93 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (r.type === "member") { const m = t.find(x => x.email === r.id); return { ...r, label: m?.name ?? r.id, ok: !!m }; }
       if (r.type === "project") { const p = db.select().from(projects).where(eq(projects.id, r.id)).get(); return { ...r, label: p?.name ?? "Proyek dihapus", ok: !!p }; }
       const k = db.select().from(tasks).where(eq(tasks.id, r.id)).get();
-      return k && viewer.policy.canSee(k.email) ? { ...r, label: k.title, ok: true } : { ...r, label: "Tugas", ok: false };
+      if (!k || !viewer.policy.canSee(k.email)) return { ...r, label: "Tugas", ok: false };
+      const assignee = t.find(m => m.email === k.email);
+      const proj = k.projectId ? db.select().from(projects).where(eq(projects.id, k.projectId)).get() : null;
+      return {
+        ...r,
+        label: k.title,
+        ok: true,
+        taskDetails: {
+          id: k.id,
+          title: k.title,
+          status: k.status,
+          priority: k.priority,
+          date: k.date,
+          due: k.due,
+          assigneeName: assignee?.name ?? k.email,
+          assigneeEmail: k.email,
+          projectName: proj?.name,
+          projectColor: proj?.color,
+        },
+      };
     });
   };
-  const toMessage = (m: typeof messages.$inferSelect, files: { id: string; name: string; mime: string; size: number }[], viewer: { policy: ReturnType<typeof makePolicy> }): MessageDTO => ({
-    id: m.id, channel: m.channel, email: m.email, name: team().find(x => x.email === m.email)?.name ?? (ownerOf(m.email) ? "Superadmin" : m.email),
-    text: m.deletedAt ? "" : m.text, refs: m.deletedAt ? [] : labelRefs(m.refs, viewer), attachments: m.deletedAt ? [] : files, createdAt: m.createdAt, deleted: !!m.deletedAt,
-  });
+
+  const pollsOf = (msgIds: string[], viewerEmail: string): Map<string, PollDTO> => {
+    if (!msgIds.length) return new Map();
+    const pollRows = db.select().from(chatPolls).where(inArray(chatPolls.messageId, msgIds)).all();
+    if (!pollRows.length) return new Map();
+    const pollIds = pollRows.map(p => p.id);
+    const voteRows = db.select().from(chatPollVotes).where(inArray(chatPollVotes.pollId, pollIds)).all();
+    const t = team();
+
+    const map = new Map<string, PollDTO>();
+    for (const p of pollRows) {
+      const votes = voteRows.filter(v => v.pollId === p.id);
+      const options = (p.options as string[]).map((optText, idx) => {
+        const optVotes = votes.filter(v => v.optionIndex === idx);
+        const voterEmails = optVotes.map(v => v.email);
+        const voterNames = voterEmails.map(e => t.find(m => m.email === e)?.name ?? (ownerOf(e) ? "Superadmin" : e));
+        return {
+          index: idx,
+          text: optText,
+          count: optVotes.length,
+          voterEmails,
+          voterNames,
+          hasVoted: voterEmails.includes(viewerEmail),
+        };
+      });
+      const uniqueVoters = new Set(votes.map(v => v.email)).size;
+      const creator = t.find(m => m.email === p.creatorEmail);
+      map.set(p.messageId, {
+        id: p.id,
+        messageId: p.messageId,
+        channel: p.channel,
+        creatorEmail: p.creatorEmail,
+        creatorName: creator?.name ?? (ownerOf(p.creatorEmail) ? "Superadmin" : p.creatorEmail),
+        question: p.question,
+        options,
+        totalVotes: votes.length,
+        totalVoters: uniqueVoters,
+        allowMultiple: p.allowMultiple,
+        isClosed: p.isClosed,
+        createdAt: p.createdAt,
+      });
+    }
+    return map;
+  };
+
+  const toMessage = (m: typeof messages.$inferSelect, files: { id: string; name: string; mime: string; size: number }[], viewer: { policy: ReturnType<typeof makePolicy> }, poll?: PollDTO | null): MessageDTO => {
+    const t = team();
+    const pinnedByMember = m.pinnedBy ? t.find(x => x.email === m.pinnedBy) : null;
+    return {
+      id: m.id,
+      channel: m.channel,
+      email: m.email,
+      name: t.find(x => x.email === m.email)?.name ?? (ownerOf(m.email) ? "Superadmin" : m.email),
+      text: m.deletedAt ? "" : m.text,
+      refs: m.deletedAt ? [] : labelRefs(m.refs, viewer),
+      attachments: m.deletedAt ? [] : files,
+      createdAt: m.createdAt,
+      deleted: !!m.deletedAt,
+      isPinned: !!m.isPinned,
+      pinnedAt: m.pinnedAt,
+      pinnedBy: m.pinnedBy,
+      pinnedByName: pinnedByMember?.name ?? (m.pinnedBy && ownerOf(m.pinnedBy) ? "Superadmin" : m.pinnedBy),
+      poll: poll ?? null,
+    };
+  };
   const filesOf = (ids: string[]) => ids.length ? db.select({ id: attachments.id, name: attachments.name, mime: attachments.mime, size: attachments.size, messageId: attachments.messageId }).from(attachments).where(inArray(attachments.messageId, ids)).all() : [];
 
   return new Hono<AppEnv>()
@@ -230,13 +310,16 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         const otherEmail = (parts[0]?.toLowerCase() === u.email.toLowerCase() ? parts[1] : parts[0]) ?? "";
         if (!otherEmail) continue;
         const other = allTeam.find(m => m.email.toLowerCase() === otherEmail.toLowerCase());
-        const name = other?.name ?? otherEmail ?? "Chat Pribadi";
+        const isSuperadminSession = parts.some(p => p.toLowerCase() === env.OWNER_EMAIL.toLowerCase());
+        const isOtherOwner = otherEmail.toLowerCase() === env.OWNER_EMAIL.toLowerCase();
+        const name = other?.name ?? (isOtherOwner ? "Superadmin (Hellens)" : (otherEmail || "Chat Pribadi"));
         out.push({
           id: row.channel,
           kind: "dm",
           name,
           projectId: null,
-          color: "lilac",
+          color: isSuperadminSession ? "yellow" : "lilac",
+          isSuperadminSession,
           dmUser: other ? {
             email: other.email,
             name: other.name,
@@ -246,7 +329,16 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
             level: other.level,
             hasPhoto: other.photoV > 0,
             photoV: other.photoV,
-          } : undefined,
+          } : (isOtherOwner ? {
+            email: otherEmail,
+            name: "Superadmin (Hellens)",
+            role: "Superadmin",
+            group: "",
+            jobdesk: "System & Company Administration",
+            level: "superadmin",
+            hasPhoto: false,
+            photoV: 0,
+          } : undefined),
           ...info(row.channel),
         });
       }
@@ -348,7 +440,8 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const before = Number(c.req.query("before")) || Number.MAX_SAFE_INTEGER;
       const rows = db.select().from(messages).where(and(eq(messages.channel, ch), lt(messages.createdAt, before))).orderBy(desc(messages.createdAt)).limit(PAGE).all().reverse();
       const files = filesOf(rows.map(r => r.id));
-      return c.json({ messages: rows.map(r => toMessage(r, files.filter(f => f.messageId === r.id), u)), more: rows.length === PAGE });
+      const polls = pollsOf(rows.map(r => r.id), u.email);
+      return c.json({ messages: rows.map(r => toMessage(r, files.filter(f => f.messageId === r.id), u, polls.get(r.id))), more: rows.length === PAGE });
     })
     .post("/channels/:id/messages", zValidator("json", messageCreate), c => {
       const u = c.var.user, ch = c.req.param("id"), b = c.req.valid("json");
@@ -390,6 +483,91 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       db.delete(attachments).where(eq(attachments.messageId, m.id)).run();
       bus.emit("chat");
       return c.json({ ok: true });
+    })
+    .post("/channels/:id/messages/:msgId/pin", c => {
+      const u = c.var.user, ch = c.req.param("id"), msgId = c.req.param("msgId");
+      if (!canAccess(u.email, u.owner, ch)) return c.json({ error: "forbidden" }, 403);
+      const m = db.select().from(messages).where(and(eq(messages.id, msgId), eq(messages.channel, ch), isNull(messages.deletedAt))).get();
+      if (!m) return c.json({ error: "Pesan tidak ditemukan" }, 404);
+      const isPinned = !m.isPinned;
+      db.update(messages).set({
+        isPinned,
+        pinnedAt: isPinned ? Date.now() : null,
+        pinnedBy: isPinned ? u.email : null,
+      }).where(eq(messages.id, msgId)).run();
+      bus.emit("chat");
+      return c.json({ isPinned, pinnedAt: isPinned ? Date.now() : null });
+    })
+    .post("/channels/:id/polls", zValidator("json", pollCreate), c => {
+      const u = c.var.user, ch = c.req.param("id"), b = c.req.valid("json");
+      if (!canAccess(u.email, u.owner, ch)) return c.json({ error: "forbidden" }, 403);
+      const msgId = newId(), pollId = newId(), now = Date.now();
+      db.transaction(tx => {
+        tx.insert(messages).values({
+          id: msgId,
+          channel: ch,
+          email: u.email,
+          text: `📊 Polling: ${b.question}`,
+          refs: [],
+          createdAt: now,
+        }).run();
+        tx.insert(chatPolls).values({
+          id: pollId,
+          messageId: msgId,
+          channel: ch,
+          creatorEmail: u.email,
+          question: b.question,
+          options: b.options,
+          allowMultiple: b.allowMultiple,
+          isClosed: false,
+          createdAt: now,
+        }).run();
+        tx.insert(channelReads).values({ email: u.email, channel: ch, readAt: now }).onConflictDoUpdate({ target: [channelReads.email, channelReads.channel], set: { readAt: now } }).run();
+      });
+      bus.emit("chat");
+      return c.json({ id: pollId, messageId: msgId }, 201);
+    })
+    .post("/polls/:id/vote", zValidator("json", z.object({ optionIndex: z.number().int().min(0) })), c => {
+      const u = c.var.user, pollId = c.req.param("id"), { optionIndex } = c.req.valid("json");
+      const poll = db.select().from(chatPolls).where(eq(chatPolls.id, pollId)).get();
+      if (!poll) return c.json({ error: "Polling tidak ditemukan" }, 404);
+      if (poll.isClosed) return c.json({ error: "Polling sudah ditutup" }, 400);
+      if (!canAccess(u.email, u.owner, poll.channel)) return c.json({ error: "forbidden" }, 403);
+      if (optionIndex >= (poll.options as string[]).length) return c.json({ error: "Pilihan tidak valid" }, 400);
+
+      const existingVotes = db.select().from(chatPollVotes).where(and(eq(chatPollVotes.pollId, pollId), eq(chatPollVotes.email, u.email))).all();
+      const alreadyVotedThis = existingVotes.find(v => v.optionIndex === optionIndex);
+
+      db.transaction(tx => {
+        if (alreadyVotedThis) {
+          tx.delete(chatPollVotes).where(eq(chatPollVotes.id, alreadyVotedThis.id)).run();
+        } else {
+          if (!poll.allowMultiple) {
+            tx.delete(chatPollVotes).where(and(eq(chatPollVotes.pollId, pollId), eq(chatPollVotes.email, u.email))).run();
+          }
+          tx.insert(chatPollVotes).values({
+            id: newId(),
+            pollId,
+            email: u.email,
+            optionIndex,
+            createdAt: Date.now(),
+          }).run();
+        }
+      });
+      bus.emit("chat");
+      return c.json({ ok: true });
+    })
+    .post("/polls/:id/close", c => {
+      const u = c.var.user, pollId = c.req.param("id");
+      const poll = db.select().from(chatPolls).where(eq(chatPolls.id, pollId)).get();
+      if (!poll) return c.json({ error: "Polling tidak ditemukan" }, 404);
+      const isCreator = poll.creatorEmail.toLowerCase() === u.email.toLowerCase();
+      const isAdminUp = u.owner || u.policy.isBoss || u.policy.isAdmin || u.policy.isSuper;
+      if (!isCreator && !isAdminUp) return c.json({ error: "forbidden" }, 403);
+      const nextClosed = !poll.isClosed;
+      db.update(chatPolls).set({ isClosed: nextClosed }).where(eq(chatPolls.id, pollId)).run();
+      bus.emit("chat");
+      return c.json({ ok: true, isClosed: nextClosed });
     })
     // Upload first, attach on send. 8 MB each; the global 2 MB request limit is lifted for this one route only.
     .post("/attachments", bodyLimit({ maxSize: MAX_FILE + 512 * 1024, onError: c => c.json({ error: "Berkas terlalu besar (maksimal 8 MB)." }, 413) }), async c => {

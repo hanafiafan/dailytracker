@@ -2392,3 +2392,244 @@
 /* Brand tile: black D on lime, same as the app icon */
 .logo i, :root[data-theme="dark"] .logo i, .loginart .logo i { background: #C7FF16; color: #000; }
 .logo i svg { width: 24px; height: 24px; }
+
+/* ---- Superadmin (Hellens) Chat Session & Styling ---- */
+.chitem.superadmin {
+  background: linear-gradient(135deg, color-mix(in srgb, #EAB308 14%, var(--surface)), color-mix(in srgb, #10B981 10%, var(--surface)));
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  box-shadow: 0 2px 10px rgba(234, 179, 8, 0.08);
+}
+.chitem.superadmin .chdot {
+  background: linear-gradient(135deg, #F59E0B, #10B981);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
+}
+.chitem.superadmin:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, #EAB308 22%, var(--surface)), color-mix(in srgb, #10B981 16%, var(--surface)));
+}
+
+.superadmin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, #F59E0B, #10B981);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+.thread-superadmin-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, rgba(234, 179, 8, 0.16), rgba(16, 185, 129, 0.12), rgba(234, 179, 8, 0.06));
+  border-bottom: 1px solid rgba(234, 179, 8, 0.35);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.msg.from-superadmin .mbody {
+  border-left: 2px solid #F59E0B;
+  padding-left: 10px;
+}
+.msg.from-superadmin .avatar {
+  box-shadow: 0 0 0 2px #F59E0B, 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+/* ---- Pinned Messages Bar & Styling ---- */
+.pinned-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, #F59E0B 12%, var(--surface));
+  border-bottom: 1px solid color-mix(in srgb, #F59E0B 35%, var(--border));
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pinned-bar:hover {
+  background: color-mix(in srgb, #F59E0B 18%, var(--surface));
+}
+.pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #D97706;
+  background: color-mix(in srgb, #F59E0B 15%, transparent);
+  padding: 1px 7px;
+  border-radius: 99px;
+  margin-bottom: 3px;
+}
+.msg.is-pinned {
+  background: color-mix(in srgb, #F59E0B 6%, transparent);
+  border-radius: 12px;
+  padding-left: 6px;
+  padding-right: 6px;
+  transition: background 0.4s ease;
+}
+.msg.is-highlighted {
+  animation: pulseHighlight 2s ease-out;
+}
+@keyframes pulseHighlight {
+  0% { background: color-mix(in srgb, var(--volt) 40%, transparent); }
+  100% { background: transparent; }
+}
+
+/* ---- Message Actions Hover Bar ---- */
+.m-actions {
+  position: absolute;
+  right: 0;
+  top: -12px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  border-radius: 8px;
+  padding: 2px;
+  z-index: 5;
+}
+.msg:hover .m-actions, .m-actions:focus-within {
+  display: flex;
+}
+.m-act-btn {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.m-act-btn:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.m-act-btn.pinned {
+  color: #F59E0B;
+}
+
+/* ---- Lark-Style Task Card in Chat ---- */
+.chat-task-card {
+  margin-top: 8px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  max-width: 480px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  transition: all 0.15s ease;
+}
+.chat-task-card:hover {
+  border-color: var(--line-focus, var(--blue));
+  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+}
+.chat-task-card-h {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.chat-task-check {
+  margin-top: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.chat-task-check.done {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: #101114;
+}
+.chat-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 0.78rem;
+}
+
+/* ---- Polling Card in Chat ---- */
+.chat-poll-card {
+  margin-top: 8px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  max-width: 460px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.poll-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--blue) 15%, transparent);
+  color: var(--blue-ink);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-bottom: 6px;
+}
+.poll-option-btn {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.88rem;
+  transition: border-color 0.15s;
+}
+.poll-option-btn:hover {
+  border-color: var(--blue);
+}
+.poll-option-btn.voted {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+.poll-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+  transition: width 0.3s ease;
+  pointer-events: none;
+}
+.poll-option-btn.voted .poll-bar-fill {
+  background: color-mix(in srgb, var(--blue) 28%, transparent);
+}
+

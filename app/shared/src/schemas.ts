@@ -107,6 +107,11 @@ export const resourceInput = z.object({ name: z.string().trim().min(1).max(60), 
 export const bookingCreate = z.object({ resourceId: z.string().min(1), date, start: hm, end: hm, taskId: z.string().nullish(), note: z.string().trim().max(200).default("") });
 export const ChatRef = z.object({ type: z.enum(["member", "task", "project"]), id: z.string().min(1).max(80) });
 export const messageCreate = z.object({ text: z.string().trim().max(2000).default(""), refs: z.array(ChatRef).max(20).default([]), attachmentIds: z.array(z.string()).max(6).default([]) });
+export const pollCreate = z.object({
+  question: z.string().trim().min(1, "Pertanyaan harus diisi").max(200),
+  options: z.array(z.string().trim().min(1, "Pilihan tidak boleh kosong").max(100)).min(2, "Minimal 2 pilihan").max(10, "Maksimal 10 pilihan"),
+  allowMultiple: z.boolean().default(false),
+});
 export const groupInput = z.object({ name: z.string().trim().min(1).max(40), description: z.string().trim().max(300).optional().default(""), emails: z.array(email).max(200).default([]) });
 export const groupPatch = z.object({ name: z.string().trim().min(1).max(40).optional(), description: z.string().trim().max(300).optional(), emails: z.array(email).max(200).optional() });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
@@ -175,9 +180,69 @@ export interface ProjectReportDTO {
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }
-export interface ChatRefDTO { type: "member" | "task" | "project"; id: string; label: string; ok: boolean }
+
+export interface TaskRefDetailDTO {
+  id: string;
+  title: string;
+  status: Status;
+  priority: Priority;
+  date: string;
+  due: string | null;
+  assigneeName?: string;
+  assigneeEmail?: string;
+  projectName?: string;
+  projectColor?: string;
+}
+
+export interface ChatRefDTO {
+  type: "member" | "task" | "project";
+  id: string;
+  label: string;
+  ok: boolean;
+  taskDetails?: TaskRefDetailDTO;
+}
+
+export interface PollOptionDTO {
+  index: number;
+  text: string;
+  count: number;
+  voterEmails: string[];
+  voterNames: string[];
+  hasVoted: boolean;
+}
+
+export interface PollDTO {
+  id: string;
+  messageId: string;
+  channel: string;
+  creatorEmail: string;
+  creatorName: string;
+  question: string;
+  options: PollOptionDTO[];
+  totalVotes: number;
+  totalVoters: number;
+  allowMultiple: boolean;
+  isClosed: boolean;
+  createdAt: number;
+}
+
 export interface AttachmentDTO { id: string; name: string; mime: string; size: number }
-export interface MessageDTO { id: string; channel: string; email: string; name: string; text: string; refs: ChatRefDTO[]; attachments: AttachmentDTO[]; createdAt: number; deleted: boolean }
+export interface MessageDTO {
+  id: string;
+  channel: string;
+  email: string;
+  name: string;
+  text: string;
+  refs: ChatRefDTO[];
+  attachments: AttachmentDTO[];
+  createdAt: number;
+  deleted: boolean;
+  isPinned?: boolean;
+  pinnedAt?: number | null;
+  pinnedBy?: string | null;
+  pinnedByName?: string | null;
+  poll?: PollDTO | null;
+}
 export interface AdminOverviewDTO {
   owner: string;
   counts: {
@@ -210,4 +275,5 @@ export interface ChannelDTO {
   last: { text: string; name: string; at: number } | null;
   group?: { members: string[]; createdBy: string; canManage: boolean; description?: string; hasPhoto?: boolean; photoV?: number };
   dmUser?: { email: string; name: string; role: string; group?: string; jobdesk?: string; level?: string; hasPhoto: boolean; photoV: number };
+  isSuperadminSession?: boolean;
 }

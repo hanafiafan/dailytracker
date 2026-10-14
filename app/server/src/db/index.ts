@@ -40,6 +40,32 @@ export function openDb(path: string) {
     try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN description text DEFAULT '' NOT NULL").run(); } catch {}
     try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN photo blob").run(); } catch {}
     try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN photo_v integer DEFAULT 0 NOT NULL").run(); } catch {}
+
+    try { sqlite.prepare("ALTER TABLE messages ADD COLUMN is_pinned integer DEFAULT 0 NOT NULL").run(); } catch {}
+    try { sqlite.prepare("ALTER TABLE messages ADD COLUMN pinned_at integer").run(); } catch {}
+    try { sqlite.prepare("ALTER TABLE messages ADD COLUMN pinned_by text").run(); } catch {}
+    try {
+      sqlite.prepare(`CREATE TABLE IF NOT EXISTS chat_polls (
+        id text PRIMARY KEY NOT NULL,
+        message_id text NOT NULL REFERENCES messages(id) ON DELETE cascade,
+        channel text NOT NULL,
+        creator_email text NOT NULL,
+        question text NOT NULL,
+        options text NOT NULL,
+        allow_multiple integer DEFAULT 0 NOT NULL,
+        is_closed integer DEFAULT 0 NOT NULL,
+        created_at integer NOT NULL
+      )`).run();
+    } catch {}
+    try {
+      sqlite.prepare(`CREATE TABLE IF NOT EXISTS chat_poll_votes (
+        id text PRIMARY KEY NOT NULL,
+        poll_id text NOT NULL REFERENCES chat_polls(id) ON DELETE cascade,
+        email text NOT NULL,
+        option_index integer NOT NULL,
+        created_at integer NOT NULL
+      )`).run();
+    } catch {}
   } catch {}
   return Object.assign(db, { sqlite });
 }

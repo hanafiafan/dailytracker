@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Camera,
+  CheckSquare,
   Copy,
+  Crown,
   Download,
   FileText,
   Hash,
@@ -13,8 +15,11 @@ import {
   MessageCircle,
   MessageSquare,
   Pencil,
+  Pin,
+  PinOff,
   Plus,
   Settings,
+  ShieldCheck,
   Target,
   Trash2,
   UserMinus,
@@ -29,6 +34,7 @@ import { ChatComposer } from "../components/ChatComposer";
 import { Page } from "../components/Page";
 import { Avatar, ConfirmButton, Empty } from "../components/ui";
 import { GroupDialog } from "../components/GroupDialog";
+import { ChatTaskCard, ChatPollCard, ConvertMessageToTaskModal, PinnedBar } from "../components/ChatFeatures";
 import { api, ok, putImage } from "../lib/api";
 import { fmtTime } from "../lib/format";
 import { squarePhoto } from "../lib/image";
@@ -72,12 +78,30 @@ function useAllTeam() {
 /** Message text with its [[n]] placeholders turned into clickable chips (person, task, project). */
 function Body({ m }: { m: MessageDTO }) {
   const { openTask } = useUi();
+  const { me, policy } = useViewer();
   const [, go] = useLocation();
   const parts = m.text.split(/(\[\[\d+\]\])/g);
   const chip = (r: ChatRefDTO) => r.type === "member" ? <span key={r.id} className="rchip mem">@{r.label}</span>
     : r.type === "project" ? <button key={r.id} className="rchip proj" onClick={() => go("/proyek/" + r.id)}><Hash size={12} />{r.label}</button>
     : r.ok ? <button key={r.id} className="rchip task" onClick={() => openTask(r.id)}><FileText size={12} />{r.label}</button> : <span key={r.id} className="rchip off" title="Kamu tidak punya akses ke tugas ini"><FileText size={12} />Tugas pribadi</span>;
-  return <p className="mtext">{parts.map((p, i) => { const k = /^\[\[(\d+)\]\]$/.exec(p); const r = k ? m.refs[Number(k[1])] : undefined; return r ? <Fragment key={i}>{chip(r)}</Fragment> : <Fragment key={i}>{p}</Fragment>; })}</p>;
+
+  // Integrated task details for Lark-style task cards
+  const taskCards = m.refs.filter(r => r.type === "task" && r.taskDetails);
+
+  return (
+    <>
+      <p className="mtext">{parts.map((p, i) => { const k = /^\[\[(\d+)\]\]$/.exec(p); const r = k ? m.refs[Number(k[1])] : undefined; return r ? <Fragment key={i}>{chip(r)}</Fragment> : <Fragment key={i}>{p}</Fragment>; })}</p>
+      {taskCards.map(r => (
+        <ChatTaskCard key={r.id} detail={r.taskDetails!} onOpen={openTask} />
+      ))}
+      {m.poll && (
+        <ChatPollCard
+          poll={m.poll}
+          canManage={m.email === me.email || policy.isAdmin || policy.isSuper || policy.isBoss}
+        />
+      )}
+    </>
+  );
 }
 
 const ChIcon = ({ c }: { c: ChannelDTO }) =>
@@ -736,6 +760,8 @@ function Thread({
   const box = useRef<HTMLDivElement>(null);
   const toEnd = () => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; };
   const [zoom, setZoom] = useState<string | null>(null), [cfg, setCfg] = useState(false);
+  const [convertToTask, setConvertToTask] = useState<MessageDTO | null>(null);
+
   const last = list.at(-1)?.id;
   useEffect(() => { toEnd(); }, [last, ch.id]);
   useEffect(() => { if (ch.unread > 0 || last) void ok(api.chat.channels[":id"].read.$post({ param: { id: ch.id } })).then(() => qc.invalidateQueries({ queryKey: [...keys.chat, "channels"] })); }, [ch.id, last]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -744,6 +770,24 @@ function Thread({
 
   const isDm = ch.kind === "dm";
   const dmMem = isDm && ch.dmUser ? member(ch.dmUser.email) : undefined;
+  const isSuperSession = !!ch.isSuperadminSession;
+
+  const pinnedMessages = list.filter(m => m.isPinned && !m.deleted);
+
+  const togglePin = useAction(async (msgId: string) => {
+    const res = await ok(api.chat.channels[":id"].messages[":msgId"].pin.$post({ param: { id: ch.id, msgId } })) as { isPinned: boolean };
+    await qc.invalidateQueries({ queryKey: keys.chat });
+    toast.success(res.isPinned ? "Pesan disematkan 📌" : "Sematkan pesan dilepas");
+  });
+
+  const jumpToMsg = (id: string) => {
+    const el = document.getElementById("msg-" + id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("is-highlighted");
+      setTimeout(() => el.classList.remove("is-highlighted"), 2000);
+    }
+  };
 
   return (
     <section className="thread" aria-label={ch.name}>
@@ -756,7 +800,11 @@ function Thread({
           aria-label="Buka detail info percakapan"
           title="Klik untuk melihat info detail percakapan"
         >
-          {isDm && dmMem ? (
+          {isSuperSession ? (
+            <span className="chdot" style={{ background: "linear-gradient(135deg, #F59E0B, #10B981)", color: "#fff" }}>
+              <Crown size={18} />
+            </span>
+          ) : isDm && dmMem ? (
             <Avatar m={dmMem} />
           ) : ch.kind === "group" && ch.group?.hasPhoto ? (
             <img
@@ -769,9 +817,13 @@ function Thread({
             <span className={"chdot " + (ch.kind === "general" ? "gen" : "")} data-c={ch.color ?? undefined}><ChIcon c={ch} /></span>
           )}
           <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
-            <b className="clamp1">{ch.name}</b>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <b className="clamp1">{ch.name}</b>
+              {isSuperSession && <span className="superadmin-tag"><Crown size={10} /> Superadmin</span>}
+            </div>
             <small className="muted clamp1">
-              {ch.kind === "general" ? "Semua anggota tim · Info forum" :
+              {isSuperSession ? "Sesi koordinasi khusus Superadmin (Hellens)" :
+               ch.kind === "general" ? "Semua anggota tim · Info forum" :
                ch.kind === "group" ? `${ch.group?.members.length ?? 0} anggota · Info grup` :
                ch.kind === "dm" ? (ch.dmUser?.role || "Percakapan Pribadi · Info kontak") :
                "Anggota proyek · Info"}
@@ -793,26 +845,118 @@ function Thread({
           </button>
         )}
       </header>
+
+      {isSuperSession && (
+        <div className="thread-superadmin-banner">
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Crown size={16} style={{ color: "#F59E0B" }} />
+            <span>Sesi Khusus Superadmin (Hellens)</span>
+          </div>
+          <span className="superadmin-tag"><ShieldCheck size={11} /> Prioritas</span>
+        </div>
+      )}
+
+      {pinnedMessages.length > 0 && (
+        <PinnedBar
+          pinnedMessages={pinnedMessages}
+          onJumpTo={jumpToMsg}
+          onUnpin={id => togglePin.mutate(id)}
+        />
+      )}
+
       {cfg && <GroupDialog ch={ch} onClose={() => setCfg(false)} onDone={id => { if (!id) onBack?.(); }} />}
       <div className="msgs" aria-live="polite" ref={box}>
         {q.data?.more && <p className="muted" style={{ textAlign: "center", fontSize: ".78rem" }}>Menampilkan 60 pesan terbaru</p>}
         {list.map(m => {
           const d = dayLabel(m.createdAt), head = d !== lastDay, cont = !head && lastWho === m.email; lastDay = d; lastWho = m.email;
           const mine = m.email === me.email, mem = member(m.email), can = mine || policy.canManage(m.email);
+          const isSuperMsg = m.name.toLowerCase().includes("superadmin") || m.name.toLowerCase().includes("hellens") || mem?.level === "superadmin";
+
           return (
             <Fragment key={m.id}>
               {head && <div className="dayhead"><span>{d}</span></div>}
-              <article className={"msg" + (mine ? " mine" : "") + (cont ? " cont" : "")}>
-                {!cont && (mem ? <Avatar m={mem} /> : <span className="avatar">{m.name[0]}</span>)}
+              <article
+                id={"msg-" + m.id}
+                className={
+                  "msg" +
+                  (mine ? " mine" : "") +
+                  (cont ? " cont" : "") +
+                  (m.isPinned ? " is-pinned" : "") +
+                  (isSuperMsg ? " from-superadmin" : "")
+                }
+              >
+                {!cont && (
+                  mem ? (
+                    <Avatar m={mem} />
+                  ) : (
+                    <span
+                      className="avatar"
+                      style={isSuperMsg ? { background: "linear-gradient(135deg, #F59E0B, #10B981)", color: "#fff", fontWeight: 800 } : undefined}
+                    >
+                      {isSuperMsg ? <Crown size={15} /> : m.name[0]}
+                    </span>
+                  )
+                )}
                 <div className="mbody">
-                  {!cont && <div className="mmeta"><b>{mine ? "Kamu" : m.name}</b><small>{fmtTime(m.createdAt)}</small></div>}
+                  {!cont && (
+                    <div className="mmeta">
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <b>{mine ? "Kamu" : m.name}</b>
+                        {isSuperMsg && (
+                          <span className="superadmin-tag" title="Superadmin (Hellens)">
+                            <Crown size={9} /> Superadmin
+                          </span>
+                        )}
+                      </span>
+                      <small>{fmtTime(m.createdAt)}</small>
+                    </div>
+                  )}
+
+                  {m.isPinned && (
+                    <div className="pinned-badge">
+                      <Pin size={10} /> Disematkan {m.pinnedByName ? `oleh ${m.pinnedByName}` : ""}
+                    </div>
+                  )}
+
                   {m.deleted ? <p className="mtext gone">Pesan dihapus</p> : <>
                     {m.text && <Body m={m} />}
                     {m.attachments.length > 0 && <div className="matt">{m.attachments.map(a => a.mime.startsWith("image/")
                       ? <button key={a.id} className="mimg" onClick={() => setZoom(a.id)} aria-label={`Perbesar ${a.name}`}><img src={`/api/chat/files/${a.id}`} alt={a.name} loading="lazy" /></button>
                       : <a key={a.id} className="mfile" href={`/api/chat/files/${a.id}`} download={a.name}><FileText size={18} /><span><b className="clamp1">{a.name}</b><small>{bytes(a.size)}</small></span><Download size={16} /></a>)}</div>}
                   </>}
-                  {can && !m.deleted && <button className="mdel" aria-label="Hapus pesan" onClick={() => void del(m.id)}><Trash2 size={13} /></button>}
+
+                  {/* Hover Actions: Jadikan Tugas, Pin, Hapus */}
+                  {!m.deleted && (
+                    <div className="m-actions">
+                      <button
+                        type="button"
+                        className="m-act-btn"
+                        title="Jadikan Tugas (Lark style)"
+                        onClick={() => setConvertToTask(m)}
+                      >
+                        <CheckSquare size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className={"m-act-btn" + (m.isPinned ? " pinned" : "")}
+                        title={m.isPinned ? "Lepas pin pesan" : "Sematkan pesan"}
+                        onClick={() => togglePin.mutate(m.id)}
+                      >
+                        <Pin size={13} />
+                      </button>
+                      {can && (
+                        <button
+                          type="button"
+                          className="m-act-btn"
+                          title="Hapus pesan"
+                          style={{ color: "var(--bad)" }}
+                          onClick={() => void del(m.id)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </article>
             </Fragment>);
@@ -821,6 +965,13 @@ function Thread({
       </div>
       <ChatComposer channel={ch.id} onSent={() => requestAnimationFrame(toEnd)} />
       {zoom && <div className="lightbox" role="dialog" onClick={() => setZoom(null)}><img src={`/api/chat/files/${zoom}`} alt="Lampiran" /></div>}
+      {convertToTask && (
+        <ConvertMessageToTaskModal
+          message={convertToTask}
+          channel={ch.id}
+          onClose={() => setConvertToTask(null)}
+        />
+      )}
     </section>
   );
 }
@@ -886,10 +1037,19 @@ function Channels({ list, active, onPick }: { list: ChannelDTO[]; active: string
   const renderItem = (c: ChannelDTO) => {
     const isDm = c.kind === "dm";
     const mem = isDm && c.dmUser ? member(c.dmUser.email) : undefined;
+    const isSuper = !!c.isSuperadminSession;
     return (
       <li key={c.id}>
-        <button className={c.id === active ? "on" : ""} onClick={() => onPick(c.id)} aria-current={c.id === active ? "true" : undefined}>
-          {isDm && mem ? (
+        <button
+          className={(c.id === active ? "on " : "") + (isSuper ? "chitem superadmin" : "")}
+          onClick={() => onPick(c.id)}
+          aria-current={c.id === active ? "true" : undefined}
+        >
+          {isSuper ? (
+            <span className="chdot" style={{ background: "linear-gradient(135deg, #F59E0B, #10B981)", color: "#fff" }}>
+              <Crown size={18} />
+            </span>
+          ) : isDm && mem ? (
             <Avatar m={mem} />
           ) : c.kind === "group" && c.group?.hasPhoto ? (
             <img
@@ -901,7 +1061,13 @@ function Channels({ list, active, onPick }: { list: ChannelDTO[]; active: string
           ) : (
             <span className={"chdot " + (c.kind === "general" ? "gen" : "")} data-c={c.color ?? undefined}><ChIcon c={c} /></span>
           )}
-          <span className="chmain"><b className="clamp1">{c.name}</b><small className="clamp1 muted">{c.last ? `${c.last.name}: ${c.last.text.replace(/\[\[\d+\]\]/g, "…")}` : "Belum ada pesan"}</small></span>
+          <span className="chmain">
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <b className="clamp1">{c.name}</b>
+              {isSuper && <span className="superadmin-tag"><Crown size={10} /> Superadmin</span>}
+            </span>
+            <small className="clamp1 muted">{c.last ? `${c.last.name}: ${c.last.text.replace(/\[\[\d+\]\]/g, "…")}` : "Belum ada pesan"}</small>
+          </span>
           <span className="chside">{c.last && <small className="muted">{ago(c.last.at)}</small>}{c.unread > 0 && <i className="cbadge">{c.unread > 99 ? "99+" : c.unread}</i>}</span>
         </button>
       </li>
