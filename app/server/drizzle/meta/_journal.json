@@ -99,6 +99,13 @@
       "when": 1791884619814,
       "tag": "0013_square_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1791994000000,
+      "tag": "0014_chat_group_details",
+      "breakpoints": true
     }
   ]
 }

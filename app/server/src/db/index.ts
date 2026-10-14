@@ -36,6 +36,10 @@ export function openDb(path: string) {
         insert.run(u, u, `Unit Bisnis & Entitas ${u}`, colors[i % colors.length]!, now);
       });
     }
+
+    try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN description text DEFAULT '' NOT NULL").run(); } catch {}
+    try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN photo blob").run(); } catch {}
+    try { sqlite.prepare("ALTER TABLE chat_groups ADD COLUMN photo_v integer DEFAULT 0 NOT NULL").run(); } catch {}
   } catch {}
   return Object.assign(db, { sqlite });
 }

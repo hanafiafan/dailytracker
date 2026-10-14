@@ -291,9 +291,23 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const u = c.var.user, t = find(c.req.param("id")), b = c.req.valid("json");
       if (!t || !u.policy.canSee(t.email)) return c.json({ error: "not found" }, 404);
       if (!u.policy.canCommentTask(t)) return c.json({ error: "Anda tidak memiliki izin untuk mengomentari tugas ini" }, 403);
-      const row = { id: newId(), taskId: t.id, by: who(u), byEmail: u.email, text: b.text, at: Date.now() };
+      const now = Date.now();
+      const row = { id: newId(), taskId: t.id, by: who(u), byEmail: u.email, text: b.text, at: now };
       db.insert(comments).values(row).run();
       log(u, t.id, "comment", "menulis komentar");
+
+      // Fitur komentar project: jika tugas proyek diberikan komentar, otomatis masuk ke status revisi
+      if (t.projectId) {
+        db.update(tasks).set({
+          status: "doing",
+          doneAt: null,
+          returnedAt: now,
+          revisions: t.revisions + 1,
+        }).where(eq(tasks.id, t.id)).run();
+        log(u, t.id, "returned", `masuk status revisi otomatis melalui komentar dari ${who(u)}`);
+        void notify.returned({ ...t, status: "doing", returnedAt: now, revisions: t.revisions + 1 });
+      }
+
       // Only people who can see the task are worth mentioning: its assignee, the owner, and admins who manage the assignee.
       const team = loadTeam(db);
       const audience = new Set([t.email, ...team.filter(m => m.isAdmin).map(m => m.email), env.OWNER_EMAIL]);

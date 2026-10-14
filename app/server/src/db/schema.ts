@@ -266,6 +266,9 @@ export const guideAcks = sqliteTable("guide_acks", {
 export const chatGroups = sqliteTable("chat_groups", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  photo: blob("photo", { mode: "buffer" }),
+  photoV: integer("photo_v").notNull().default(0),
   createdBy: text("created_by").notNull(),
   createdAt: integer("created_at").notNull(),
 });

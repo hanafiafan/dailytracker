@@ -6,7 +6,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-or
 import { makePolicy, isBOMember, isDirectorMember } from "@shared/policy";
 import { groupInput, groupPatch, messageCreate, type ChannelDTO, type ChatRefDTO, type MessageDTO } from "@shared/schemas";
 import { attachments, channelReads, chatGroupMembers, chatGroups, members, messages, projects, tasks } from "../db/schema.js";
-import { loadTeam, newId, type AppEnv, type Deps } from "../context.js";
+import { loadTeam, newId, type AppEnv, type Deps, type User } from "../context.js";
 import type { Notify } from "../notify.js";
 
 const MAX_FILE = 8 * 1024 * 1024;
@@ -30,6 +30,9 @@ const TYPES: Record<string, { inline: boolean; ok: (b: Uint8Array) => boolean }>
 };
 const cleanName = (n: string) => n.replace(/[\\/\u0000-\u001f"<>|?*]/g, "_").trim().slice(0, 120) || "berkas";
 
+const MAX_PHOTO = 150_000;
+const isJpeg = (b: Uint8Array) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+
 // Team chat: one general channel, one per project. Who may read a channel is derived from the project, never stored.
 export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
   const team = () => loadTeam(db);
@@ -42,10 +45,14 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, gid)).all();
     return ms.some(m => m.email.toLowerCase() === email.toLowerCase());
   };
-  /** Rename, change members, delete: the creator or the superadmin. */
-  const groupAdmin = (u: { email: string; owner: boolean }, gid: string) => {
+  /** Edit name, description, photo, members: creator, superadmin, or role admin keatas in group */
+  const groupAdmin = (u: User, gid: string) => {
     const g = db.select().from(chatGroups).where(eq(chatGroups.id, gid)).get();
-    return g && (u.owner || g.createdBy.toLowerCase() === u.email.toLowerCase()) ? g : undefined;
+    if (!g) return undefined;
+    if (!canAccess(u.email, u.owner, "g-" + gid)) return undefined;
+    const isCreator = g.createdBy.toLowerCase() === u.email.toLowerCase();
+    const isAdminUp = u.owner || u.policy.isAdmin || u.policy.isBoss || u.policy.isSuper || u.policy.isManager;
+    return (isCreator || isAdminUp) ? g : undefined;
   };
   const setMembers = (tx: Pick<typeof db, "delete" | "insert">, gid: string, emails: string[]) => {
     tx.delete(chatGroupMembers).where(eq(chatGroupMembers.groupId, gid)).run();
@@ -135,6 +142,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
           id: "bo-direktur",
           kind: "group",
           name: "BO & Direktur",
+          description: "Kanal koordinasi khusus Brand Owner & Direktur",
           projectId: null,
           color: "yellow",
           ...info("bo-direktur"),
@@ -142,21 +150,71 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
             members: team().filter(x => isBOMember(x) || isDirectorMember(x)).map(x => x.email),
             createdBy: u.email,
             canManage: false,
+            description: "Kanal koordinasi khusus Brand Owner & Direktur",
           },
         });
       }
-      if (canAccess(u.email, u.owner, GENERAL)) out.push({ id: GENERAL, kind: "general", name: "Umum", projectId: null, color: null, ...info(GENERAL) });
+      if (canAccess(u.email, u.owner, GENERAL)) {
+        out.push({
+          id: GENERAL,
+          kind: "general",
+          name: "Umum",
+          description: "Forum diskusi terbuka untuk seluruh anggota tim",
+          projectId: null,
+          color: null,
+          ...info(GENERAL),
+          group: {
+            members: team().map(x => x.email),
+            createdBy: "system",
+            canManage: false,
+            description: "Forum diskusi terbuka untuk seluruh anggota tim",
+          },
+        });
+      }
       for (const p of db.select().from(projects).orderBy(asc(projects.createdAt)).all()) {
         const id = "p-" + p.id;
         if (p.archived || !canAccess(u.email, u.owner, id)) continue;
-        out.push({ id, kind: "project", name: p.name, projectId: p.id, color: p.color as ChannelDTO["color"], ...info(id) });
+        const projectTaskEmails = db.select({ email: tasks.email }).from(tasks).where(eq(tasks.projectId, p.id)).all().map(x => x.email);
+        const membersList = Array.from(new Set([...projectTaskEmails, ...team().filter(m => m.isAdmin).map(m => m.email)]));
+        out.push({
+          id,
+          kind: "project",
+          name: p.name,
+          description: p.description || `Kanal proyek ${p.name}`,
+          projectId: p.id,
+          color: p.color as ChannelDTO["color"],
+          ...info(id),
+          group: {
+            members: membersList,
+            createdBy: "system",
+            canManage: false,
+            description: p.description || `Kanal proyek ${p.name}`,
+          },
+        });
       }
       const mine = db.select().from(chatGroups).orderBy(asc(chatGroups.createdAt)).all();
       for (const g of mine) {
         const id = "g-" + g.id;
         if (!canAccess(u.email, u.owner, id)) continue;
         const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, g.id)).all().map(x => x.email);
-        out.push({ id, kind: "group", name: g.name, projectId: null, color: null, ...info(id), group: { members: ms, createdBy: g.createdBy, canManage: u.owner || g.createdBy === u.email } });
+        const canManage = !!groupAdmin(u, g.id);
+        out.push({
+          id,
+          kind: "group",
+          name: g.name,
+          description: g.description,
+          projectId: null,
+          color: null,
+          ...info(id),
+          group: {
+            members: ms,
+            createdBy: g.createdBy,
+            canManage,
+            description: g.description,
+            hasPhoto: (g.photoV || 0) > 0,
+            photoV: g.photoV || 0,
+          },
+        });
       }
 
       // Direct Message (DM) channels
@@ -179,7 +237,16 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
           name,
           projectId: null,
           color: "lilac",
-          dmUser: other ? { email: other.email, name: other.name, role: other.role, hasPhoto: other.photoV > 0, photoV: other.photoV } : undefined,
+          dmUser: other ? {
+            email: other.email,
+            name: other.name,
+            role: other.role,
+            group: other.group,
+            jobdesk: other.jobdesk,
+            level: other.level,
+            hasPhoto: other.photoV > 0,
+            photoV: other.photoV,
+          } : undefined,
           ...info(row.channel),
         });
       }
@@ -209,11 +276,36 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       }
       const id = newId();
       db.transaction(tx => {
-        tx.insert(chatGroups).values({ id, name: b.name, createdBy: u.email, createdAt: Date.now() }).run();
+        tx.insert(chatGroups).values({ id, name: b.name, description: b.description || "", createdBy: u.email, createdAt: Date.now() }).run();
         setMembers(tx, id, [...b.emails, u.email]);
       });
       bus.emit("chat");
       return c.json({ id: "g-" + id }, 201);
+    })
+    .get("/groups/:id/photo", c => {
+      const u = c.var.user, gid = c.req.param("id");
+      if (!canAccess(u.email, u.owner, "g-" + gid)) return c.json({ error: "forbidden" }, 403);
+      const g = db.select({ photo: chatGroups.photo }).from(chatGroups).where(eq(chatGroups.id, gid)).get();
+      if (!g?.photo) return c.body(null, 404);
+      return c.body(new Uint8Array(g.photo), 200, { "content-type": "image/jpeg", "cache-control": "private, max-age=31536000, immutable" });
+    })
+    .put("/groups/:id/photo", async c => {
+      const u = c.var.user, gid = c.req.param("id");
+      const g = groupAdmin(u, gid);
+      if (!g) return c.json({ error: "forbidden" }, 403);
+      const bytes = new Uint8Array(await c.req.arrayBuffer());
+      if (!isJpeg(bytes) || bytes.length > MAX_PHOTO) return c.json({ error: "Foto harus JPG dan kurang dari 150 KB" }, 400);
+      db.update(chatGroups).set({ photo: Buffer.from(bytes), photoV: Math.abs(g.photoV || 0) + 1 }).where(eq(chatGroups.id, gid)).run();
+      bus.emit("chat");
+      return c.json({ ok: true });
+    })
+    .delete("/groups/:id/photo", c => {
+      const u = c.var.user, gid = c.req.param("id");
+      const g = groupAdmin(u, gid);
+      if (!g) return c.json({ error: "forbidden" }, 403);
+      db.update(chatGroups).set({ photo: null, photoV: -(Math.abs(g.photoV || 0) + 1) }).where(eq(chatGroups.id, gid)).run();
+      bus.emit("chat");
+      return c.json({ ok: true });
     })
     .patch("/groups/:id", zValidator("json", groupPatch), c => {
       const u = c.var.user, gid = c.req.param("id"), b = c.req.valid("json");
@@ -221,7 +313,10 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (!g) return c.json({ error: "forbidden" }, 403);
       if (b.emails && b.emails.some(e => !team().some(m => m.email === e) && e !== env.OWNER_EMAIL)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
       db.transaction(tx => {
-        if (b.name) tx.update(chatGroups).set({ name: b.name }).where(eq(chatGroups.id, gid)).run();
+        const patch: Record<string, any> = {};
+        if (b.name) patch.name = b.name;
+        if (b.description !== undefined) patch.description = b.description;
+        if (Object.keys(patch).length > 0) tx.update(chatGroups).set(patch).where(eq(chatGroups.id, gid)).run();
         if (b.emails) setMembers(tx, gid, [...b.emails, g.createdBy]);
       });
       bus.emit("chat");
@@ -235,7 +330,9 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     })
     .delete("/groups/:id", c => {
       const u = c.var.user, gid = c.req.param("id");
-      if (!groupAdmin(u, gid)) return c.json({ error: "forbidden" }, 403);
+      const g = db.select().from(chatGroups).where(eq(chatGroups.id, gid)).get();
+      if (!g) return c.json({ error: "not found" }, 404);
+      if (!u.owner && !groupAdmin(u, gid)) return c.json({ error: "forbidden" }, 403);
       db.transaction(tx => {
         tx.delete(attachments).where(eq(attachments.channel, "g-" + gid)).run();
         tx.delete(messages).where(eq(messages.channel, "g-" + gid)).run();

@@ -205,5 +205,91 @@ describe("10 Revisi Features", () => {
     const postDm = await t.call(OWNER, "POST", `/chat/channels/${ownerDmId}/messages`, { text: "halo a", refs: [], attachmentIds: [] });
     expect(postDm.status).toBe(201);
   });
+
+  it("Project task comments automatically trigger revision status (status: doing, returnedAt, revisions increment)", async () => {
+    // Create a project
+    const pRes = await t.call(OWNER, "POST", "/meta/projects", { name: "Proyek Rev Test" });
+    const p = await json(pRes);
+
+    // Create a task under this project for a@x.id
+    const tRes = await t.call(OWNER, "POST", "/tasks", {
+      emails: ["a@x.id"],
+      title: "Desain Mockup Web",
+      projectId: p.id,
+    });
+    const { ids } = await json(tRes);
+    const taskId = ids[0];
+
+    // Check initial state
+    let task = (await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`))) as unknown as J;
+    expect(task.status).toBe("todo");
+    expect(task.revisions).toBe(0);
+    expect(task.returnedAt).toBeNull();
+
+    // Now someone posts a comment on the project task
+    const cRes = await t.call(OWNER, "POST", `/tasks/${taskId}/comments`, { text: "Warna tombol diganti jadi biru dong" });
+    expect(cRes.status).toBe(201);
+
+    // Task should automatically be in revision state
+    task = (await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`))) as unknown as J;
+    expect(task.status).toBe("doing");
+    expect(task.revisions).toBe(1);
+    expect(task.returnedAt).toBeTypeOf("number");
+
+    // Second comment increments revision again
+    await t.call(OWNER, "POST", `/tasks/${taskId}/comments`, { text: "Logo kurang besar sedikit" });
+    task = (await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`))) as unknown as J;
+    expect(task.revisions).toBe(2);
+    expect(task.status).toBe("doing");
+  });
+
+  it("Chat group details: description, photo upload, and member additions for role admin ke atas", async () => {
+    // a@x.id creates a group
+    const grpRes = await t.call("a@x.id", "POST", "/chat/groups", {
+      name: "Tim Desain",
+      description: "Grup koordinasi desain",
+      emails: ["b@x.id"],
+    });
+    expect(grpRes.status).toBe(201);
+    const gid = ((await json(grpRes)).id as string).slice(2);
+
+    // Verify description returned in channels
+    const channels = (await json(await t.call("a@x.id", "GET", "/chat/channels"))) as unknown as J[];
+    const grpChan = channels.find(c => c.id === "g-" + gid);
+    expect(grpChan).toBeDefined();
+    expect(grpChan.group.description).toBe("Grup koordinasi desain");
+
+    // Admin updates name and description
+    const patchRes = await t.call("a@x.id", "PATCH", `/chat/groups/${gid}`, {
+      name: "Tim Desain & UI/UX",
+      description: "Deskripsi baru tim desain",
+      emails: ["b@x.id", "hcs@x.id"],
+    });
+    expect(patchRes.status).toBe(200);
+
+    // Check updated members
+    const updatedChans = (await json(await t.call("a@x.id", "GET", "/chat/channels"))) as unknown as J[];
+    const updatedChan = updatedChans.find(c => c.id === "g-" + gid);
+    expect(updatedChan.name).toBe("Tim Desain & UI/UX");
+    expect(updatedChan.group.description).toBe("Deskripsi baru tim desain");
+    expect(updatedChan.group.members).toContain("hcs@x.id");
+
+    // Upload JPEG group photo (magic bytes 0xFF 0xD8 0xFF ...)
+    const fakeJpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    const photoRes = await t.call("a@x.id", "PUT", `/chat/groups/${gid}/photo`, fakeJpg, { "content-type": "image/jpeg" });
+    expect(photoRes.status).toBe(200);
+
+    // GET photo
+    const getPhoto = await t.call("a@x.id", "GET", `/chat/groups/${gid}/photo`);
+    expect(getPhoto.status).toBe(200);
+    expect(getPhoto.headers.get("content-type")).toBe("image/jpeg");
+
+    // DELETE photo
+    const delPhoto = await t.call("a@x.id", "DELETE", `/chat/groups/${gid}/photo`);
+    expect(delPhoto.status).toBe(200);
+
+    // Non-existent photo returns 404
+    expect((await t.call("a@x.id", "GET", `/chat/groups/${gid}/photo`)).status).toBe(404);
+  });
 });
 

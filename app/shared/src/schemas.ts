@@ -107,8 +107,8 @@ export const resourceInput = z.object({ name: z.string().trim().min(1).max(60), 
 export const bookingCreate = z.object({ resourceId: z.string().min(1), date, start: hm, end: hm, taskId: z.string().nullish(), note: z.string().trim().max(200).default("") });
 export const ChatRef = z.object({ type: z.enum(["member", "task", "project"]), id: z.string().min(1).max(80) });
 export const messageCreate = z.object({ text: z.string().trim().max(2000).default(""), refs: z.array(ChatRef).max(20).default([]), attachmentIds: z.array(z.string()).max(6).default([]) });
-export const groupInput = z.object({ name: z.string().trim().min(1).max(40), emails: z.array(email).max(200).default([]) });
-export const groupPatch = groupInput.partial();
+export const groupInput = z.object({ name: z.string().trim().min(1).max(40), description: z.string().trim().max(300).optional().default(""), emails: z.array(email).max(200).default([]) });
+export const groupPatch = z.object({ name: z.string().trim().min(1).max(40).optional(), description: z.string().trim().max(300).optional(), emails: z.array(email).max(200).optional() });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
 export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
@@ -203,10 +203,11 @@ export interface ChannelDTO {
   id: string;
   kind: "general" | "project" | "group" | "dm";
   name: string;
+  description?: string;
   projectId: string | null;
   color: Color | null;
   unread: number;
   last: { text: string; name: string; at: number } | null;
-  group?: { members: string[]; createdBy: string; canManage: boolean };
-  dmUser?: { email: string; name: string; role: string; hasPhoto: boolean; photoV: number };
+  group?: { members: string[]; createdBy: string; canManage: boolean; description?: string; hasPhoto?: boolean; photoV?: number };
+  dmUser?: { email: string; name: string; role: string; group?: string; jobdesk?: string; level?: string; hasPhoto: boolean; photoV: number };
 }
