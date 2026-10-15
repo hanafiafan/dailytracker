@@ -333,6 +333,11 @@ describe("team chat", () => {
     expect((await json(await t.call("a@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["general", "p-" + proj.id]);
     expect((await json(await t.call("b@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["general"]);
     expect((await json(await t.call("hcs@x.id", "GET", "/chat/channels"))).length).toBe(2);
+    t.db.insert(members).values({ email: "hanief@x.id", name: "Hanief", role: "Brand Owner", level: "Brand Owner", sortOrder: 0 }).run();
+    expect((await json(await t.call("hanief@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["bo-direktur", "general"]);
+    expect((await json(await t.call(OWNER, "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["general"]);
+    await t.call(OWNER, "POST", "/tasks", { emails: ["hanief@x.id"], title: "Review Kampanye", projectId: proj.id });
+    expect((await json(await t.call("hanief@x.id", "GET", "/chat/channels"))).map((c: J) => c.id)).toEqual(["bo-direktur", "general", "p-" + proj.id]);
     expect((await t.call("out@x.id", "GET", "/chat/channels")).status).toBe(403);
     expect((await t.call("b@x.id", "GET", `/chat/channels/p-${proj.id}/messages`)).status).toBe(403);
     expect((await post(t, "b@x.id", "p-" + proj.id, { text: "hai" })).status).toBe(403);

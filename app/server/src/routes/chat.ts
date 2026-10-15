@@ -74,44 +74,65 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     }
   };
   const canAccess = (email: string, owner: boolean, channel: string) => {
-    const isSuperadmin = owner || email.toLowerCase() === env.OWNER_EMAIL.toLowerCase();
-    if (isSuperadmin) {
-      if (channel === GENERAL) return true; // Kanal Umum terbuka untuk semuanya
-      if (channel.startsWith("dm:")) {
-        const parts = channel.slice(3).split(":").map(p => p.toLowerCase());
-        return parts.includes(email.toLowerCase());
-      }
-      if (channel.startsWith("g-")) {
-        return groupAccess(email, channel.slice(2));
-      }
-      // bo-direktur dan kanal proyek disembunyikan sepenuhnya dari Superadmin
-      return false;
-    }
-    const t = team(), p = makePolicy(email, owner, t), me = t.find(m => m.email === email);
-    if (!me) return false;
-    if (channel === GENERAL) return true; // Kanal Umum terbuka untuk semuanya
-    if (channel === "bo-direktur") return p.isBO || p.isDirector;
-    if (p.isBO) {
-      if (channel.startsWith("dm:")) {
-        const parts = channel.slice(3).split(":");
-        return parts.includes(email);
-      }
-      if (channel.startsWith("g-")) {
-        const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, channel.slice(2))).all().map(x => x.email);
-        return ms.every(e => e === email || isDirectorMember(t.find(x => x.email === e)));
-      }
-      const proj = projectOf(channel);
-      if (proj) return true; // Brand Owner can view all active project discussion channels
-      return false;
-    }
+    const emailLower = email.toLowerCase();
+    const isSuperadmin = owner || emailLower === env.OWNER_EMAIL.toLowerCase();
+    const t = team();
+    const me = t.find(m => m.email.toLowerCase() === emailLower);
+    if (!isSuperadmin && !me) return false;
+
+    // Kanal Umum terbuka untuk seluruh akun tim yang terdaftar dan superadmin
+    if (channel === GENERAL) return true;
+
+    // Chat Pribadi (DM): hanya akun/ID yang terlibat langsung dalam kanal DM
     if (channel.startsWith("dm:")) {
-      const parts = channel.slice(3).split(":");
-      return parts.includes(email);
+      const parts = channel.slice(3).split(":").map(p => p.toLowerCase());
+      return parts.includes(emailLower);
     }
-    if (channel.startsWith("g-")) return groupAccess(email, channel.slice(2));
+
+    // Grup: hanya akun yang terdaftar sebagai anggota atau pembuat grup
+    if (channel.startsWith("g-")) {
+      const gid = channel.slice(2);
+      if (me && isBOMember(me)) {
+        if (!groupAccess(email, gid)) return false;
+        const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, gid)).all().map(x => x.email);
+        return ms.every(e => e.toLowerCase() === emailLower || isDirectorMember(t.find(x => x.email.toLowerCase() === e.toLowerCase())));
+      }
+      return groupAccess(email, gid);
+    }
+
+    // BO & Direktur: hanya akun Brand Owner dan Direktur
+    if (channel === "bo-direktur") {
+      if (isSuperadmin) return false;
+      return !!(me && (isBOMember(me) || isDirectorMember(me)));
+    }
+
+    // Superadmin disembunyikan dari kanal proyek
+    if (isSuperadmin) return false;
+
+    // Kanal Proyek (p-projectId):
+    // Hanya akun atau ID yang terkait langsung dengan proyek:
+    // 1. Memiliki tugas di proyek tersebut (tasks.email)
+    // 2. Memberikan/membuat tugas di proyek tersebut (tasks.fromAdmin)
+    // 3. Mengelola anggota yang memiliki tugas di proyek tersebut (policy.canManage(task.email))
+    // 4. Memiliki izin akses eksplisit di member.allowedCommentProjectIds
     const proj = projectOf(channel);
     if (!proj) return false;
-    return p.isManager || !!db.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.projectId, proj.id), eq(tasks.email, email))).get();
+
+    const projectTaskRows = db.select({ email: tasks.email, fromAdmin: tasks.fromAdmin })
+      .from(tasks).where(eq(tasks.projectId, proj.id)).all();
+    const isDirectAssociated = projectTaskRows.some(
+      row => (row.email && row.email.toLowerCase() === emailLower) ||
+             (row.fromAdmin && (row.fromAdmin.toLowerCase() === emailLower || (me && row.fromAdmin.toLowerCase() === me.name.toLowerCase())))
+    );
+    if (isDirectAssociated) return true;
+
+    const p = makePolicy(email, owner, t);
+    const managesAssignee = projectTaskRows.some(row => row.email && p.canManage(row.email));
+    if (managesAssignee) return true;
+
+    if (me?.allowedCommentProjectIds?.includes(proj.id)) return true;
+
+    return false;
   };
   const ownerOf = (email: string) => email === env.OWNER_EMAIL;
 
@@ -276,8 +297,16 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       for (const p of db.select().from(projects).orderBy(asc(projects.createdAt)).all()) {
         const id = "p-" + p.id;
         if (p.archived || !canAccess(u.email, u.owner, id)) continue;
-        const projectTaskEmails = db.select({ email: tasks.email }).from(tasks).where(eq(tasks.projectId, p.id)).all().map(x => x.email);
-        const membersList = Array.from(new Set([...projectTaskEmails, ...team().filter(m => m.isAdmin).map(m => m.email)]));
+        const projectTasks = db.select({ email: tasks.email, fromAdmin: tasks.fromAdmin }).from(tasks).where(eq(tasks.projectId, p.id)).all();
+        const projectEmails = new Set<string>();
+        for (const pt of projectTasks) {
+          if (pt.email) projectEmails.add(pt.email);
+          if (pt.fromAdmin && pt.fromAdmin.includes("@")) projectEmails.add(pt.fromAdmin);
+        }
+        for (const tm of team()) {
+          if (tm.allowedCommentProjectIds?.includes(p.id)) projectEmails.add(tm.email);
+        }
+        const membersList = Array.from(projectEmails);
         out.push({
           id,
           kind: "project",
