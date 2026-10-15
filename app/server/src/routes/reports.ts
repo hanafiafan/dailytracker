@@ -10,6 +10,10 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Tasks in [from, to] that the caller may see. */
 function visibleTasks({ db }: Deps, u: User, from: string, to: string) {
+  const isSuperOrBO = u.policy.isBoss || u.policy.isBO;
+  if (isSuperOrBO) {
+    return db.select().from(tasks).where(and(gte(tasks.date, from), lte(tasks.date, to))).all();
+  }
   const emails = loadTeam(db).map(m => m.email).filter(e => u.policy.canSee(e));
   if (!emails.length) return [];
   return db.select().from(tasks).where(and(gte(tasks.date, from), lte(tasks.date, to), inArray(tasks.email, emails))).all();

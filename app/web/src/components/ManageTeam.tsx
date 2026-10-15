@@ -18,8 +18,9 @@ import { Sheet } from "./Sheet";
 import { useIsMobile } from "../lib/useMedia";
 import { MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
 import { ymd } from "@shared/time";
+import { isBOMember, isDirectorMember } from "@shared/policy";
 
-const LEVELS = ["Director", "Project Manager", "Lead", "Senior", "Staff", "Intern", "Client"] as const;
+const LEVELS = ["Brand Owner", "Director", "Project Manager", "Lead", "Senior", "Staff", "Intern", "Client"] as const;
 
 const units = (team: MemberDTO[], entities?: { id: string; name: string }[]) => {
   const set = new Set(team.map(m => m.group).filter(Boolean));
@@ -195,11 +196,21 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           <Avatar m={m} />
           <span className="mcr-who"><b className="clamp1">{m.name}</b><small className="muted clamp1">{m.role || "—"}</small>
             <span className="mcr-tags">
+              {isBOMember(m) ? (
+                <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "#ea580c", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
+                  Brand Owner
+                </span>
+              ) : isDirectorMember(m) ? (
+                <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
+                  Direktur
+                </span>
+              ) : m.isAdmin ? (
+                <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>
+              ) : null}
               {m.group && <span className="tag due">{m.group}</span>}
               {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
               {m.accountType === "client" && <span className="tag warn">Klien</span>}
               {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
-              {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
               {!m.seenAt && <span className="tag off">Belum masuk</span>}
             </span></span>
           <MoreHorizontal size={20} />
@@ -229,11 +240,21 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           <small className="muted">{m.email}</small>
         </div>
         <div className="mtags">
+          {isBOMember(m) ? (
+            <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "#ea580c", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
+              Brand Owner
+            </span>
+          ) : isDirectorMember(m) ? (
+            <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
+              Direktur
+            </span>
+          ) : m.isAdmin ? (
+            <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>
+          ) : null}
           {m.group && <span className="tag due">{m.group}</span>}
           {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
           {m.accountType === "client" && <span className="tag warn">Klien</span>}
           {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
-          {m.isAdmin && <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>}
           {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
         </div>
         <div className="mact">

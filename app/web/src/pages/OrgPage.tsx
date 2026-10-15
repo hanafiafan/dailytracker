@@ -9,7 +9,7 @@ import { addDays } from "@shared/time";
 import { useViewer } from "../lib/viewer";
 
 type Level = "superadmin" | "bo" | "director" | "owner" | "head" | "member";
-const LEVEL: Record<Level, string> = { superadmin: "Superadmin", bo: "BO", director: "Direktur", owner: "Superadmin", head: "Atasan", member: "Anggota" };
+const LEVEL: Record<Level, string> = { superadmin: "Superadmin", bo: "Brand Owner", director: "Direktur", owner: "Superadmin", head: "Atasan", member: "Anggota" };
 
 interface Person { key: string; name: string; role: string; level: Level; unit: string; m?: MemberDTO; reports: string; kids: Person[] }
 
@@ -43,7 +43,7 @@ function useOrg() {
         const isDir = !!directorM && m.email === directorM.email;
         const level: Level = isBO ? "bo" : isDir ? "director" : "member";
         const role = isBO
-          ? (m.role && m.role.trim().toUpperCase() === "BO" ? m.role : "BO")
+          ? (m.role && (m.role.trim().toUpperCase() === "BO" || /brand owner/i.test(m.role)) ? "Brand Owner" : m.role)
           : isDir
           ? (m.role && m.role.trim().toLowerCase().includes("direktur") ? m.role : "Direktur")
           : m.role;

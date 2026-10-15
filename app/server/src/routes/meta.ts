@@ -73,7 +73,7 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
         return c.json({ ok: true });
       })
       .delete("/projects/:id", c => {
-        if (!c.var.user.policy.isBoss) return c.json({ error: "forbidden" }, 403);
+        if (!c.var.user.policy.isBoss && !c.var.user.policy.isBO) return c.json({ error: "forbidden" }, 403);
         db.delete(projects).where(eq(projects.id, c.req.param("id"))).run();
         bus.emit("meta"); bus.emit("tasks");
         return c.json({ ok: true });
@@ -90,6 +90,7 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
         return c.json({ ok: true });
       })
       .delete("/labels/:id", c => {
+        if (!c.var.user.policy.isBoss && !c.var.user.policy.isBO) return c.json({ error: "forbidden" }, 403);
         db.delete(labels).where(eq(labels.id, c.req.param("id"))).run();
         bus.emit("meta"); bus.emit("tasks");
         return c.json({ ok: true });

@@ -26,7 +26,7 @@ export const resourceRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     return c.json({ ok: true });
   })
   .delete("/:id", c => {
-    if (!c.var.user.policy.isBoss) return c.json({ error: "forbidden" }, 403);
+    if (!c.var.user.policy.isBoss && !c.var.user.policy.isBO) return c.json({ error: "forbidden" }, 403);
     db.delete(resources).where(eq(resources.id, c.req.param("id"))).run();
     bus.emit("resources");
     return c.json({ ok: true });

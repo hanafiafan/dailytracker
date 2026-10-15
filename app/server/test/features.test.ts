@@ -464,5 +464,20 @@ describe("instant self tasks and proof completion", () => {
     const [task] = (await json(await t.call("hanief@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
     expect(task).toMatchObject({ id: ids[0], by: "self", approvalStatus: "approved" });
   });
+
+  it("brand owner can see all active tasks and projects across the team", async () => {
+    const t = setup();
+    t.db.insert(members).values({ email: "hanief@x.id", name: "Hanief", role: "Brand Owner", isAdmin: true, sortOrder: 0 }).run();
+    // Insert a task for another member (e.g. vero@x.id)
+    await t.call("vero@x.id", "POST", "/tasks", { emails: ["vero@x.id"], title: "Tugas Vero" });
+    // Insert a task for owner
+    await t.call(OWNER, "POST", "/tasks", { emails: ["vero@x.id"], title: "Tugas dari Superadmin" });
+    
+    // Hanief fetches all tasks
+    const allTasks = (await json(await t.call("hanief@x.id", "GET", "/tasks?from=2000-01-01"))) as unknown as J[];
+    expect(allTasks.length).toBeGreaterThanOrEqual(2);
+    expect(allTasks.some(x => x.title === "Tugas Vero")).toBe(true);
+    expect(allTasks.some(x => x.title === "Tugas dari Superadmin")).toBe(true);
+  });
 });
 

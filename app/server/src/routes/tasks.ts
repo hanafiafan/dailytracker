@@ -34,7 +34,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     .get("/", c => {
       const u = c.var.user, from = c.req.query("from") ?? addDays(wib().date, -30);
       const team = loadTeam(db);
-      const visible = u.policy.isBoss ? null : team.map(m => m.email).filter(e => u.policy.canSee(e));
+      const visible = (u.policy.isBoss || u.policy.isBO) ? null : team.map(m => m.email).filter(e => u.policy.canSee(e));
       if (visible && !visible.length) return c.json([]);
       const rows = db.select().from(tasks)
         .where(visible ? and(gte(tasks.date, from), inArray(tasks.email, visible)) : gte(tasks.date, from)).all();

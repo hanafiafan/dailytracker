@@ -77,8 +77,8 @@ function ManagerDashboard() {
   const tasks = tq.data ?? [];
   const byPerson = useMemo(() => Map.groupBy(tasks, t => t.email), [tasks]);
   const units = [...new Set(team.map(m => m.group).filter(Boolean))].sort();
-  const myUnits = policy.isBoss ? units : policy.groups;
-  const workers = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && isDirectorMember(m))) && policy.canManage(m.email) && (!unit || m.group === unit));
+  const myUnits = policy.isBoss || policy.isBO ? units : policy.groups;
+  const workers = team.filter(m => (!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && m.email !== policy.me)) && (policy.isBoss || policy.isBO || policy.canManage(m.email)) && (!unit || m.group === unit));
   const shown = workers.flatMap(m => { const { day, late } = splitDay(byPerson.get(m.email) ?? [], date); return day.concat(late); });
   const leaves = useLeaves(true).data ?? [];
   const idle = loaded && date === today() ? workers.filter(m => !m.isAdmin && !awayOn(leaves, m.email, date) && isIdle(byPerson.get(m.email) ?? [])) : [];
@@ -90,7 +90,7 @@ function ManagerDashboard() {
   const myDay = splitDay(mine, date);
   const myOpen = mine.filter(t => t.date <= today() && t.status !== "done").length;
   return (
-    <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
+    <Page title={<>Halo, <em>{(member(me.email)?.name ?? me.name).split(" ")[0]}</em></>} sub={`${fmtLong(date)} · ${workers.length} orang${policy.isSuper ? " · Superadmin" : policy.isBO ? " · Brand Owner" : policy.isBoss ? "" : " · Admin " + policy.groups.join(", ")}`} dateNav
       tabs={[{ id: "orang", label: "Ringkasan" }, ...(self ? [{ id: "saya", label: `Tugas saya${myOpen ? ` (${myOpen})` : ""}` }] : []), { id: "perhatian", label: `Perhatian${attn ? ` (${attn})` : ""}` }, { id: "rekap", label: "Rekap" }, { id: "aktivitas", label: "Aktivitas" }]} tab={tab} onTab={setTab}
       actions={myUnits.length > 1 ? <div className="chips">
         <button className="chip" aria-pressed={!unit} onClick={() => setUnit("")}>Semua unit</button>

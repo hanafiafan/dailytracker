@@ -17,12 +17,15 @@ export interface PolicyMember {
 
 export type GuideRole = "karyawan" | "unit" | "admin" | "owner";
 
-export const isBOMember = (m?: { name?: string; role?: string; email?: string } | null) =>
+export const isBOMember = (m?: { name?: string; role?: string; level?: string; email?: string } | null) =>
   !!m && (
     m.role?.trim().toUpperCase() === "BO" ||
     m.role?.trim().toLowerCase() === "business owner" ||
     m.role?.trim().toLowerCase() === "brand owner" ||
+    m.level?.trim().toLowerCase() === "brand owner" ||
+    m.level?.trim().toUpperCase() === "BO" ||
     /brand owner/i.test(m.role ?? "") ||
+    /brand owner/i.test(m.level ?? "") ||
     /hanief/i.test(m.name ?? "") ||
     /hanief/i.test(m.email ?? "")
   );
@@ -59,9 +62,9 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
 
   /** Manage someone's tasks and profile:
    *  - Superadmin (Hellens / isOwner): full access to manage anyone.
-   *  - BO only connects with Director (Aziz) and self.
+   *  - Brand Owner (Hanief): ranks below Superadmin and above Admin. Controls Director (Aziz) & self.
+   *    Nobody below Superadmin can manage BO.
    *  - Vero (Project Manager) can assign & manage tasks across all entities (HCS, HCM, etc.) & self.
-   *  - Other members cannot manage BO; only Director, Superadmin, and BO can manage BO.
    *  - Boss anyone; unit admin only ordinary members of their units.
    */
   const canManage = (email: string) => {
@@ -73,7 +76,8 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     }
     const t = target(email);
     if (isBOMember(t)) {
-      return isDirector;
+      // BO ranks above Admin and Director; only Superadmin (isOwner) can manage BO
+      return false;
     }
     if (isPM) return email === me || !isBOMember(t);
     if (isBoss) return true;
@@ -91,7 +95,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
 
   /** Visibility:
    *  - Superadmin (Hellens / isOwner) & PM: full visibility of everyone.
-   *  - Brand Owner (Hanief): view only for all data.
+   *  - Brand Owner (Hanief): full visibility of all active projects, tasks, and members (ranks below Superadmin and above Admin).
    *  - Other members cannot see BO; only Director, Superadmin, and BO can see BO.
    */
   const canSee = (email: string) => {
@@ -99,7 +103,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     if (isOwner || isPM || isBO) return true;
     const t = target(email);
     if (isBOMember(t)) {
-      return isDirector;
+      return isDirector || isOwner;
     }
     return canManage(email) || (isMember && me === email);
   };
@@ -125,11 +129,15 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   /** `patch` lists the fields being changed. Everyone else who manages a person may only fix their name and title. */
   const canEditMember = (email: string, patch: Record<string, unknown>) => {
     if (isSuper) return true;
+    if (isBO) {
+      const t = target(email);
+      return (email === me || isDirectorMember(t)) && Object.keys(patch).every(k => k === "name" || k === "role");
+    }
     return canManage(email) && Object.keys(patch).every(k => k === "name" || k === "role");
   };
 
   /** Which guide this account reads (and confirms). */
-  const guideRole = (): GuideRole => isOwner ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
+  const guideRole = (): GuideRole => isOwner ? "owner" : isBO ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
 
   /** Who this person can start a direct message with:
    *  - Superadmin & Director: anyone on the team.
@@ -143,7 +151,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     if (!other) return false;
     if (isOwner || isDirector) return true;
     if (isBO) return isDirectorMember(other);
-    if (isBOMember(other)) return isDirector;
+    if (isBOMember(other)) return isDirector || isOwner;
     if (isClient) return canManage(email) || other.email === mine?.managerEmail;
     if (other.accountType === "client") return canManage(email);
     return true;

@@ -51,7 +51,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     if (!g) return undefined;
     if (!canAccess(u.email, u.owner, "g-" + gid)) return undefined;
     const isCreator = g.createdBy.toLowerCase() === u.email.toLowerCase();
-    const isAdminUp = u.owner || u.policy.isAdmin || u.policy.isBoss || u.policy.isSuper || u.policy.isManager;
+    const isAdminUp = u.owner || u.policy.isAdmin || u.policy.isBoss || u.policy.isSuper || u.policy.isManager || u.policy.isBO;
     return (isCreator || isAdminUp) ? g : undefined;
   };
   const setMembers = (tx: Pick<typeof db, "delete" | "insert">, gid: string, emails: string[]) => {
@@ -100,6 +100,8 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         const ms = db.select({ email: chatGroupMembers.email }).from(chatGroupMembers).where(eq(chatGroupMembers.groupId, channel.slice(2))).all().map(x => x.email);
         return ms.every(e => e === email || isDirectorMember(t.find(x => x.email === e)));
       }
+      const proj = projectOf(channel);
+      if (proj) return true; // Brand Owner can view all active project discussion channels
       return false;
     }
     if (channel.startsWith("dm:")) {
@@ -582,7 +584,7 @@ export const chatRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const poll = db.select().from(chatPolls).where(eq(chatPolls.id, pollId)).get();
       if (!poll) return c.json({ error: "Polling tidak ditemukan" }, 404);
       const isCreator = poll.creatorEmail.toLowerCase() === u.email.toLowerCase();
-      const isAdminUp = u.owner || u.policy.isBoss || u.policy.isAdmin || u.policy.isSuper;
+      const isAdminUp = u.owner || u.policy.isBoss || u.policy.isAdmin || u.policy.isSuper || u.policy.isBO;
       if (!isCreator && !isAdminUp) return c.json({ error: "forbidden" }, 403);
       const nextClosed = !poll.isClosed;
       db.update(chatPolls).set({ isClosed: nextClosed }).where(eq(chatPolls.id, pollId)).run();

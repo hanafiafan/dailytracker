@@ -77,11 +77,11 @@ describe("policy", () => {
     expect(staff.canSee("hanief@x.id")).toBe(false);
     expect(staff.canManage("hanief@x.id")).toBe(false);
 
-    // Director (Aziz) can see and manage BO and the rest of the team
+    // Director (Aziz) can see BO (since BO coordinates with Director), but Director CANNOT manage BO (BO is above Admin/Director)
     const dir = as("aziz@x.id");
     expect(dir.isDirector).toBe(true);
     expect(dir.canSee("hanief@x.id")).toBe(true);
-    expect(dir.canManage("hanief@x.id")).toBe(true);
+    expect(dir.canManage("hanief@x.id")).toBe(false);
     expect(dir.canSee("a@x.id")).toBe(true);
     expect(dir.canManage("a@x.id")).toBe(true);
   });
@@ -96,5 +96,14 @@ describe("policy", () => {
     expect(superadmin.canManage("aziz@x.id")).toBe(true);
     expect(superadmin.canSee("a@x.id")).toBe(true);
     expect(superadmin.canManage("a@x.id")).toBe(true);
+  });
+  it("Brand Owner (Hanief) has full visibility of all team members and active tasks", () => {
+    const bo = as("hanief@x.id");
+    expect(bo.isBO).toBe(true);
+    expect(bo.guideRole()).toBe("owner");
+    // Can see all members' tasks
+    for (const m of team) {
+      expect(bo.canSee(m.email)).toBe(true);
+    }
   });
 });
