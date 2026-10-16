@@ -52,7 +52,7 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
         {proofOpen && <ProofPanel t={t} onClose={() => setProofOpen(false)} />}
       </div>
       {canDelete
-        ? <ConfirmButton className="del" ariaLabel="Hapus tugas" label="✕" armed="Hapus?" onConfirm={() => a.remove.mutate()} />
+        ? <ConfirmButton className="del" ariaLabel="Hapus tugas" label="✕" armed={t.routineId ? "Hapus hari ini?" : "Hapus?"} onConfirm={() => a.remove.mutate()} />
         : <span />}
       {lightbox && photo && (
         <div className="lightbox" role="dialog" aria-label="Foto bukti" onClick={() => setLightbox(false)} onKeyDown={e => e.key === "Escape" && setLightbox(false)}>

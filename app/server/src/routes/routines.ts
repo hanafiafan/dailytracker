@@ -1,6 +1,7 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
-import { routines } from "../db/schema.js";
+import { and, eq, gte } from "drizzle-orm";
+import { wib } from "@shared/time";
+import { routines, tasks } from "../db/schema.js";
 import { toRoutine } from "../dto.js";
 import { loadTeam, type AppEnv, type Deps } from "../context.js";
 
@@ -14,7 +15,11 @@ export const routineRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     const r = db.select().from(routines).where(eq(routines.id, c.req.param("id"))).get();
     if (!r) return c.json({ ok: true });
     if (!c.var.user.policy.canManage(r.email)) return c.json({ error: "forbidden" }, 403);
-    db.delete(routines).where(eq(routines.id, r.id)).run();
+    // Stopping a routine also clears its copies that nobody has started yet, from today on.
+    db.transaction(tx => {
+      tx.delete(routines).where(eq(routines.id, r.id)).run();
+      tx.delete(tasks).where(and(eq(tasks.routineId, r.id), eq(tasks.status, "todo"), gte(tasks.date, wib().date))).run();
+    });
     bus.emit("tasks");
     return c.json({ ok: true });
   });

@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { commentCreate, subtaskCreate, subtaskPatch, taskApproval, taskCreate, taskPatch, taskReport, taskStatus, type Priority } from "@shared/schemas";
 import { addDays, weekday, wib } from "@shared/time";
-import { activity, comments, labels, members, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
+import { activity, comments, labels, members, meta, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
 import { toActivity, toComment } from "../dto.js";
 import { loadTeam, newId, type AppEnv, type Deps, type User } from "../context.js";
 import type { Notify } from "../notify.js";
@@ -263,7 +263,11 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (!t) return c.json({ ok: true });
       const ownSelf = u.email === t.email && !!u.member && t.by === "self";
       if (!ownSelf && !u.policy.canManage(t.email)) return c.json({ error: "forbidden" }, 403);
-      db.delete(tasks).where(eq(tasks.id, t.id)).run();
+      db.transaction(tx => {
+        tx.delete(tasks).where(eq(tasks.id, t.id)).run();
+        // The routine would recreate today's copy at its next run; remember that this one was removed on purpose.
+        if (t.routineId) tx.insert(meta).values({ k: "rskip:" + t.id, v: t.date }).onConflictDoNothing().run();
+      });
       touch();
       return c.json({ ok: true });
     })

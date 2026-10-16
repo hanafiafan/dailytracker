@@ -5,11 +5,12 @@ import { keys, useAction } from "./queries";
 const refresh = [keys.tasks, keys.activity, keys.analytics, keys.team];
 
 /** Mutations on one task. Each one toasts on failure and refreshes the task lists. */
-export function useTaskActions(t: Pick<TaskDTO, "id">) {
+export function useTaskActions(t: Pick<TaskDTO, "id" | "routineId">) {
   const id = t.id, param = { id };
   return {
     setStatus: useAction((status: TaskDTO["status"]) => ok(api.tasks[":id"].status.$patch({ param, json: { status } })), { refresh }),
     approve: useAction((status: "approved" | "rejected") => ok(api.tasks[":id"].approve.$post({ param, json: { status } })), { done: "Keputusan persetujuan disimpan", refresh }),
+    stopRoutine: useAction(() => ok(api.routines[":id"].$delete({ param: { id: t.routineId ?? "" } })), { done: "Tugas rutin dihentikan, tidak akan muncul lagi", refresh: [...refresh, keys.routines] }),
     remove: useAction(() => ok(api.tasks[":id"].$delete({ param })), { done: "Tugas dihapus", refresh }),
     nudge: useAction(() => ok(api.tasks[":id"].nudge.$post({ param })), { done: "Pengingat terkirim", refresh: [keys.activity, keys.inbox] }),
     giveBack: useAction((reason?: string) => ok(api.tasks[":id"].return.$post({ param, json: { reason: reason || "" } } as any)), { done: "Tugas dikembalikan untuk direvisi", refresh }),

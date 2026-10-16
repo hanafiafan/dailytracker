@@ -13,12 +13,13 @@ import { newId } from "./context.js";
 /** Minutes after the end time before the automatic reminder is written on an unfinished task. */
 const AUTO_LATE_MS = 15 * 60000;
 
-/** Idempotent: a routine's task for a date has the fixed id r-<routine>-<date>. Returns how many were created. */
+/** Idempotent (and a copy someone deleted on purpose is not brought back): a routine's task for a date has the fixed id r-<routine>-<date>. Returns how many were created. */
 export function ensureRoutines(db: Db, date: string, now = Date.now()) {
   const dow = weekday(date);
   let n = 0;
+  const skipped = new Set(db.select().from(meta).all().filter(m => m.k.startsWith("rskip:")).map(m => m.k.slice(6)));
   for (const r of db.select().from(routines).all()) {
-    if (!r.days.includes(dow)) continue;
+    if (!r.days.includes(dow) || skipped.has(`r-${r.id}-${date}`)) continue;
     const res = db.insert(tasks).values({
       id: `r-${r.id}-${date}`, email: r.email, date, title: r.title, note: r.note, start: r.start, due: r.due, hot: r.hot, priority: r.priority, projectId: r.projectId,
       needProof: r.needProof, by: "owner", fromAdmin: r.byName, routineId: r.id, createdAt: now,

@@ -180,6 +180,24 @@ describe("api", () => {
     expect((await t.call("a@x.id", "GET", "/me")).status).toBe(200); // everyone can still sign in
   });
 
+  it("a deleted routine copy stays deleted; stopping the routine ends it", async () => {
+    const date = wib().date;
+    await t.call(OWNER, "POST", "/tasks", { emails: ["a@x.id"], title: "Rutin", routineDays: [0, 1, 2, 3, 4, 5, 6] });
+    const today = () => t.db.select().from(tasks).all().filter(x => x.email === "a@x.id");
+    expect(today()).toHaveLength(1);
+    expect((await t.call(OWNER, "DELETE", `/tasks/${today()[0]!.id}`)).status).toBe(200);
+    ensureRoutines(t.db, date);
+    expect(today()).toHaveLength(0); // not brought back by the next run
+    ensureRoutines(t.db, "2099-01-01");
+    expect(today()).toHaveLength(1); // other days still appear
+    const rid = today()[0]!.routineId!;
+    expect((await t.call("a@x.id", "DELETE", `/routines/${rid}`)).status).toBe(403);
+    expect((await t.call(OWNER, "DELETE", `/routines/${rid}`)).status).toBe(200);
+    expect(today()).toHaveLength(0); // unstarted future copy removed
+    ensureRoutines(t.db, "2099-01-02");
+    expect(today()).toHaveLength(0);
+  });
+
   it("ask-for-work notifies managers", async () => {
     expect((await t.call("a@x.id", "POST", "/ask")).status).toBe(200);
     const s = t.sent.find(x => x.title.includes("minta tugas"));
