@@ -44,6 +44,12 @@ export const projects = sqliteTable("projects", {
   closedBy: text("closed_by"),
   summary: text("summary").notNull().default(""),
   resultLinks: text("result_links", { mode: "json" }).$type<string[]>().notNull().default([]),
+  /** The client's account (a member with accountType "client") and the project manager; both optional. */
+  clientEmail: text("client_email"),
+  pmEmail: text("pm_email"),
+  /** Planned period, YYYY-MM-DD. */
+  startDate: text("start_date"),
+  dueDate: text("due_date"),
 });
 
 export const projectServices = sqliteTable("project_services", {
@@ -53,6 +59,12 @@ export const projectServices = sqliteTable("project_services", {
   description: text("description").notNull().default(""),
   status: text("status", { enum: ["todo", "doing", "done"] }).notNull().default("todo"),
   createdAt: integer("created_at").notNull(),
+  /** What the client bought, e.g. 100 "foto": progress is the sum of `tasks.qty` on done tasks against `targetQty` (0 = no numeric target). */
+  targetQty: integer("target_qty").notNull().default(0),
+  unit: text("unit").notNull().default(""),
+  dueDate: text("due_date"),
+  /** Members in charge of this service. */
+  picEmails: text("pic_emails", { mode: "json" }).$type<string[]>().notNull().default([]),
 });
 
 export const labels = sqliteTable("labels", {
@@ -69,6 +81,8 @@ export const tasks = sqliteTable("tasks", {
   note: text("note").notNull().default(""),
   /** How many times a manager sent it back for fixes. */
   revisions: integer("revisions").notNull().default(0),
+  /** How many deliverables (photos, pages, ...) this task produced; counted towards its service's target once done. */
+  qty: integer("qty").notNull().default(0),
   start: text("start"),
   due: text("due"),
   status: text("status", { enum: ["todo", "doing", "done"] }).notNull().default("todo"),

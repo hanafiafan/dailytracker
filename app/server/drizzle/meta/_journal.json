@@ -120,6 +120,13 @@
       "when": 1792002000000,
       "tag": "0016_revision_note",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792669420793,
+      "tag": "0017_project_detail",
+      "breakpoints": true
     }
   ]
 }

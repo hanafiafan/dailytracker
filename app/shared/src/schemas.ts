@@ -31,6 +31,11 @@ export const projectServiceInput = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(300).default(""),
   status: z.enum(STATUSES).default("todo"),
+  /** What the client bought, e.g. 100 + "foto"; 0 means no numeric target. */
+  targetQty: z.number().int().min(0).max(100000).default(0),
+  unit: z.string().trim().max(20).default(""),
+  dueDate: date.nullish(),
+  picEmails: z.array(email).max(30).default([]),
 });
 export const projectServicePatch = projectServiceInput.partial();
 
@@ -85,11 +90,17 @@ export const taskPatch = z.object({
   title: z.string().trim().min(1).max(120), note: z.string().trim().max(600),
   date, start: hm.nullable(), due: hm.nullable(),
   priority: z.enum(PRIORITIES), projectId: z.string().nullable(), serviceId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
-  needProof: z.boolean(), email, warnMin: z.number().int().min(15).max(1440).nullable(),
+  needProof: z.boolean(), email, warnMin: z.number().int().min(15).max(1440).nullable(), qty: z.number().int().min(0).max(100000),
 }).partial();
 export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160) });
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
-export const projectInput = z.object({ name: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(35).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false) });
+const projectBase = z.object({
+  name: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(35).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false),
+  clientEmail: email.nullish(), pmEmail: email.nullish(), startDate: date.nullish(), dueDate: date.nullish(),
+});
+const periodOk = (p: { startDate?: string | null; dueDate?: string | null }) => !(p.startDate && p.dueDate) || p.startDate <= p.dueDate;
+export const projectInput = projectBase.refine(periodOk, { message: "Tenggat harus setelah tanggal mulai", path: ["dueDate"] });
+export const projectPatch = projectBase.partial().refine(periodOk, { message: "Tenggat harus setelah tanggal mulai", path: ["dueDate"] });
 export const projectClose = z.object({
   summary: z.string().trim().max(1000).default(""),
   links: z.array(z.string().trim().url().max(500).refine(u => /^https?:\/\//i.test(u), "Hanya tautan http(s)")).max(10).default([]),
@@ -124,7 +135,7 @@ export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });
 
 export interface EntityDTO { id: string; name: string; description: string; color: Color; createdAt: number }
-export interface ProjectServiceDTO { id: string; projectId: string; name: string; description: string; status: Status; createdAt: number }
+export interface ProjectServiceDTO { id: string; projectId: string; name: string; description: string; status: Status; createdAt: number; targetQty: number; unit: string; dueDate: string | null; picEmails: string[] }
 
 // ---- shapes returned by the API ----
 export interface MemberDTO {
@@ -134,7 +145,10 @@ export interface MemberDTO {
 }
 export interface CommentDTO { id: string; by: string; byEmail: string; text: string; at: number }
 export interface SubtaskDTO { id: string; title: string; done: boolean }
-export interface ProjectDTO { id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number; closedAt: number | null; closedBy: string | null; summary: string; links: string[] }
+export interface ProjectDTO {
+  id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number; closedAt: number | null; closedBy: string | null; summary: string; links: string[];
+  clientEmail: string | null; pmEmail: string | null; startDate: string | null; dueDate: string | null;
+}
 export interface LabelDTO { id: string; name: string; color: Color }
 export interface ActivityDTO { id: string; taskId: string | null; taskTitle: string | null; actorEmail: string; actorName: string; kind: string; text: string; at: number }
 export interface NotificationDTO { id: string; kind: string; taskId: string | null; text: string; at: number; read: boolean }
@@ -152,6 +166,7 @@ export interface TaskDTO {
   id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
   status: Status; hot: boolean; priority: Priority; projectId: string | null; serviceId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   approvalStatus: "pending" | "approved" | "rejected"; approvedBy: string | null; approvedAt: number | null;
+  qty: number;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   revisionNote?: string | null;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
@@ -159,11 +174,13 @@ export interface TaskDTO {
 }
 export interface RoutineDTO { id: string; email: string; title: string; note: string; start: string | null; due: string | null; days: number[]; hot: boolean; needProof: boolean; byName: string | null }
 export interface LinkDTO { id: string; title: string; url: string; createdAt: number }
-export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; labels: LabelDTO[]; entities?: EntityDTO[] }
+/** All-time figures for a project card: tasks, and per service how much was handed in against its target. */
+export interface ProjectStatDTO { total: number; done: number; services: { target: number; delivered: number; unit: string; tasks: number; tasksDone: number }[] }
+export interface MetaDTO { owner: { email: string; name: string }; projects: ProjectDTO[]; projectStats: Record<string, ProjectStatDTO>; labels: LabelDTO[]; entities?: EntityDTO[] }
 /** Bump when the guide or its terms change materially: everyone is asked to confirm again. */
 export const GUIDE_VERSION = 1;
 export const guideAck = z.object({ version: z.number().int() });
-export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null; guideAck: { version: number; at: number } | null }
+export interface MeDTO { email: string; name: string; owner: boolean; member: MemberDTO | null; guideAck: { version: number; at: number } | null; /** True only when the server runs in local test mode (ALLOW_DEV_LOGIN): the first-run device setup is skipped. */ dev?: boolean }
 export interface LeaveDTO { id: string; email: string; kind: LeaveKind; from: string; to: string; reason: string; proofLink: string | null; hasPhoto: boolean; status: "pending" | "approved" | "rejected"; decidedBy: string | null; decidedAt: number | null; createdAt: number }
 export interface TimeEntryDTO { id: string; taskId: string; email: string; startedAt: number; endedAt: number | null }
 export interface RunningTimerDTO { entry: TimeEntryDTO; taskTitle: string }
@@ -177,7 +194,7 @@ export interface ProjectReportDTO {
   project: ProjectDTO;
   services?: ProjectServiceDTO[];
   stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number; revisions: number };
-  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null }[];
+  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null; qty: number; startedAt: number | null }[];
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }

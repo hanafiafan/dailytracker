@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, desc, eq, ne } from "drizzle-orm";
-import { entityInput, entityPatch, labelInput, projectClose, projectInput, projectServiceInput, projectServicePatch } from "@shared/schemas";
+import { and, asc, desc, eq, isNotNull, ne } from "drizzle-orm";
+import type { ProjectStatDTO } from "@shared/schemas";
+import { entityInput, entityPatch, labelInput, projectClose, projectInput, projectPatch, projectServiceInput, projectServicePatch } from "@shared/schemas";
 import { entities, labels, projectServices, projects, sessions, tasks } from "../db/schema.js";
 import { toLabel, toProject } from "../dto.js";
 import { logActivity } from "../services.js";
@@ -9,15 +10,30 @@ import { newId, type AppEnv, type Deps } from "../context.js";
 
 // Projects, labels, entities, and services
 export const metaRoutes = ({ db, bus, env }: Deps) => {
+  const projectStats = () => {
+    const out: Record<string, ProjectStatDTO> = {}, get = (id: string) => (out[id] ??= { total: 0, done: 0, services: [] });
+    const svc = new Map<string, ProjectStatDTO["services"][number]>();
+    for (const s of db.select().from(projectServices).orderBy(asc(projectServices.createdAt)).all()) { const row = { target: s.targetQty, delivered: 0, unit: s.unit, tasks: 0, tasksDone: 0 }; svc.set(s.id, row); get(s.projectId).services.push(row); }
+    for (const t of db.select({ p: tasks.projectId, s: tasks.status, q: tasks.qty, sv: tasks.serviceId }).from(tasks).where(isNotNull(tasks.projectId)).all()) {
+      const o = get(t.p!), r = t.sv ? svc.get(t.sv) : undefined;
+      o.total++; if (r) r.tasks++;
+      if (t.s === "done") { o.done++; if (r) { r.tasksDone++; r.delivered += t.q; } }
+    }
+    return out;
+  };
   const guard = new Hono<AppEnv>().use(async (c, next) => (c.var.user.policy.isManager || c.var.user.policy.canCreateProject()) ? next() : c.json({ error: "forbidden" }, 403));
   return new Hono<AppEnv>()
     .get("/", c => c.json({
       owner: { email: env.OWNER_EMAIL, name: db.select({ n: sessions.name }).from(sessions).where(eq(sessions.email, env.OWNER_EMAIL)).orderBy(desc(sessions.exp)).get()?.n ?? "Hellens" },
-      projects: db.select().from(projects).orderBy(asc(projects.createdAt)).all().map(toProject),
+      // A client only learns about their own projects.
+      projects: db.select().from(projects).orderBy(asc(projects.createdAt)).all().filter(p => !c.var.user.policy.isClient || p.clientEmail === c.var.user.email).map(toProject),
+      projectStats: projectStats(),
       labels: db.select().from(labels).orderBy(asc(labels.name)).all().map(toLabel),
       entities: db.select().from(entities).orderBy(asc(entities.name)).all(),
     }))
     .get("/projects/:id/services", c => {
+      const u = c.var.user, p = db.select({ clientEmail: projects.clientEmail }).from(projects).where(eq(projects.id, c.req.param("id"))).get();
+      if (u.policy.isClient && (!p || p.clientEmail !== u.email)) return c.json({ error: "not found" }, 404);
       const rows = db.select().from(projectServices).where(eq(projectServices.projectId, c.req.param("id"))).orderBy(asc(projectServices.createdAt)).all();
       return c.json(rows);
     })
@@ -26,10 +42,10 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
       const row = { id: newId(), ...c.req.valid("json"), createdAt: Date.now() };
       db.insert(projects).values(row).run();
       bus.emit("meta");
-      return c.json(toProject({ ...row, closedAt: null, closedBy: null, summary: "", resultLinks: [] }), 201);
+      return c.json(toProject({ clientEmail: null, pmEmail: null, startDate: null, dueDate: null, ...row, closedAt: null, closedBy: null, summary: "", resultLinks: [] }), 201);
     })
     .route("/", guard
-      .patch("/projects/:id", zValidator("json", projectInput.partial()), c => {
+      .patch("/projects/:id", zValidator("json", projectPatch), c => {
         db.update(projects).set(c.req.valid("json")).where(eq(projects.id, c.req.param("id"))).run();
         bus.emit("meta");
         return c.json({ ok: true });

@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { commentCreate, subtaskCreate, subtaskPatch, taskApproval, taskCreate, taskPatch, taskReport, taskStatus, type Priority } from "@shared/schemas";
 import { addDays, weekday, wib } from "@shared/time";
-import { activity, comments, labels, members, meta, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
+import { activity, comments, labels, members, meta, projectServices, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
 import { toActivity, toComment } from "../dto.js";
 import { loadTeam, newId, type AppEnv, type Deps, type User } from "../context.js";
 import type { Notify } from "../notify.js";
@@ -24,6 +24,8 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
     const known = labelIds.length ? new Set(db.select({ id: labels.id }).from(labels).where(inArray(labels.id, labelIds)).all().map(l => l.id)) : new Set<string>();
     for (const labelId of known) db.insert(taskLabels).values({ taskId, labelId }).run();
   };
+  /** A service must belong to the task's project. */
+  const serviceOk = (sid: string | null | undefined, pid: string | null | undefined) => !sid || (!!pid && !!db.select({ id: projectServices.id }).from(projectServices).where(and(eq(projectServices.id, sid), eq(projectServices.projectId, pid))).get());
   const projectOk = (id: string | null | undefined) => !id || !!db.select({ id: projects.id }).from(projects).where(eq(projects.id, id)).get();
   /** May this user change the task's content (not just its status)? Managers: anyone's. Members: only tasks they made themselves. */
   const canEdit = (u: User, t: typeof tasks.$inferSelect) => u.policy.canManage(t.email) || (u.email === t.email && !!u.member && t.by === "self");
@@ -51,6 +53,8 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const emails = [...new Set(b.emails)];
       for (const e of emails) if (!team.some(m => m.email === e)) return c.json({ error: "Anggota tidak ditemukan" }, 404);
       if (!projectOk(b.projectId)) return c.json({ error: "Proyek tidak ditemukan" }, 404);
+      if (!serviceOk(b.serviceId, b.projectId)) return c.json({ error: "Layanan bukan bagian dari proyek ini" }, 400);
+      if (emails.some(e => team.find(m => m.email === e)?.accountType === "client")) return c.json({ error: "Akun client tidak bisa diberi tugas" }, 400);
       const priority: Priority = b.hot && b.priority === "normal" ? "high" : b.priority;
 
       const isSelfOnly = emails.length === 1 && emails[0] === u.email;
@@ -110,6 +114,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (!t) return c.json({ error: "not found" }, 404);
       if (!canEdit(u, t)) return c.json({ error: "forbidden" }, 403);
       if (b.projectId !== undefined && !projectOk(b.projectId)) return c.json({ error: "Proyek tidak ditemukan" }, 404);
+      if ((b.serviceId !== undefined || b.projectId !== undefined) && !serviceOk(b.serviceId !== undefined ? b.serviceId : b.projectId !== undefined && b.projectId !== t.projectId ? null : t.serviceId, b.projectId !== undefined ? b.projectId : t.projectId)) return c.json({ error: "Layanan bukan bagian dari proyek ini" }, 400);
       const manager = u.policy.canManage(t.email);
       if (!manager && (b.email !== undefined || b.needProof !== undefined || b.warnMin !== undefined)) return c.json({ error: "forbidden" }, 403);
       if (b.email !== undefined && b.email !== t.email) {
@@ -117,6 +122,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       }
       const { labelIds, ...cols } = b;
       const patch: Partial<typeof tasks.$inferInsert> = { ...cols };
+      if (b.projectId !== undefined && b.projectId !== t.projectId && b.serviceId === undefined) patch.serviceId = null; // a service belongs to its project
       if (b.priority) patch.hot = isHot(b.priority);
       if (b.date !== undefined || b.start !== undefined || b.due !== undefined || b.warnMin !== undefined) { patch.remDue = false; patch.remLate = false; }
       const start = b.start === undefined ? t.start : b.start, due = b.due === undefined ? t.due : b.due;
@@ -130,6 +136,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       if (b.priority && b.priority !== t.priority) notes.push(`mengubah prioritas menjadi ${PRIORITY_LABEL[b.priority]}`);
       if (b.projectId !== undefined && b.projectId !== t.projectId) notes.push("memindahkan proyek");
       if (labelIds) notes.push("mengubah label");
+      if (b.qty !== undefined && b.qty !== t.qty) notes.push(`mengubah jumlah hasil menjadi ${b.qty}`);
       const reassigned = b.email !== undefined && b.email !== t.email;
       db.transaction(() => {
         if (Object.keys(patch).length) db.update(tasks).set(patch).where(eq(tasks.id, t.id)).run();
@@ -191,6 +198,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       let link = typeof form.link === "string" ? form.link.trim() : "";
       const note = typeof form.note === "string" ? form.note.trim().slice(0, 600) : "";
       const skip = form.skipProof === "1";
+      const qty = Math.min(100000, Math.max(0, Math.trunc(Number(form.qty ?? 0)) || 0));
       if (link && !/^https?:\/\//i.test(link)) link = "https://" + link;
       if (link && !URL.canParse(link)) return c.json({ error: "Link tidak valid" }, 400);
       if (photo && (!isJpeg(photo) || photo.length > MAX_PROOF)) return c.json({ error: "Foto harus JPG dan kurang dari 1,5 MB" }, 400);
@@ -201,7 +209,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
         if (photo) tx.insert(proofs).values({ taskId: t.id, data: Buffer.from(photo), at: now }).onConflictDoUpdate({ target: proofs.taskId, set: { data: Buffer.from(photo), at: now } }).run();
         if (!skip && !photo) tx.delete(proofs).where(eq(proofs.taskId, t.id)).run();
         tx.update(tasks).set({
-          status: "done", doneAt: now, returnedAt: null,
+          status: "done", doneAt: now, returnedAt: null, qty,
           ...(skip ? {} : { proofLink: link || null, proofAt: now, hasPhoto: !!photo }),
           ...(note ? { report: note, reportAt: now } : {}),
         }).where(eq(tasks.id, t.id)).run();

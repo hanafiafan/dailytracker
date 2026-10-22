@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
 import { PRIORITIES, type ProjectReportDTO, type AnalyticsDTO, type PersonStat, type Priority } from "@shared/schemas";
 import { addDays, atMs, wib } from "@shared/time";
-import { labels, members, projects, tasks, taskLabels, timeEntries } from "../db/schema.js";
+import { labels, members, projectServices, projects, tasks, taskLabels, timeEntries } from "../db/schema.js";
 import { toProject } from "../dto.js";
 import { loadTeam, type AppEnv, type Deps, type User } from "../context.js";
 
@@ -33,16 +33,20 @@ export const reportRoutes = (deps: Deps) => {
     .get("/project/:id", c => {
       const u = c.var.user, p = db.select().from(projects).where(eq(projects.id, c.req.param("id"))).get();
       if (!p) return c.json({ error: "not found" }, 404);
+      // A client sees only the projects that carry their account, and all of that project's tasks (read-only).
+      const isTheClient = !!p.clientEmail && p.clientEmail === u.email;
+      if (u.policy.isClient && !isTheClient) return c.json({ error: "not found" }, 404);
       const names = new Map(loadTeam(db).map(m => [m.email, m.name]));
-      const rows = db.select().from(tasks).where(eq(tasks.projectId, p.id)).all().filter(t => u.policy.canSee(t.email)).sort((a, b) => a.date.localeCompare(b.date));
+      const rows = db.select().from(tasks).where(eq(tasks.projectId, p.id)).all().filter(t => isTheClient || u.policy.canSee(t.email)).sort((a, b) => a.date.localeCompare(b.date));
       const now = Date.now(), mins = new Map<string, number>();
       if (rows.length) for (const e of db.select().from(timeEntries).where(inArray(timeEntries.taskId, rows.map(t => t.id))).all()) mins.set(e.taskId, (mins.get(e.taskId) ?? 0) + Math.max(0, Math.min(e.endedAt ?? now, e.startedAt + 12 * 3_600_000) - e.startedAt) / 60000);
       const done = rows.filter(t => t.status === "done");
       const onTime = done.filter(t => { const dl = dueMs(t); return !dl || (t.doneAt ?? 0) - dl <= 60000; }).length;
       const out: ProjectReportDTO = {
         project: toProject(p),
+        services: db.select().from(projectServices).where(eq(projectServices.projectId, p.id)).orderBy(asc(projectServices.createdAt)).all(),
         stats: { total: rows.length, done: done.length, open: rows.length - done.length, onTime, late: done.length - onTime, minutes: Math.round([...mins.values()].reduce((s, v) => s + v, 0)), withProof: done.filter(t => t.proofLink || t.hasPhoto).length, revisions: rows.reduce((s, t) => s + t.revisions, 0) },
-        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0), revisions: t.revisions })),
+        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0), revisions: t.revisions, serviceId: t.serviceId ?? null, qty: t.qty ?? 0, startedAt: t.startedAt })),
       };
       return c.json(out);
     })

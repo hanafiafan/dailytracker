@@ -23,7 +23,7 @@ export const toComment = (c: CommentRow): CommentDTO => ({ id: c.id, by: c.by, b
 export interface TaskExtras { comments?: CommentRow[]; labelIds?: string[]; subtasks?: SubtaskDTO[] }
 export const toTask = (t: TaskRow, x: TaskExtras = {}): TaskDTO => ({
   id: t.id, email: t.email, date: t.date, title: t.title, note: t.note, start: t.start, due: t.due, status: t.status,
-  hot: t.hot, priority: t.priority, projectId: t.projectId, serviceId: t.serviceId ?? null, labelIds: x.labelIds ?? [], subtasks: x.subtasks ?? [], needProof: t.needProof, warnMin: t.warnMin, by: t.by, fromAdmin: t.fromAdmin, routineId: t.routineId, createdAt: t.createdAt,
+  hot: t.hot, priority: t.priority, projectId: t.projectId, serviceId: t.serviceId ?? null, qty: t.qty ?? 0, labelIds: x.labelIds ?? [], subtasks: x.subtasks ?? [], needProof: t.needProof, warnMin: t.warnMin, by: t.by, fromAdmin: t.fromAdmin, routineId: t.routineId, createdAt: t.createdAt,
   approvalStatus: (t.approvalStatus ?? "approved") as TaskDTO["approvalStatus"], approvedBy: t.approvedBy ?? null, approvedAt: t.approvedAt ?? null,
   startedAt: t.startedAt, doneAt: t.doneAt, returnedAt: t.returnedAt, revisions: t.revisions, revisionNote: t.revisionNote ?? null, proofLink: t.proofLink, proofAt: t.proofAt,
   hasPhoto: t.hasPhoto, report: t.report, reportAt: t.reportAt, comments: (x.comments ?? []).map(toComment),
@@ -32,7 +32,7 @@ export const toRoutine = (r: RoutineRow): RoutineDTO => ({
   id: r.id, email: r.email, title: r.title, note: r.note, start: r.start, due: r.due, days: r.days, hot: r.hot,
   needProof: r.needProof, byName: r.byName,
 });
-export const toProject = (p: typeof projects.$inferSelect): ProjectDTO => ({ id: p.id, name: p.name, color: p.color as ProjectDTO["color"], description: p.description, archived: p.archived, createdAt: p.createdAt, closedAt: p.closedAt, closedBy: p.closedBy, summary: p.summary, links: p.resultLinks });
+export const toProject = (p: typeof projects.$inferSelect): ProjectDTO => ({ id: p.id, name: p.name, color: p.color as ProjectDTO["color"], description: p.description, archived: p.archived, createdAt: p.createdAt, closedAt: p.closedAt, closedBy: p.closedBy, summary: p.summary, links: p.resultLinks, clientEmail: p.clientEmail ?? null, pmEmail: p.pmEmail ?? null, startDate: p.startDate ?? null, dueDate: p.dueDate ?? null });
 export const toLabel = (l: typeof labels.$inferSelect): LabelDTO => ({ id: l.id, name: l.name, color: l.color as LabelDTO["color"] });
 export const toLeave = (l: Omit<typeof leaves.$inferSelect, "proofPhoto"> & { hasPhoto: boolean }): LeaveDTO => ({ id: l.id, email: l.email, kind: l.kind, from: l.from, to: l.to, reason: l.reason, proofLink: l.proofLink, hasPhoto: !!l.hasPhoto, status: l.status, decidedBy: l.decidedBy, decidedAt: l.decidedAt, createdAt: l.createdAt });
 export const toNotification = (n: typeof notifications.$inferSelect): NotificationDTO => ({ id: n.id, kind: n.kind, taskId: n.taskId, text: n.text, at: n.at, read: n.readAt !== null });

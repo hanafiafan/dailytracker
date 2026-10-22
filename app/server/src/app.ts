@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { deleteCookie, getCookie } from "hono/cookie";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
@@ -32,6 +33,8 @@ export function createApp(deps: Deps) {
   const nameOf = (email: string) => db.select({ n: members.name }).from(members).where(eq(members.email, email)).get()?.n ?? email;
   const notify = createNotify(push, db, bus, nameOf);
   const auth = requireUser(deps), team = requireTeam;
+  /** Client accounts are read-only guests of their own project: they never create or change work items. */
+  const noClientWrites = createMiddleware<AppEnv>(async (c, next) => (c.var.user.policy.isClient && c.req.method !== "GET" ? c.json({ error: "forbidden" }, 403) : next()));
   const deviceId = (endpoint: string) => createHash("sha256").update(endpoint).digest("hex").slice(0, 12);
   const lastTest = new Map<string, number>();
 
@@ -88,7 +91,7 @@ export function createApp(deps: Deps) {
         bus.emit("team");
       }
       const ack = db.select().from(guideAcks).where(eq(guideAcks.email, u.email)).get();
-      return c.json({ email: u.email, name: m?.name ?? u.name, owner: u.owner, member: m ? toMemberLite(m) : null, guideAck: ack ? { version: ack.version, at: ack.at } : null });
+      return c.json({ email: u.email, name: m?.name ?? u.name, owner: u.owner, member: m ? toMemberLite(m) : null, guideAck: ack ? { version: ack.version, at: ack.at } : null, ...(env.ALLOW_DEV_LOGIN ? { dev: true } : {}) });
     })
     // "I have read the guide for my role and accept the terms": remembered per person and guide version.
     .post("/guide/ack", auth, team, zValidator("json", guideAck), c => {
@@ -99,20 +102,20 @@ export function createApp(deps: Deps) {
       return c.json({ ok: true });
     })
     .use("/team/*", auth, team).route("/team", teamRoutes(deps))
-    .use("/tasks/*", auth, team).route("/tasks", taskRoutes(deps, notify))
-    .use("/routines/*", auth, team).route("/routines", routineRoutes(deps))
-    .use("/leaves/*", auth, team).route("/leaves", leaveRoutes(deps, notify))
-    .use("/time/*", auth, team).route("/time", timeRoutes(deps))
-    .use("/resources/*", auth, team).route("/resources", resourceRoutes(deps))
-    .use("/bookings/*", auth, team).route("/bookings", bookingRoutes(deps))
+    .use("/tasks/*", auth, team, noClientWrites).route("/tasks", taskRoutes(deps, notify))
+    .use("/routines/*", auth, team, noClientWrites).route("/routines", routineRoutes(deps))
+    .use("/leaves/*", auth, team, noClientWrites).route("/leaves", leaveRoutes(deps, notify))
+    .use("/time/*", auth, team, noClientWrites).route("/time", timeRoutes(deps))
+    .use("/resources/*", auth, team, noClientWrites).route("/resources", resourceRoutes(deps))
+    .use("/bookings/*", auth, team, noClientWrites).route("/bookings", bookingRoutes(deps))
     .use("/chat/*", auth, team).route("/chat", chatRoutes(deps, notify))
-    .use("/links/*", auth, team).route("/links", linkRoutes(deps))
+    .use("/links/*", auth, team, noClientWrites).route("/links", linkRoutes(deps))
     .use("/meta/*", auth, team).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth, team).route("/inbox", inboxRoutes(deps))
     .use("/reports/*", auth, team).route("/reports", reportRoutes(deps))
-    .use("/admin/*", auth, team).route("/admin", adminRoutes(deps))
+    .use("/admin/*", auth, team, noClientWrites).route("/admin", adminRoutes(deps))
     // "I have nothing left to do": tells the admins.
-    .post("/ask", auth, team, c => {
+    .post("/ask", auth, team, noClientWrites, c => {
       const u = c.var.user;
       if (!u.member) return c.json({ error: "forbidden" }, 403);
       db.update(members).set({ askAt: Date.now() }).where(eq(members.email, u.email)).run();

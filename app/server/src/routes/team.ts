@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { asc, eq } from "drizzle-orm";
 import { memberCreate, memberMove, memberOrder, memberPatch } from "@shared/schemas";
-import { chatGroups, members } from "../db/schema.js";
+import { chatGroups, members, projectServices, projects, tasks } from "../db/schema.js";
 import { toMemberLite } from "../dto.js";
 import { loadTeam, memberColumns, type AppEnv, type Deps } from "../context.js";
 
@@ -13,7 +13,17 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
   .get("/", c => {
     const u = c.var.user;
     if (!u.owner && !u.member) return c.json({ error: "forbidden" }, 403);
-    const rows = db.select(memberColumns).from(members).orderBy(asc(members.sortOrder), asc(members.name)).all();
+    let rows = db.select(memberColumns).from(members).orderBy(asc(members.sortOrder), asc(members.name)).all();
+    // A client only meets the people working on their own projects (PM, PICs, task assignees), never the whole team.
+    if (u.policy.isClient) {
+      const mine = db.select().from(projects).where(eq(projects.clientEmail, u.email)).all(), known = new Set([u.email]);
+      for (const p of mine) {
+        if (p.pmEmail) known.add(p.pmEmail);
+        for (const sv of db.select({ pics: projectServices.picEmails }).from(projectServices).where(eq(projectServices.projectId, p.id)).all()) sv.pics.forEach(e => known.add(e));
+        for (const t of db.select({ e: tasks.email }).from(tasks).where(eq(tasks.projectId, p.id)).all()) known.add(t.e);
+      }
+      rows = rows.filter(m => known.has(m.email));
+    }
     return c.json(rows.map(toMemberLite));
   })
   .post("/", zValidator("json", memberCreate), c => {
