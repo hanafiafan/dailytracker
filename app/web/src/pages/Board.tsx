@@ -47,7 +47,7 @@ function DraggableCard({ t, canDrag }: { t: TaskDTO; canDrag: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: t.id, disabled: !canDrag });
   return (
     <div ref={setNodeRef} style={{ opacity: isDragging ? 0.35 : 1 }} {...attributes} {...listeners} onClick={() => openTask(t.id)} role="button" tabIndex={0}
-      onKeyDown={e => { if (e.key === "Enter") openTask(t.id); else listeners?.onKeyDown?.(e); }} aria-label={t.title}>
+      onKeyDown={e => { if (e.key === "Enter") openTask(t.id); else listeners?.onKeyDown?.(e); }}>
       <Card t={t} />
     </div>
   );
@@ -137,7 +137,7 @@ export function Board() {
           <div className="mklist">
             {tasks.filter(t => t.status === mst).map(t => (
               <div key={t.id} className="mk">
-                <div role="button" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)} aria-label={t.title}><Card t={t} /></div>
+                <div role="button" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}><Card t={t} /></div>
                 {canDrag(t) && t.status !== "done" && (
                   <button className={"btn small " + (t.status === "todo" ? "blue" : "primary")} onClick={() => { if (t.status === "todo") { patchTaskLocally(qc, t.id, { status: "doing" }); move.mutate({ id: t.id, status: "doing" }); } else openTask(t.id); }}>{t.status === "todo" ? "Mulai kerjakan" : "Selesaikan"}</button>
                 )}

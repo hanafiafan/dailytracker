@@ -165,7 +165,7 @@ export function CalendarPage() {
             <div className="mini-g">
               {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map(d => <b key={d}>{d}</b>)}
               {cells.map(d => (
-                <button key={d} className={(d.slice(0, 7) !== ymd(m0).slice(0, 7) ? "off " : "") + (d >= wk && d <= days[6]! ? "in-week " : "") + (d === t0 ? "today" : "")} onClick={() => setDate(d)} aria-label={d}>
+                <button key={d} className={(d.slice(0, 7) !== ymd(m0).slice(0, 7) ? "off " : "") + (d >= wk && d <= days[6]! ? "in-week " : "") + (d === t0 ? "today" : "")} onClick={() => setDate(d)} aria-label={fmtLong(d)}>
                   {Number(d.slice(8))}{counts.has(d) && <i className="pip" />}
                 </button>
               ))}

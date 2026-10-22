@@ -1,6 +1,6 @@
 import { loadTemplates, saveTemplates } from "../lib/templates";
 import { useState } from "react";
-import { X, Users, Sparkles, Plus, Clock, Target, Link2, ListChecks, Zap, Flame, RefreshCw, Trash2, CheckSquare } from "lucide-react";
+import { X, Users, Target, Link2, ListChecks, Zap, Flame, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { PRIORITIES, type Priority } from "@shared/schemas";
 import { api, ok } from "../lib/api";
@@ -19,7 +19,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const templates = loadTemplates();
   const { me, team, policy, projects, labels } = useViewer();
   const manager = policy.isManager;
-  const people = team.filter(m => m.email === me.email || ((!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && isDirectorMember(m))) && policy.canManage(m.email)));
+  const people = team.filter(m => m.accountType !== "client" && (m.email === me.email || ((!m.isAdmin || (policy.isBoss && m.email !== policy.me) || (policy.isBO && isDirectorMember(m))) && policy.canManage(m.email))));
 
   // Mode: "team" vs "self"
   const [mode, setMode] = useState<"team" | "self">(() => {
@@ -31,7 +31,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     return manager ? "team" : "self";
   });
 
-  const [sel, setSel] = useState(() => new Set(prefill.emails && prefill.emails.length > 0 ? prefill.emails : [me.email]));
+  const [sel, setSel] = useState(() => new Set(prefill.emails && prefill.emails.length > 0 ? prefill.emails : mode === "team" ? [] : [me.email]));
   const [priority, setPriority] = useState<Priority>(prefill.priority ?? "normal");
   const [chosenProject, setChosenProject] = useState(prefill.projectId ?? "");
   const servicesQ = useProjectServices(chosenProject || null);
@@ -50,9 +50,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const [focusType, setFocusType] = useState<"deep" | "quick" | "routine" | "urgent" | null>(prefill.focusType ?? null);
   const [targetOutput, setTargetOutput] = useState(prefill.targetOutput ?? "");
   const [refLink, setRefLink] = useState(prefill.refLink ?? "");
-  const [steps, setSteps] = useState<string[]>(prefill.steps ?? []);
-  const [newStepText, setNewStepText] = useState("");
-  const [rawTextSteps, setRawTextSteps] = useState(false);
+  const [more, setMore] = useState(() => !!(prefill.note || prefill.steps?.length || prefill.labelIds?.length || prefill.targetOutput || prefill.refLink || (prefill.priority && prefill.priority !== "normal")));
 
   const applyDuration = (mins: number) => {
     let s = start;
@@ -91,22 +89,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     }
   };
 
-  const addStep = () => {
-    const s = newStepText.trim();
-    if (!s) return;
-    setSteps([...steps, s]);
-    setNewStepText("");
-  };
-
-  const removeStep = (idx: number) => {
-    setSteps(steps.filter((_, i) => i !== idx));
-  };
-
-  const loadStepTemplate = (tpl: string[]) => {
-    setSteps(tpl);
-    toast.success("Checklist templat diterapkan");
-  };
-
   const save = useAction((f: FormData) => {
     const isSelf = mode === "self";
     const finalEmails = isSelf ? [me.email] : [...sel];
@@ -126,12 +108,7 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
     const finalNote = noteParts.join("\n\n");
 
     // Checklist subtasks
-    let finalSubtasks: string[] = [];
-    if (isSelf && !rawTextSteps) {
-      finalSubtasks = steps.map(s => s.trim()).filter(Boolean);
-    } else {
-      finalSubtasks = String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean);
-    }
+    const finalSubtasks = String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean);
 
     return ok(api.tasks.$post({ json: {
       emails: finalEmails,
@@ -165,6 +142,14 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const others = people.filter(p => p.email !== me.email);
   const allTeam = others.length > 0 && others.every(p => sel.has(p.email));
 
+  const Presets = () => (
+    <div className="chips">
+      {PRESETS.map(([lbl, a, b]) => (
+        <button key={lbl} type="button" className="chip" aria-pressed={start === a && due === b} onClick={() => { setStart(a); setDue(b); }}>{a ? `${lbl} ${a}–${b}` : lbl}</button>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <div className="scrim" onClick={onClose} />
@@ -172,506 +157,129 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
         <form style={{ display: "contents" }} onSubmit={e => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}>
           <div className="dialog-h">
             <div>
-              <h2>{mode === "self" ? "Tugas Diri Sendiri" : "Tugas untuk Tim"}</h2>
-              <p className="muted">
-                {mode === "self"
-                  ? "Fokus kerja pribadi dengan target capaian, estimasi waktu & checklist."
-                  : "Bagikan pekerjaan ke satu orang atau beberapa anggota tim."}
-              </p>
+              <h2>Tugas baru</h2>
+              <p className="muted">{mode === "self" ? "Pekerjaan untuk diri sendiri." : "Bagikan ke satu orang atau beberapa anggota tim."}</p>
             </div>
-            <button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {manager && (
+                <div className="seg" role="group" aria-label="Untuk siapa">
+                  <button type="button" aria-pressed={mode === "team"} onClick={() => { setMode("team"); if (sel.size === 1 && sel.has(me.email) && others.length > 0) setSel(new Set([others[0]!.email])); }}><Users size={13} style={{ marginRight: 5 }} />Tim</button>
+                  <button type="button" aria-pressed={mode === "self"} onClick={() => { setMode("self"); setSel(new Set([me.email])); }}><CheckSquare size={13} style={{ marginRight: 5 }} />Saya</button>
+                </div>
+              )}
+              <button type="button" className="iconbtn" aria-label="Tutup" onClick={onClose}><X size={16} /></button>
+            </div>
           </div>
 
           <div className="dialog-b">
-            {manager && (
-              <div className="modetab-wrap">
-                <button
-                  type="button"
-                  className={"modetab-btn" + (mode === "team" ? " active" : "")}
-                  onClick={() => {
-                    setMode("team");
-                    if (sel.size === 1 && sel.has(me.email) && others.length > 0) {
-                      setSel(new Set([others[0]!.email]));
-                    }
-                  }}
-                >
-                  <Users size={16} /> Tugas untuk Tim
-                </button>
-                <button
-                  type="button"
-                  className={"modetab-btn" + (mode === "self" ? " active" : "")}
-                  onClick={() => {
-                    setMode("self");
-                    setSel(new Set([me.email]));
-                  }}
-                >
-                  <CheckSquare size={16} /> Tugas Diri Sendiri
-                </button>
+            <section className="dsec">
+              {mode === "team" && (
+                <div className="field">
+                  <span>Untuk siapa {sel.size > 0 && <em style={{ fontStyle: "normal", fontWeight: 400 }}>· {sel.size} dipilih</em>}</span>
+                  <div className="chips">
+                    <button type="button" className="chip" aria-pressed={allTeam} onClick={() => setSel(sel.size === others.length ? new Set() : new Set(others.map(p => p.email)))}>Semua tim</button>
+                    {others.map(m => <button type="button" key={m.email} className="chip" aria-pressed={sel.has(m.email)} onClick={() => setSel(toggle(sel, m.email))}>{m.name}</button>)}
+                    <button type="button" className="chip" aria-pressed={sel.has(me.email)} onClick={() => setSel(toggle(sel, me.email))}>+ Saya ikut</button>
+                  </div>
+                </div>
+              )}
+              <label className="field">
+                <span>Judul tugas</span>
+                <input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder={mode === "self" ? "Apa yang ingin diselesaikan?" : "mis. Foto produk pashmina warna baru"} maxLength={120} />
+              </label>
+              {mode === "self" && (
+                <div className="chips">
+                  <button type="button" className="chip" aria-pressed={focusType === "deep"} onClick={() => handleFocusSelect("deep")}><Zap size={13} />Deep work 2 jam</button>
+                  <button type="button" className="chip" aria-pressed={focusType === "quick"} onClick={() => handleFocusSelect("quick")}>Cepat 30 mnt</button>
+                  <button type="button" className="chip" aria-pressed={focusType === "urgent"} onClick={() => handleFocusSelect("urgent")}><Flame size={13} />Kritis</button>
+                </div>
+              )}
+            </section>
+
+            <section className="dsec">
+              <div className="dgrid">
+                {!(routine && mode === "team") && <label className="field"><span>Tanggal</span><input className="input" name="date" type="date" defaultValue={prefill.date ?? date} /></label>}
+                <div className="timegrid" style={routine && mode === "team" ? { gridColumn: "1 / -1" } : undefined}>
+                  <label className="tl"><span>Mulai</span><input className="input" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
+                  <label className="tl"><span>Selesai</span><input className="input" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>
+                </div>
               </div>
-            )}
+              <Presets />
+            </section>
 
-            {/* MODE: SELF (TUGAS MANDIRI) */}
-            {mode === "self" && (
-              <>
-                <section className="dsec" style={{ borderTop: 0, paddingTop: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--canvas)", borderRadius: "var(--r-md)", border: "1px solid var(--line)" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--ink)", color: "var(--on-ink)", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 12 }}>
-                      {me.name[0]}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span>{me.member?.name ?? me.name} (Anda)</span>
-                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "var(--surface)", border: "1px solid var(--line)", color: "var(--muted)", fontWeight: 600 }}>Tugas Mandiri</span>
-                      </div>
+            <section className="dsec">
+              <div className="dgrid">
+                <label className="field"><span>Proyek</span>
+                  <select className="input" name="project" value={chosenProject} onChange={e => setChosenProject(e.target.value)}>
+                    <option value="">Tanpa proyek</option>
+                    {projects.filter(p => !p.archived && !p.closedAt).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select></label>
+                {services.length > 0 && (
+                  <label className="field"><span>Layanan</span>
+                    <select className="input" name="service" defaultValue={prefill.serviceId ?? ""}>
+                      <option value="">Umum</option>
+                      {services.map(sv => <option key={sv.id} value={sv.id}>{sv.name}{sv.targetQty ? ` (${sv.targetQty} ${sv.unit})` : ""}</option>)}
+                    </select></label>
+                )}
+              </div>
+              {mode === "team" && templates.length > 0 && (
+                <div className="chips">
+                  <span className="muted" style={{ fontSize: ".76rem" }}>Templat:</span>
+                  {templates.map((t, i) => (
+                    <span key={i} className="chip" style={{ paddingRight: 4 }}>
+                      <button type="button" className="linkbtn" style={{ textDecoration: "none" }} onClick={() => onTemplate({ ...t, emails: [...sel] })}>{t.title}</button>
+                      <button type="button" className="iconbtn" style={{ width: 22, height: 22 }} aria-label={`Hapus templat ${t.title}`} onClick={() => { saveTemplates(templates.filter((_, j) => j !== i)); setTpl(n => n + 1); }}><X size={12} /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="dsec">
+              <button type="button" className="linkbtn" aria-expanded={more} onClick={() => setMore(!more)} style={{ justifySelf: "start" }}>{more ? "Sembunyikan opsi lain" : "Opsi lain: prioritas, catatan, checklist, label, pengingat"}</button>
+              {more && (
+                <>
+                  <div className="field"><span>Prioritas</span>
+                    <div className="seg" role="group" aria-label="Prioritas" style={{ justifySelf: "start" }}>
+                      {PRIORITIES.map(p => <button type="button" key={p} aria-pressed={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</button>)}
                     </div>
                   </div>
-
-                  <div style={{ marginTop: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--muted)", display: "block", marginBottom: 6 }}>
-                      Sifat Tugas &amp; Fokus
-                    </span>
-                    <div className="chips">
-                      <button
-                        type="button"
-                        className="chip"
-                        aria-pressed={focusType === "deep"}
-                        onClick={() => handleFocusSelect("deep")}
-                      >
-                        <Zap size={13} /> Deep Work (2 Jam)
-                      </button>
-                      <button
-                        type="button"
-                        className="chip"
-                        aria-pressed={focusType === "quick"}
-                        onClick={() => handleFocusSelect("quick")}
-                      >
-                        ⚡ Quick Task (30 Mnt)
-                      </button>
-                      <button
-                        type="button"
-                        className="chip"
-                        aria-pressed={focusType === "urgent"}
-                        onClick={() => handleFocusSelect("urgent")}
-                      >
-                        <Flame size={13} /> Prioritas Kritis
-                      </button>
-                      <button
-                        type="button"
-                        className="chip"
-                        aria-pressed={focusType === "routine"}
-                        onClick={() => handleFocusSelect("routine")}
-                      >
-                        <RefreshCw size={13} /> Rutinitas Harian
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="dsec">
-                  <h3>Informasi Utama</h3>
-                  <label className="field">
-                    <span>Judul Tugas</span>
-                    <input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder="Apa yang ingin Anda kerjakan & selesaikan?" maxLength={120} />
-                  </label>
-
-                  <label className="field">
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Target size={14} style={{ color: "var(--muted)" }} />
-                      <span>Target Capaian / Output Akhir <em style={{ fontStyle: "normal", fontWeight: 400 }}>(Definition of Done)</em></span>
-                    </span>
-                    <input
-                      className="input"
-                      value={targetOutput}
-                      onChange={e => setTargetOutput(e.target.value)}
-                      placeholder="Contoh: Dokumen SOP v1 final di-approve, atau draf artikel 1000 kata selesai"
-                      maxLength={180}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Link2 size={14} style={{ color: "var(--muted)" }} />
-                      <span>Tautan Dokumen / Referensi Kerja <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span>
-                    </span>
-                    <input
-                      className="input"
-                      value={refLink}
-                      onChange={e => setRefLink(e.target.value)}
-                      placeholder="https://docs.google.com/... link Figma, Google Drive, Notion, spreadsheet, dll."
-                      maxLength={500}
-                    />
-                  </label>
-
-                  <div className="dgrid">
-                    <div className="field">
-                      <span>Prioritas</span>
-                      <div className="seg" role="group" aria-label="Prioritas" style={{ justifySelf: "start" }}>
-                        {PRIORITIES.map(p => (
-                          <button type="button" key={p} aria-pressed={priority === p} onClick={() => setPriority(p)}>
-                            {PRIORITY_LABEL[p]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <label className="field">
-                      <span>Proyek</span>
-                      <select className="input" name="project" value={chosenProject} onChange={e => setChosenProject(e.target.value)}>
-                        <option value="">Tanpa proyek</option>
-                        {projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                    </label>
-                    {services.length > 0 && (
-                      <label className="field" style={{ gridColumn: "1 / -1" }}>
-                        <span>Layanan Proyek (Customer)</span>
-                        <select className="input" name="service" defaultValue={prefill.serviceId ?? ""}>
-                          <option value="">Umum (Tanpa Layanan Khusus)</option>
-                          {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
-                        </select>
-                      </label>
-                    )}
-                  </div>
-
+                  <label className="field"><span>Catatan / brief</span><textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, link brief, atau target" /></label>
+                  {mode === "self" && <>
+                    <label className="field"><span><Target size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Target hasil akhir</span><input className="input" value={targetOutput} onChange={e => setTargetOutput(e.target.value)} placeholder="mis. Draf artikel 1000 kata selesai" maxLength={180} /></label>
+                    <label className="field"><span><Link2 size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Tautan referensi</span><input className="input" value={refLink} onChange={e => setRefLink(e.target.value)} placeholder="https://…" maxLength={500} /></label>
+                  </>}
+                  <label className="field"><span><ListChecks size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Checklist <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu langkah per baris)</em></span>
+                    <textarea className="input" name="subtasks" rows={3} defaultValue={(prefill.steps ?? []).join("\n")} placeholder={"Ambil foto\nEdit warna\nUnggah ke Drive"} /></label>
                   {labels.length > 0 && (
-                    <div className="field">
-                      <span>Label</span>
-                      <div className="chips">
-                        {labels.map(l => (
-                          <button type="button" key={l.id} className="chip" data-c={l.color} aria-pressed={lab.has(l.id)} onClick={() => setLab(toggle(lab, l.id))}>
-                            <i className="sw" />{l.name}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="field"><span>Label</span>
+                      <div className="chips">{labels.map(l => <button type="button" key={l.id} className="chip" data-c={l.color} aria-pressed={lab.has(l.id)} onClick={() => setLab(toggle(lab, l.id))}><i className="sw" />{l.name}</button>)}</div>
                     </div>
                   )}
-                </section>
-
-                <section className="dsec">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h3>Waktu &amp; Smart Time-Blocking</h3>
-                    <span className="muted" style={{ fontSize: 11 }}>Durasi Cepat:</span>
-                  </div>
-
-                  <div className="dgrid">
-                    <label className="field">
-                      <span>Tanggal</span>
-                      <input className="input" name="date" type="date" defaultValue={prefill.date ?? date} />
-                    </label>
-                    <div className="timegrid">
-                      <label className="tl"><span>Mulai</span><input className="input" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
-                      <label className="tl"><span>Selesai</span><input className="input" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>
-                    </div>
-                  </div>
-
-                  <div className="chips" style={{ gap: 6 }}>
-                    <button type="button" className="chip" onClick={() => applyDuration(15)}>+15 mnt</button>
-                    <button type="button" className="chip" onClick={() => applyDuration(30)}>+30 mnt</button>
-                    <button type="button" className="chip" onClick={() => applyDuration(60)}>+1 jam</button>
-                    <button type="button" className="chip" onClick={() => applyDuration(120)}>+2 jam</button>
-                    <button type="button" className="chip" onClick={() => applyDuration(240)}>+4 jam</button>
-                  </div>
-
-                  <div className="chips" style={{ marginTop: 2 }}>
-                    {PRESETS.map(([lbl, a, b]) => (
-                      <button key={lbl} type="button" className="chip" onClick={() => { setStart(a); setDue(b); }}>
-                        {a ? `${lbl} ${a}–${b}` : lbl}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="dsec">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h3 style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <ListChecks size={14} /> Checklist Langkah Kerja
-                    </h3>
-                    <button
-                      type="button"
-                      className="linkbtn"
-                      style={{ fontSize: 11 }}
-                      onClick={() => setRawTextSteps(!rawTextSteps)}
-                    >
-                      {rawTextSteps ? "Gunakan Checklist Interaktif" : "Gunakan Teks Multi-baris"}
-                    </button>
-                  </div>
-
-                  {!rawTextSteps ? (
-                    <div>
-                      {steps.length > 0 && (
-                        <div className="step-list">
-                          {steps.map((st, i) => (
-                            <div key={i} className="step-item">
-                              <span className="step-num">{i + 1}</span>
-                              <span className="step-text">{st}</span>
-                              <button type="button" className="step-del" onClick={() => removeStep(i)}>✕</button>
-                            </div>
-                          ))}
-                        </div>
+                  {due && !(routine && mode === "team") && (
+                    <label className="field"><span>Pengingat sebelum jam {due}</span>
+                      <select className="input" value={(mode === "self" ? warnSelf : warn) ?? ""} onChange={e => mode === "self" ? setWarnSelf(e.target.value ? Number(e.target.value) : null) : setWarn(Number(e.target.value))}>
+                        {mode === "self" && <option value="">Tanpa pengingat</option>}
+                        {WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelumnya</option>)}
+                      </select></label>
+                  )}
+                  <label className="check"><input type="checkbox" checked={mode === "self" ? proofSelf : proof} onChange={e => mode === "self" ? setProofSelf(e.target.checked) : setProof(e.target.checked)} />Wajib lampirkan bukti saat selesai</label>
+                  {mode === "team" && (
+                    <>
+                      <label className="check"><input type="checkbox" checked={routine} onChange={e => setRoutine(e.target.checked)} />Ulangi rutin setiap minggu</label>
+                      {routine && (
+                        <div className="chips">{[1, 2, 3, 4, 5, 6, 0].map(d => <button type="button" key={d} className="chip" aria-pressed={days.has(d)} onClick={() => setDays(toggle(days, d))}>{DAYN[d]}</button>)}</div>
                       )}
-
-                      <div className="step-input-row">
-                        <input
-                          className="input"
-                          value={newStepText}
-                          onChange={e => setNewStepText(e.target.value)}
-                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addStep(); } }}
-                          placeholder="Tambah langkah lalu tekan Enter…"
-                          maxLength={160}
-                          style={{ flex: 1 }}
-                        />
-                        <button type="button" className="btn small" onClick={addStep}>
-                          <Plus size={14} /> Tambah
-                        </button>
-                      </div>
-
-                      <div className="chips" style={{ marginTop: 8, gap: 6 }}>
-                        <span className="muted" style={{ fontSize: 11, alignSelf: "center" }}>Templat:</span>
-                        <button
-                          type="button"
-                          className="chip"
-                          onClick={() => loadStepTemplate(["1. Riset & Persiapan", "2. Eksekusi Utama", "3. Review & Finishing"])}
-                        >
-                          ⚡ 3-Tahap
-                        </button>
-                        <button
-                          type="button"
-                          className="chip"
-                          onClick={() => loadStepTemplate(["1. Draf Awal", "2. Self-Check & Testing", "3. Finalisasi & Simpan"])}
-                        >
-                          📋 Draf &amp; Review
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <label className="field">
-                      <span>Langkah <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu per baris)</em></span>
-                      <textarea
-                        className="input"
-                        name="subtasks"
-                        rows={3}
-                        defaultValue={(prefill.steps ?? []).join("\n")}
-                        placeholder={"1. Siapkan referensi\n2. Kerjakan bagian inti\n3. Cek hasil akhir"}
-                      />
-                    </label>
+                    </>
                   )}
-                </section>
-
-                <section className="dsec">
-                  <h3>Catatan Tambahan &amp; Pengaturan</h3>
-                  <label className="field">
-                    <span>Catatan Tambahan <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span>
-                    <textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, catatan pengingat, atau konteks tambahan" />
-                  </label>
-
-                  {due && (
-                    <label className="field">
-                      <span>Pengingat Mandiri Sebelum Jam {due}</span>
-                      <select className="input" value={warnSelf ?? ""} onChange={e => setWarnSelf(e.target.value ? Number(e.target.value) : null)}>
-                        <option value="">Tanpa pengingat</option>
-                        {WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelumnya</option>)}
-                      </select>
-                    </label>
-                  )}
-
-                  <div style={{ marginTop: 4 }}>
-                    <label className="check" style={{ fontSize: ".85rem" }}>
-                      <input type="checkbox" checked={proofSelf} onChange={e => setProofSelf(e.target.checked)} />
-                      Wajib lampirkan bukti (foto/link/catatan) saat selesai
-                    </label>
-                    <p className="muted" style={{ fontSize: ".76rem", margin: "2px 0 0 24px" }}>
-                      Jika tidak dicentang, tugas mandiri dapat langsung diselesaikan instan sekali klik.
-                    </p>
-                  </div>
-                </section>
-              </>
-            )}
-
-            {/* MODE: TEAM (TUGAS UNTUK ANGGOTA TIM) */}
-            {mode === "team" && (
-              <>
-                <section className="dsec" style={{ borderTop: 0, paddingTop: 4 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <h3 style={{ margin: 0 }}>Penerima Tugas</h3>
-                    <span className="muted" style={{ fontSize: 12 }}>
-                      {sel.size > 0 ? `${sel.size} orang dipilih` : "Pilih penerima"}
-                    </span>
-                  </div>
-
-                  <div className="chips">
-                    <button
-                      type="button"
-                      className="chip"
-                      aria-pressed={allTeam}
-                      onClick={() => {
-                        setSel(sel.size === others.length ? new Set() : new Set(others.map(p => p.email)));
-                      }}
-                    >
-                      Semua Tim
-                    </button>
-                    {others.map(m => (
-                      <button
-                        type="button"
-                        key={m.email}
-                        className="chip"
-                        aria-pressed={sel.has(m.email)}
-                        onClick={() => setSel(toggle(sel, m.email))}
-                      >
-                        {m.name}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="chip"
-                      aria-pressed={sel.has(me.email)}
-                      onClick={() => setSel(toggle(sel, me.email))}
-                    >
-                      + {me.member?.name ?? "Saya"} (Ikut)
-                    </button>
-                  </div>
-                </section>
-
-                {templates.length > 0 && (
-                  <section className="dsec">
-                    <h3>Templat</h3>
-                    <div className="chips">
-                      {templates.map((t, i) => (
-                        <span key={i} className="chip" style={{ paddingRight: 4 }}>
-                          <button type="button" className="linkbtn" style={{ textDecoration: "none" }} onClick={() => onTemplate({ ...t, emails: [...sel] })}>
-                            {t.title}
-                          </button>
-                          <button type="button" className="iconbtn" style={{ width: 22, height: 22 }} aria-label={`Hapus templat ${t.title}`} onClick={() => { saveTemplates(templates.filter((_, j) => j !== i)); setTpl(n => n + 1); }}>
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                <section className="dsec">
-                  <h3>Detail Pekerjaan</h3>
-                  <label className="field">
-                    <span>Judul Tugas</span>
-                    <input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder="Contoh: Foto produk pashmina warna baru" maxLength={120} />
-                  </label>
-                  <label className="field">
-                    <span>Deskripsi / Brief Instruksi <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional)</em></span>
-                    <textarea className="input" name="note" rows={2} defaultValue={prefill.note ?? ""} maxLength={600} placeholder="Detail, link brief, atau target" />
-                  </label>
-                  <div className="dgrid">
-                    <div className="field">
-                      <span>Prioritas</span>
-                      <div className="seg" role="group" aria-label="Prioritas" style={{ justifySelf: "start" }}>
-                        {PRIORITIES.map(p => <button type="button" key={p} aria-pressed={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</button>)}
-                      </div>
-                    </div>
-                    <label className="field">
-                      <span>Proyek</span>
-                      <select className="input" name="project" value={chosenProject} onChange={e => setChosenProject(e.target.value)}>
-                        <option value="">Tanpa proyek</option>
-                        {projects.filter(p => !p.archived).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                    </label>
-                    {services.length > 0 && (
-                      <label className="field" style={{ gridColumn: "1 / -1" }}>
-                        <span>Layanan Proyek (Customer)</span>
-                        <select className="input" name="service" defaultValue={prefill.serviceId ?? ""}>
-                          <option value="">Umum (Tanpa Layanan Khusus)</option>
-                          {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
-                        </select>
-                      </label>
-                    )}
-                  </div>
-                  {labels.length > 0 && (
-                    <div className="field">
-                      <span>Label</span>
-                      <div className="chips">
-                        {labels.map(l => (
-                          <button type="button" key={l.id} className="chip" data-c={l.color} aria-pressed={lab.has(l.id)} onClick={() => setLab(toggle(lab, l.id))}>
-                            <i className="sw" />{l.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </section>
-
-                <section className="dsec">
-                  <h3>Jadwal</h3>
-                  <div className="dgrid">
-                    {!routine && <label className="field"><span>Tanggal</span><input className="input" name="date" type="date" defaultValue={prefill.date ?? date} /></label>}
-                    <div className="timegrid" style={routine ? { gridColumn: "1 / -1" } : undefined}>
-                      <label className="tl"><span>Mulai</span><input className="input" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
-                      <label className="tl"><span>Selesai</span><input className="input" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>
-                    </div>
-                  </div>
-                  <div className="chips">
-                    {PRESETS.map(([lbl, a, b]) => (
-                      <button key={lbl} type="button" className="chip" onClick={() => { setStart(a); setDue(b); }}>
-                        {a ? `${lbl} ${a}–${b}` : lbl}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="chips" style={{ gap: 18, marginTop: 4 }}>
-                    <label className="check"><input type="checkbox" checked={routine} onChange={e => setRoutine(e.target.checked)} />Ulangi rutin</label>
-                  </div>
-                  {routine && (
-                    <div className="field">
-                      <span>Muncul otomatis setiap</span>
-                      <div className="chips">
-                        {[1, 2, 3, 4, 5, 6, 0].map(d => (
-                          <button type="button" key={d} className="chip" aria-pressed={days.has(d)} onClick={() => setDays(toggle(days, d))}>
-                            {DAYN[d]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </section>
-
-                {due && !routine && (
-                  <section className="dsec">
-                    <h3>Peringatan tenggat</h3>
-                    <label className="field">
-                      <span>Ingatkan penerima sebelum jam {due}</span>
-                      <select className="input" value={warn} onChange={e => setWarn(Number(e.target.value))}>
-                        {WARN_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l} sebelumnya</option>)}
-                      </select>
-                    </label>
-                    <p className="muted" style={{ fontSize: ".8rem" }}>Pengingat dikirim ke notifikasi dan lonceng penerima tugas.</p>
-                  </section>
-                )}
-
-                {!routine && (
-                  <section className="dsec">
-                    <h3>Checklist &amp; bukti</h3>
-                    <label className="field">
-                      <span>Langkah untuk anggota <em style={{ fontStyle: "normal", fontWeight: 400 }}>(satu per baris)</em></span>
-                      <textarea className="input" name="subtasks" rows={3} defaultValue={(prefill.steps ?? []).join("\n")} placeholder={"Ambil foto\nEdit warna\nUpload ke Drive"} />
-                    </label>
-                    <label className="check"><input type="checkbox" checked={proof} onChange={e => setProof(e.target.checked)} />Karyawan wajib melampirkan bukti</label>
-                  </section>
-                )}
-
-                {routine && (
-                  <section className="dsec">
-                    <h3>Bukti</h3>
-                    <label className="check"><input type="checkbox" checked={proof} onChange={e => setProof(e.target.checked)} />Karyawan wajib melampirkan bukti</label>
-                  </section>
-                )}
-              </>
-            )}
+                </>
+              )}
+            </section>
           </div>
-
           <footer className="dialog-f">
             <button type="button" className="btn ghost" onClick={onClose}>Batal</button>
             <button type="submit" className="btn primary" disabled={save.isPending}>
-              {mode === "self"
-                ? "Simpan tugas mandiri"
-                : routine
-                  ? "Simpan tugas rutin"
-                  : sel.size > 1
-                    ? `Bagikan ke ${sel.size} orang`
-                    : "Kirim tugas"}
+              {mode === "self" ? "Simpan tugas" : routine ? "Simpan tugas rutin" : sel.size > 1 ? `Bagikan ke ${sel.size} orang` : "Kirim tugas"}
             </button>
           </footer>
         </form>

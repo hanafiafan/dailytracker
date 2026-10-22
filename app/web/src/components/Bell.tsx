@@ -32,7 +32,7 @@ export function Bell_() {
   const ago = (ms: number) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "baru saja" : m < 60 ? `${m} mnt lalu` : m < 1440 ? `${Math.floor(m / 60)} jam lalu` : `${Math.floor(m / 1440)} hari lalu`; };
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button className="tool" onClick={() => setOpen(o => !o)} aria-label={`Notifikasi${unread ? `, ${unread} belum dibaca` : ""}`} aria-expanded={open}><Bell size={18} />{unread > 0 && <span className="dot-badge">{unread > 9 ? "9+" : unread}</span>}</button>
+      <button className="tool" onClick={() => setOpen(o => !o)} aria-label={`Notifikasi${unread ? `, ${unread > 9 ? "9+" : unread} belum dibaca` : ""}`} aria-expanded={open}><Bell size={18} />{unread > 0 && <span className="dot-badge">{unread > 9 ? "9+" : unread}</span>}</button>
       {open && (
         <div className="popover" role="dialog" aria-label="Notifikasi">
           <div className="surface-h" style={{ margin: "2px 6px" }}><b>Notifikasi</b>{unread > 0 && <button className="linkbtn" onClick={() => read()}>Tandai semua dibaca</button>}</div>

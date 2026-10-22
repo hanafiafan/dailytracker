@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { addDays, parseYmd, ymd } from "@shared/time";
-import { DAYN, STATUS, today } from "../lib/format";
+import { DAYN, STATUS, today, fmtLong } from "../lib/format";
 import { PRIORITY_RANK, weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar, Empty } from "./ui";
@@ -51,7 +51,7 @@ function MonthGrid({ tasks, day, onPick }: { tasks: TaskDTO[]; day: string; onPi
       <div className="mm-g">
         {["S", "S", "R", "K", "J", "S", "M"].map((d, i) => <b key={i}>{d}</b>)}
         {cells.map(d => { const e = by.get(d); const cls = "mm-d" + (d.slice(0, 7) !== ymd(first).slice(0, 7) ? " off" : "") + (e ? (e.done === e.n ? " done" : " open") : " none") + (d === t0 ? " today" : "") + (d === day ? " sel" : "");
-          return <button key={d} className={cls} onClick={() => onPick(d)} aria-label={`${d}${e ? `, ${e.n} tugas, ${e.done} selesai` : ", tidak ada tugas"}`} aria-pressed={d === day}>{Number(d.slice(8))}</button>; })}
+          return <button key={d} className={cls} onClick={() => onPick(d)} aria-label={`${fmtLong(d)}${e ? `, ${e.n} tugas, ${e.done} selesai` : ", tidak ada tugas"}`} aria-pressed={d === day}>{Number(d.slice(8))}</button>; })}
       </div>
     </section>
   );

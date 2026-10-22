@@ -801,7 +801,6 @@ function Thread({
           type="button"
           className="thread-h-main"
           onClick={onToggleInfo}
-          aria-label="Buka detail info percakapan"
           title="Klik untuk melihat info detail percakapan"
         >
           {isSuperSession ? (
@@ -879,7 +878,7 @@ function Thread({
                   (isSuperMsg ? " from-superadmin" : "")
                 }
               >
-                {!cont && (
+                {!mine && <span className="avslot">{!cont && (
                   mem ? (
                     <Avatar m={mem} />
                   ) : (
@@ -890,19 +889,16 @@ function Thread({
                       {isSuperMsg ? <Crown size={14} /> : m.name[0]}
                     </span>
                   )
-                )}
+                )}</span>}
                 <div className="mbody">
-                  {!cont && (
+                  {!cont && !mine && ch.kind !== "dm" && (
                     <div className="mmeta">
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <b>{mine ? "Kamu" : m.name}</b>
-                        {isSuperMsg && (
-                          <span className="superadmin-tag" title="Superadmin (Hellens)">
-                            <Crown size={9} /> Superadmin
-                          </span>
-                        )}
-                      </span>
-                      <small>{fmtTime(m.createdAt)}</small>
+                      <b>{m.name}</b>
+                      {isSuperMsg && (
+                        <span className="superadmin-tag" title="Superadmin (Hellens)">
+                          <Crown size={9} /> Superadmin
+                        </span>
+                      )}
                     </div>
                   )}
 
@@ -918,6 +914,8 @@ function Thread({
                       ? <button key={a.id} className="mimg" onClick={() => setZoom(a.id)} aria-label={`Perbesar ${a.name}`}><img src={`/api/chat/files/${a.id}`} alt={a.name} loading="lazy" /></button>
                       : <a key={a.id} className="mfile" href={`/api/chat/files/${a.id}`} download={a.name}><FileText size={18} /><span><b className="clamp1">{a.name}</b><small>{bytes(a.size)}</small></span><Download size={16} /></a>)}</div>}
                   </>}
+
+                  <span className="mtime">{fmtTime(m.createdAt)}</span>
 
                   {/* Hover Actions: Jadikan Tugas, Pin, Hapus */}
                   {!m.deleted && (

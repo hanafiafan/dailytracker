@@ -197,11 +197,11 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           <span className="mcr-who"><b className="clamp1">{m.name}</b><small className="muted clamp1">{m.role || "—"}</small>
             <span className="mcr-tags">
               {isBOMember(m) ? (
-                <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "#ea580c", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
+                <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "color-mix(in srgb, #ea580c 60%, var(--ink))", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
                   Brand Owner
                 </span>
               ) : isDirectorMember(m) ? (
-                <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
+                <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "color-mix(in srgb, #6366f1 60%, var(--ink))", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
                   Direktur
                 </span>
               ) : m.isAdmin ? (
@@ -220,7 +220,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
         <p className="muted" style={{ marginBottom: 10 }}>{m.role || "—"} · {m.email}</p>
         <div className="alist">
           <button className="menuitem" onClick={() => { setSheet(false); onEdit(true); }}><Pencil size={18} /><span>Ubah profil</span></button>
-          {policy.isSuper && !self && <button className="menuitem" onClick={() => { toggleAdmin.mutate(); setSheet(false); }}><ShieldCheck size={18} /><span>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</span></button>}
+          {policy.isSuper && !self && m.accountType !== "client" && <button className="menuitem" onClick={() => { toggleAdmin.mutate(); setSheet(false); }}><ShieldCheck size={18} /><span>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</span></button>}
           {policy.isSuper && !self && <ConfirmButton className="menuitem danger" label="Hapus dari tim" armed="Yakin hapus?" onConfirm={() => { remove.mutate(); setSheet(false); }} />}
         </div>
         {policy.isSuper && m.isAdmin && !self && units(team).length > 0 && <div style={{ marginTop: 12 }}><ScopeChips m={m} /></div>}
@@ -241,11 +241,11 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
         </div>
         <div className="mtags">
           {isBOMember(m) ? (
-            <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "#ea580c", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
+            <span className="tag bo" style={{ background: "rgba(234, 88, 12, 0.15)", color: "color-mix(in srgb, #ea580c 60%, var(--ink))", borderColor: "rgba(234, 88, 12, 0.3)", fontWeight: 700 }}>
               Brand Owner
             </span>
           ) : isDirectorMember(m) ? (
-            <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
+            <span className="tag director" style={{ background: "rgba(99, 102, 241, 0.15)", color: "color-mix(in srgb, #6366f1 60%, var(--ink))", borderColor: "rgba(99, 102, 241, 0.3)", fontWeight: 700 }}>
               Direktur
             </span>
           ) : m.isAdmin ? (
@@ -258,7 +258,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           {m.seenAt ? <span className="tag on" title={"Terakhir buka " + fmtShort(ymd(new Date(m.seenAt)))}>Sudah masuk</span> : <span className="tag off">Belum masuk</span>}
         </div>
         <div className="mact">
-          {policy.isSuper && !self && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
+          {policy.isSuper && !self && m.accountType !== "client" && <button className="btn small" onClick={() => toggleAdmin.mutate()}>{m.isAdmin ? "Cabut admin" : "Jadikan admin"}</button>}
           <button className="btn small" onClick={() => onEdit(!editing)}>{editing ? "Tutup" : "Ubah"}</button>
           {policy.isSuper && !self && <ConfirmButton className="btn small danger" label="Hapus" armed="Yakin hapus?" onConfirm={() => remove.mutate()} />}
         </div>
@@ -314,7 +314,7 @@ function EntityManager() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
         {entities?.map(ent => (
-          <div key={ent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--tile)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+          <div key={ent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--glass)", borderRadius: "var(--r-md)", border: "1px solid var(--line)" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span className="tag proj" data-c={ent.color} style={{ fontWeight: 700 }}>{ent.id}</span>
@@ -341,6 +341,7 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
   const reorder = useAction((emails: string[]) => ok(api.team.order.$put({ json: { emails } })), { done: "Urutan tim disimpan" });
   const add = useAction((f: FormData) => ok(api.team.$post({ json: {
     name: String(f.get("name")), role: String(f.get("role")), email: String(f.get("email")), group: String(f.get("group") ?? "").trim().toUpperCase(),
+    accountType: f.get("type") === "client" ? "client" as const : "employee" as const, ...(f.get("type") === "client" ? { level: "Client" } : {}),
   } })), { done: "Anggota ditambahkan" });
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -371,6 +372,7 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
         <label className="field"><span>Jabatan</span><input className="input" name="role" maxLength={60} placeholder="Contoh: Videografer" /></label>
         <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required placeholder="nama@gmail.com" /></label>
         <UnitField name="group" />
+        <label className="field"><span>Tipe akun</span><select className="input" name="type" defaultValue="employee"><option value="employee">Karyawan</option><option value="client">Client (lihat proyeknya saja)</option></select></label>
         <button className="btn primary" type="submit" disabled={add.isPending}>Tambah anggota</button>
       </form>}
       {policy.isSuper && <EntityManager />}

@@ -75,6 +75,12 @@ const SECTIONS: { title: string; items: MenuItem[] }[] = [
 
 const ALL_MORE = SECTIONS.flatMap(s => s.items);
 
+const CLIENT_TABS = [
+  { to: "/proyek", label: "Proyek", Icon: FolderKanban },
+  { to: "/inbox", label: "Inbox", Icon: MessageSquare },
+  { to: "#menu", label: "Menu", Icon: Grid2x2 },
+];
+const CLIENT_MENU = new Set(["/proyek", "/inbox", "/panduan", "/pengaturan"]);
 const TABS = [
   { to: "/", label: "Dasbor", Icon: LayoutDashboard },
   { to: "/papan", label: "Papan", Icon: Columns3 },
@@ -99,8 +105,9 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
   const on = (to: string) => (to === "/" ? loc === "/" : loc.startsWith(to));
   const inMore = ALL_MORE.some(x => on(x.to) && x.to !== "/" && x.to !== "/papan" && x.to !== "/kalender" && x.to !== "/inbox");
 
-  const MENU_IDX = 4;
-  const idx = menu || inMore ? MENU_IDX : Math.max(0, TABS.findIndex(t => t.to !== "#menu" && on(t.to)));
+  const tabs = policy.isClient ? CLIENT_TABS : TABS;
+  const MENU_IDX = tabs.length - 1;
+  const idx = menu || inMore ? MENU_IDX : Math.max(0, tabs.findIndex(t => t.to !== "#menu" && on(t.to)));
 
   const badge = (to: string) => (to === "/inbox" ? msgs : to === "#menu" ? waiting : 0);
   const dark = getTheme() === "dark";
@@ -134,19 +141,19 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
         <button className="rbtn" onClick={openSearch} aria-label="Cari">
           <Search size={18} />
         </button>
-        <button className="rbtn plus" onClick={handlePlus} aria-label="Tugas baru">
+        {!policy.isClient && <button className="rbtn plus" onClick={handlePlus} aria-label="Tugas baru">
           <Plus size={20} />
-        </button>
+        </button>}
         <Bell_ />
       </header>
 
       {/* Docked Modern Bottom Bar */}
       <nav className="mbar" aria-label="Menu utama">
         <div className="mbar-track">
-          <div className="mbar-pill" style={{ transform: `translateX(${idx * 100}%)` }} aria-hidden="true" />
+          <div className="mbar-pill" style={{ width: `${100 / tabs.length}%`, transform: `translateX(${idx * 100}%)` }} aria-hidden="true" />
         </div>
-        <ul>
-          {TABS.map((t, i) => {
+        <ul style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          {tabs.map((t, i) => {
             const sel = i === idx;
             const n = badge(t.to);
             const body = (
@@ -230,7 +237,7 @@ export function MobileChrome({ waiting, msgs, out }: { waiting: number; msgs: nu
           {/* Grouped Sections */}
           {SECTIONS.map(sec => {
             const visible = sec.items.filter(
-              x => (!x.manager || policy.isManager) && (!x.superadmin || policy.isSuper)
+              x => (!x.manager || policy.isManager) && (!x.superadmin || policy.isSuper) && (!policy.isClient || CLIENT_MENU.has(x.to))
             );
             if (!visible.length) return null;
             return (

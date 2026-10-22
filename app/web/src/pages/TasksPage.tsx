@@ -144,12 +144,12 @@ export function TasksPage() {
               return (
                 <tr key={t.id} className={"ptr" + (sel.has(t.id) ? " open" : "")} onClick={() => openTask(t.id)}>
                   <td className="chk" onClick={e => e.stopPropagation()}><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} aria-label={`Pilih ${t.title}`} /></td>
-                  <td><b className="clamp1" title={t.title}>{t.title}</b>{sp.total > 0 && <small className="muted"> {sp.done}/{sp.total}</small>}</td>
+                  <td><b className="clamp1" title={t.title}>{t.title}</b>{sp.total > 0 && <small className="muted"> {sp.done}/{sp.total}</small>}{t.qty > 0 && <span className="tag off" style={{ marginLeft: 6 }}>{t.qty} hasil</span>}</td>
                   <td><span className="who">{m && <Avatar m={m} />}<span className="clamp1">{m?.name ?? t.email}</span></span></td>
                   <td>{p ? <span className="pbadge" data-c={p.color}>{p.name}</span> : <span className="muted">—</span>}</td>
                   <td><span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span></td>
                   <td className={late ? "bad" : ""}>{fmtShort(t.date)}{t.start ? ` · ${t.start}` : ""}</td>
-                  <td>{STATUS[t.status]}</td>
+                  <td><span className={"stpill " + (late && t.status !== "done" ? "late" : t.status)}>{late && t.status !== "done" ? "Terlambat" : STATUS[t.status]}</span></td>
                 </tr>
               );
             }))

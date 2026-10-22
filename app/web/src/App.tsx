@@ -10,7 +10,7 @@ import { NewTaskDialog } from "./components/NewTaskDialog";
 import { TopNav } from "./components/Page";
 import { SearchDialog } from "./components/SearchDialog";
 import { TaskDrawer } from "./components/TaskDrawer";
-import { Onboarding, needsSetup } from "./components/Onboarding";
+import { Onboarding, needsSetup, skipSetupInDev } from "./components/Onboarding";
 import { GuideGate } from "./components/GuideView";
 import { Legal } from "./components/Legal";
 import { Center, Loading, PageLoading } from "./components/ui";
@@ -46,6 +46,7 @@ function Signed({ me }: { me: MeDTO }) {
   const [, nav] = useLocation();
   const [newTask, setNewTask] = useState<NewTaskPrefill | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  skipSetupInDev(!!me.dev);
   const [setup, setSetup] = useState(() => needsSetup(me.email));
   const [, tick] = useReducer(n => n + 1, 0);
   const lastDay = useRef(today());
@@ -102,7 +103,16 @@ function Signed({ me }: { me: MeDTO }) {
           <TopNav />
           <main className="frame">
             <Suspense fallback={<PageLoading />}>
-            <Switch>
+            {viewer.policy.isClient ? (
+              <Switch>
+                <Route path="/proyek"><ProjectsPage /></Route>
+                <Route path="/proyek/:id"><ProjectReportPage /></Route>
+                <Route path="/inbox"><InboxPage /></Route>
+                <Route path="/panduan"><GuidePage /></Route>
+                <Route path="/pengaturan"><SettingsPage /></Route>
+                <Route><Redirect to="/proyek" /></Route>
+              </Switch>
+            ) : (            <Switch>
               <Route path="/"><Dashboard /></Route>
               <Route path="/papan"><Board /></Route>
               <Route path="/daftar"><TasksPage /></Route>
@@ -120,7 +130,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/panduan"><GuidePage /></Route>
               <Route path="/pengaturan"><SettingsPage /></Route>
               <Route><Redirect to="/" /></Route>
-            </Switch>
+            </Switch>)}
             </Suspense>
           </main>
           <Legal />

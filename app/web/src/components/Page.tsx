@@ -58,14 +58,14 @@ export function TopNav() {
     <header className="topnav">
       <div className="logo"><i><Mark /></i><span className="t">HAN Task Tracker</span></div>
       <nav className="pillnav" aria-label="Menu utama" ref={navRef}>
-        {NAV.filter(n => (!n.manager || policy.isManager) && (!n.superadmin || policy.isSuper)).map(({ to, label, Icon }) => (
-          <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined} aria-label={label}
-            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot">{msgs > 99 ? "99+" : msgs}</i>}</a>
+        {NAV.filter(n => (!n.manager || policy.isManager) && (!n.superadmin || policy.isSuper) && (!policy.isClient || n.to === "/proyek" || n.to === "/inbox")).map(({ to, label, Icon }) => (
+          <a key={to} href={to} aria-current={(to === "/" ? loc === "/" : loc.startsWith(to)) ? "page" : undefined}
+            onClick={e => { e.preventDefault(); go(to); }}><Icon /><span>{label}</span>{to === "/izin" && waiting > 0 && <i className="navdot" aria-hidden="true">{waiting}</i>}{to === "/inbox" && msgs > 0 && <i className="navdot" aria-hidden="true">{msgs > 99 ? "99+" : msgs}</i>}</a>
         ))}
       </nav>
       <div className="navtools">
         <RunningPill />
-        <button className="tool addtool" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={18} /></button>
+        {!policy.isClient && <button className="tool addtool" onClick={() => newTask()} aria-label="Tugas baru"><Plus size={18} /></button>}
         <button className="tool" onClick={openSearch} aria-label="Cari (Ctrl+K)" title="Cari (Ctrl+K)"><Search size={17} /></button>
         <Bell_ />
         <div className="usermenu" ref={ref}>
@@ -112,6 +112,7 @@ export function NewTaskHeaderButton() {
     return () => document.removeEventListener("mousedown", on);
   }, [open]);
 
+  if (policy.isClient) return null;
   if (!policy.isManager) {
     return (
       <button

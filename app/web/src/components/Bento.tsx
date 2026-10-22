@@ -47,7 +47,7 @@ function StatDone({ all, date }: { all: TaskDTO[]; date: string }) {
   const done = all.filter(t => t.status === "done" && inW(t, wk)), prev = all.filter(t => t.status === "done" && inW(t, addDays(wk, -7))).length;
   const onTime = done.filter(t => !t.due || (t.doneAt ?? 0) <= atMs(t.date, t.due)).length;
   return (
-    <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=done")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=done")} aria-label="Lihat tugas selesai">
+    <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=done")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=done")}>
       <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h2>Selesai</h2><span className="muted" style={{ fontSize: ".74rem", fontWeight: 600 }}>Minggu ini</span></div>
       <div className="mid-n">{done.length}<small> tugas</small></div>
       {sameDelta(done.length - prev, "dari minggu lalu")}
@@ -62,7 +62,7 @@ function StatOpen({ all }: { all: TaskDTO[] }) {
   const late = open.filter(t => t.date < today() || (t.due && now > atMs(t.date, t.due))).length;
   const hi = open.filter(t => t.priority === "urgent" || t.priority === "high").length, rest = open.length - hi;
   return (
-    <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=open")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=open")} aria-label="Lihat tugas yang belum selesai">
+    <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=open")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=open")}>
       <div className="bc-h"><span className="bc-ico red"><Flag size={18} /></span><h2>Terlambat</h2><span className="muted" style={{ fontSize: ".74rem", fontWeight: 600 }}>{open.length} terbuka</span></div>
       <div className="mid-n">{late}<small> tugas</small></div>
       <span className={"delta" + (late ? " bad" : "")}>{late ? "Perlu ditindak" : "Semua tepat waktu"}</span>
@@ -93,10 +93,10 @@ function Goals({ all }: { all: TaskDTO[] }) {
     <section className="bc s3">
       <div className="bc-h"><span className="bc-ico"><FolderKanban size={18} /></span><h2>Proyek</h2><button className="go" onClick={() => go("/proyek")} aria-label="Buka proyek"><ArrowUpRight size={16} /></button></div>
       {cur ? <>
-        <div className="gauge-card" role="link" tabIndex={0} style={{ cursor: "pointer" }} onClick={() => go("/proyek/" + cur.p.id)} onKeyDown={e => e.key === "Enter" && go("/proyek/" + cur.p.id)} aria-label={`Buka detail ${cur.p.name}`}><h3 className="clamp2">{cur.p.name}</h3><Gauge pct={cur.pct} /><div className="gv">{cur.pct}%</div><div className="tg">{cur.done} dari {cur.total} tugas selesai</div></div>
+        <div className="gauge-card" role="link" tabIndex={0} style={{ cursor: "pointer" }} onClick={() => go("/proyek/" + cur.p.id)} onKeyDown={e => e.key === "Enter" && go("/proyek/" + cur.p.id)}><h3 className="clamp2">{cur.p.name}</h3><Gauge pct={cur.pct} /><div className="gv">{cur.pct}%</div><div className="tg">{cur.done} dari {cur.total} tugas selesai</div></div>
         <div className="plist">
           {rows.filter(r => r !== cur).slice(0, 3).map(r => (
-            <button key={r.p.id} className="prow" data-c={r.p.color} onClick={() => setPick(r.p.id)} aria-label={`Tampilkan ${r.p.name}`}>
+            <button key={r.p.id} className="prow" data-c={r.p.color} onClick={() => setPick(r.p.id)}>
               <span className="pn"><span className="clamp1">{r.p.name}</span></span><span className="pg">{r.pct}%<i><b style={{ width: `${r.pct}%` }} /></i></span><ArrowUpRight size={14} />
             </button>))}
         </div>
@@ -150,8 +150,8 @@ function Side({ all, idle }: { all: TaskDTO[]; idle?: number }) {
         <div className="illo"><PromoScene /></div>
       </section>
       <div className="minis">
-        <div className="bc link" role="link" tabIndex={0} onClick={() => go("/kalender")} onKeyDown={e => e.key === "Enter" && go("/kalender")} aria-label="Buka kalender"><div className="bc-h"><span className="bc-ico lime"><CalendarClock size={17} /></span><span className="lbl">Tenggat hari ini</span></div><div className="mid-n">{due.length}</div><span className="lbl">{due[0] ? `Berikutnya ${due[0].due}` : "Tidak ada"}</span></div>
-        <div className="bc link" role="link" tabIndex={0} onClick={() => go(policy.isManager ? "/tim?t=beban" : "/daftar")} onKeyDown={e => e.key === "Enter" && go(policy.isManager ? "/tim?t=beban" : "/daftar")} aria-label="Lihat detail"><div className="bc-h"><span className="bc-ico ink">{policy.isManager ? <Users size={17} /> : <Flag size={17} />}</span><span className="lbl">{policy.isManager ? "Tanpa tugas" : "Mendatang"}</span></div><div className="mid-n">{policy.isManager ? idle ?? 0 : upcoming}</div><span className="lbl">{policy.isManager ? "orang" : "tugas"}</span></div>
+        <div className="bc link" role="link" tabIndex={0} onClick={() => go("/kalender")} onKeyDown={e => e.key === "Enter" && go("/kalender")}><div className="bc-h"><span className="bc-ico lime"><CalendarClock size={17} /></span><span className="lbl">Tenggat hari ini</span></div><div className="mid-n">{due.length}</div><span className="lbl">{due[0] ? `Berikutnya ${due[0].due}` : "Tidak ada"}</span></div>
+        <div className="bc link" role="link" tabIndex={0} onClick={() => go(policy.isManager ? "/tim?t=beban" : "/daftar")} onKeyDown={e => e.key === "Enter" && go(policy.isManager ? "/tim?t=beban" : "/daftar")}><div className="bc-h"><span className="bc-ico ink">{policy.isManager ? <Users size={17} /> : <Flag size={17} />}</span><span className="lbl">{policy.isManager ? "Tanpa tugas" : "Mendatang"}</span></div><div className="mid-n">{policy.isManager ? idle ?? 0 : upcoming}</div><span className="lbl">{policy.isManager ? "orang" : "tugas"}</span></div>
       </div>
     </div>
   );

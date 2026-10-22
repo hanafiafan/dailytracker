@@ -3,6 +3,7 @@ import type { TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { weekStart } from "../lib/tasks";
 import { CloseProject } from "../components/CloseProject";
+import { ProjectSetup } from "../components/ProjectSetup";
 import { ProjectsLabels } from "../components/ProjectsLabels";
 import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
@@ -10,7 +11,8 @@ import { today } from "../lib/format";
 import { useLocation } from "wouter";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
-import { keys, useAction, useTasks, windowFrom } from "../lib/queries";
+import { keys, useAction, useMeta, useTasks, windowFrom } from "../lib/queries";
+import { HEALTH_LABEL, pct as pctOf, type Health } from "../lib/projects";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -57,9 +59,6 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
 }
 
 import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
-import { COLORS, type Color } from "@shared/schemas";
-import { COLOR_LABEL } from "../lib/tasks";
-import { ColorPicker } from "../components/ColorPicker";
 
 export function ProjectsPage() {
   const { me, projects, policy, member } = useViewer();
@@ -71,11 +70,7 @@ export function ProjectsPage() {
   const [, go] = useLocation();
   const mobile = useIsMobile();
   const reopen = useAction((id: string) => ok(api.meta.projects[":id"].reopen.$post({ param: { id } })), { done: "Proyek dibuka kembali", refresh: [keys.meta] });
-  const addProject = useAction((f: FormData) => ok(api.meta.projects.$post({ json: {
-    name: String(f.get("name")).trim(),
-    description: String(f.get("description") ?? "").trim(),
-    color: (String(f.get("color") ?? "lilac") as Color),
-  } })), { done: "Proyek baru berhasil dibuat", refresh: [keys.meta] });
+  const stats = useMeta(true).data?.projectStats ?? {};
 
   const tq = useTasks(windowFrom(date, today()), true);
 
@@ -83,11 +78,8 @@ export function ProjectsPage() {
     const all = tq.data ?? [];
     return projects
       .filter(p => {
-        // If client, only show projects they have tasks in or client's assigned
-        if (policy.isClient) {
-          const hasTask = all.some(t => t.projectId === p.id && t.email === me.email);
-          if (!hasTask) return false;
-        }
+        // A client only sees the projects that carry their account.
+        if (policy.isClient && p.clientEmail !== me.email) return false;
         // Status filter
         if (statusFilter === "active" && (p.closedAt || p.archived)) return false;
         if (statusFilter === "archived" && !p.closedAt && !p.archived) return false;
@@ -101,13 +93,21 @@ export function ProjectsPage() {
         return true;
       })
       .map(p => {
-        const l = all.filter(t => t.projectId === p.id), done = l.filter(t => t.status === "done").length;
+        const l = all.filter(t => t.projectId === p.id), st = stats[p.id];
+        const total = st?.total ?? l.length, done = st?.done ?? l.filter(t => t.status === "done").length;
         const late = l.filter(t => t.status !== "done" && t.date < today()).length;
         const who = [...new Set(l.map(t => t.email))].map(e => member(e)).filter(Boolean);
-        return { p, total: l.length, done, late, open: l.length - done, pct: l.length ? Math.round(done / l.length * 100) : 0, who };
+        const sv = st?.services ?? [], withT = sv.filter(x => x.target > 0);
+        const pct = withT.length ? Math.round(withT.reduce((n, x) => n + pctOf(x.delivered, x.target), 0) / withT.length) : pctOf(done, total);
+        const units = [...new Set(withT.map(x => x.unit))], one = units.length === 1 ? withT.reduce((a, x) => ({ d: a.d + x.delivered, t: a.t + x.target }), { d: 0, t: 0 }) : null;
+        const result = one ? `${one.d.toLocaleString("id-ID")}/${one.t.toLocaleString("id-ID")} ${units[0]}`.trim() : withT.length ? `${withT.length} target` : null;
+        const left = p.dueDate ? Math.round((new Date(p.dueDate + "T12:00:00+07:00").getTime() - new Date(today() + "T12:00:00+07:00").getTime()) / 86_400_000) : null;
+        const elapsed = p.startDate && p.dueDate ? pctOf(Math.max(0, Math.round((new Date(today()).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1), Math.round((new Date(p.dueDate).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1) : null;
+        const health: Health = p.closedAt || pct >= 100 ? "done" : left !== null && left < 0 ? "late" : elapsed !== null && pct + 15 < elapsed ? "risk" : total || withT.length ? "ok" : "idle";
+        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length };
       })
       .sort((a, b) => b.open - a.open);
-  }, [tq.data, projects, member, statusFilter, q, policy.isClient, me.email]);
+  }, [tq.data, projects, member, statusFilter, q, policy.isClient, me.email, stats]);
 
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
@@ -159,36 +159,7 @@ export function ProjectsPage() {
             </div>
           </div>
 
-          {/* Quick Create Project Form */}
-          {showAddProject && policy.canCreateProject() && (
-            <form
-              className="row"
-              style={{ padding: 14, background: "var(--glass)", borderRadius: "var(--radius)", border: "1px solid var(--border)", marginBottom: 18 }}
-              onSubmit={e => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                if (!String(f.get("name")).trim()) return;
-                addProject.mutate(f, { onSuccess: () => { (e.target as HTMLFormElement).reset(); setShowAddProject(false); } });
-              }}
-            >
-              <label className="field" style={{ flex: "1 1 200px" }}>
-                <span>Nama Proyek</span>
-                <input className="input" name="name" placeholder="mis. Redesign Website 2026" required maxLength={60} autoFocus />
-              </label>
-              <label className="field" style={{ flex: "1 1 240px" }}>
-                <span>Deskripsi Proyek</span>
-                <input className="input" name="description" placeholder="Tujuan atau cakupan proyek" maxLength={200} />
-              </label>
-              <label className="field" style={{ flex: "0 0 auto" }}>
-                <span>Warna</span>
-                <ColorPicker name="color" defaultValue="lilac" />
-              </label>
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 2 }}>
-                <button type="button" className="btn small ghost" onClick={() => setShowAddProject(false)}>Batal</button>
-                <button type="submit" className="btn small primary" disabled={addProject.isPending}>Simpan Proyek</button>
-              </div>
-            </form>
-          )}
+          {showAddProject && policy.canCreateProject() && <ProjectSetup onClose={() => setShowAddProject(false)} />}
 
           {rows.length && mobile ? (
             <div className="mpgrid">{rows.map(({ p, total, late, open, pct }, i) => (
@@ -198,9 +169,17 @@ export function ProjectsPage() {
               </button>))}</div>
           ) : rows.length ? (
             <div className="pcards">
-              {rows.map(({ p, total, done, late, open, pct, who }) => (
+              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services }) => {
+                const client = p.clientEmail ? member(p.clientEmail) : null, pm = p.pmEmail ? member(p.pmEmail) : null;
+                return (
                 <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-                  <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a>{p.closedAt && <span className="stpill done" style={{ marginLeft: 8, verticalAlign: "middle" }}>Selesai</span>}</h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p></div></div>
+                  <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a></h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p>
+                    <div className="chips" style={{ marginTop: 6 }}><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}</div></div></div>
+                  {(client || pm || services > 0) && <div className="pj-meta">
+                    <span><small>Client</small><b className="clamp1">{client?.name ?? "–"}</b></span>
+                    <span><small>PM</small><b className="clamp1">{pm?.name ?? "–"}</b></span>
+                    <span><small>{result ? "Hasil" : "Layanan"}</small><b className="clamp1">{result ?? (services || "–")}</b></span>
+                  </div>}
                   <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
@@ -208,9 +187,9 @@ export function ProjectsPage() {
                   </div>
                   <div className="chips">
                     <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
-                    {(policy.isManager || policy.canCreateProject()) && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
+                    {(policy.isManager || policy.canCreateProject()) && !policy.isClient && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
                   </div>
-                </article>))}
+                </article>); })}
             </div>
           ) : (
             <div className="bc">

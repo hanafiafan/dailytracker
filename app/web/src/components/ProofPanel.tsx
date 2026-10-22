@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { TaskDTO } from "@shared/schemas";
 import { upload } from "../lib/api";
 import { shrink } from "../lib/image";
-import { errorText, keys } from "../lib/queries";
+import { errorText, keys, useProjectServices } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
 
 /** Finish a task: attach a photo and/or link as proof, plus an optional note. */
@@ -14,6 +14,8 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
   const { policy } = useViewer();
   const [file, setFile] = useState<{ file: File; preview: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // A task in a project service can report how many deliverables it produced (photos, pages, ...); they add up to the service target.
+  const svc = useProjectServices(t.projectId).data?.find(s => s.id === t.serviceId);
 
   const submit = async (form: HTMLFormElement, skipProof: boolean) => {
     const fd = new FormData(form);
@@ -32,6 +34,8 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
         if (link) out.set("link", link);
       } else out.set("skipProof", "1");
       if (note) out.set("note", note);
+      const qty = String(fd.get("qty") ?? "").trim();
+      if (qty) out.set("qty", qty);
       await upload(`/api/tasks/${t.id}/complete`, out);
       toast.success(skipProof ? "Tugas selesai" : "Tugas selesai dengan bukti");
       for (const k of [keys.tasks, keys.activity, keys.analytics]) await qc.invalidateQueries({ queryKey: k });
@@ -47,6 +51,7 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
         ? <div className="pv"><img src={file.preview} alt="Pratinjau bukti" /><button type="button" className="linkbtn" onClick={() => { URL.revokeObjectURL(file.preview); setFile(null); }}>Ganti foto</button></div>
         : <label className="drop"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) setFile({ file: f, preview: URL.createObjectURL(f) }); }} /><span className="iconline"><Camera size={18} />Pilih foto / screenshot</span></label>}
       <input className="input" name="link" type="url" inputMode="url" placeholder="atau tempel link hasil kerja" maxLength={500} aria-label="Link bukti" />
+      {t.serviceId && <label className="field"><span>Jumlah hasil{svc?.unit ? ` (${svc.unit})` : ""}{svc?.targetQty ? ` — target ${svc.targetQty}` : ""}</span><input className="input" name="qty" type="number" min={0} max={100000} inputMode="numeric" defaultValue={t.qty || ""} placeholder="mis. 25" /></label>}
       <textarea className="input" name="note" rows={2} maxLength={600} placeholder="Keterangan / catatan penyelesaian tugas" aria-label="Keterangan bukti" defaultValue={t.report ?? ""} />
       <div className="actions">
         <button type="button" className="btn small ghost" onClick={onClose}>Batal</button>
