@@ -6,7 +6,7 @@ import { api, ok } from "../lib/api";
 import { shrink } from "../lib/image";
 import { keys, useAction, usePopups } from "../lib/queries";
 import { ConfirmButton, Empty } from "./ui";
-import { PopupDialog } from "./Popup";
+import { PopupDialog, fmtUntil } from "./Popup";
 
 const KINDS: { type: PopupBlock["type"]; label: string; blank: PopupBlock }[] = [
   { type: "heading", label: "Judul", blank: { type: "heading", text: "" } },
@@ -23,6 +23,9 @@ const KINDS: { type: PopupBlock["type"]; label: string; blank: PopupBlock }[] = 
   { type: "button", label: "Tombol tautan", blank: { type: "button", label: "", url: "" } },
 ];
 const LABEL: Record<string, string> = { heading: "Judul", text: "Teks", list: "Daftar", callout: "Sorotan", image: "Foto", video: "Video", button: "Tombol tautan", quote: "Kutipan", accordion: "Lipat (tanya-jawab)", divider: "Garis pemisah" };
+const DURATIONS: [number | "custom" | null, string][] = [[null, "Tanpa batas waktu"], [60, "1 jam"], [360, "6 jam"], [1440, "1 hari"], [4320, "3 hari"], [10080, "7 hari"], [20160, "14 hari"], [43200, "30 hari"], ["custom", "Sampai tanggal tertentu…"]];
+const toLocalInput = (ms: number) => { const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60_000); return d.toISOString().slice(0, 16); };
+const body = (p: PopupDTO, over: Partial<PopupDTO>) => ({ title: p.title, blocks: p.blocks, active: p.active, draft: p.draft, durationMin: p.durationMin, endsAt: p.endsAt, ...over });
 const LIST_STYLE = { bullet: "poin", number: "bernomor", check: "centang" } as const;
 
 /** Superadmin tab: compose, preview, switch on/off and delete info popups. */
@@ -30,7 +33,8 @@ export function PopupAdmin() {
   const q = usePopups("all");
   const [edit, setEdit] = useState<PopupDTO | "new" | null>(null);
   const [view, setView] = useState<PopupDTO | null>(null);
-  const toggle = useAction((p: PopupDTO) => ok(api.popups[":id"].$put({ param: { id: p.id }, json: { title: p.title, blocks: p.blocks, active: !p.active } })), { refresh: [keys.popups] });
+  const toggle = useAction((p: PopupDTO) => ok(api.popups[":id"].$put({ param: { id: p.id }, json: body(p, { active: !p.active }) })), { refresh: [keys.popups] });
+  const publish = useAction((p: PopupDTO) => ok(api.popups[":id"].$put({ param: { id: p.id }, json: body(p, { draft: false, active: true }) })), { done: "Popup diterbitkan", refresh: [keys.popups] });
   const del = useAction((id: string) => ok(api.popups[":id"].$delete({ param: { id } })), { done: "Popup dihapus", refresh: [keys.popups] });
   const list = q.data ?? [];
   return (
@@ -47,9 +51,11 @@ export function PopupAdmin() {
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", margin: "4px 0" }}>{[...new Set(p.blocks.map(b => b.type === "list" ? "list" : b.type))].map(t => <span key={t} className="tag due" style={{ fontSize: ".7rem" }}>{LABEL[t]}</span>)}</div>
             <div className="muted" style={{ fontSize: ".8rem" }}>{p.blocks.length} elemen · {new Date(p.createdAt).toLocaleDateString("id-ID")}</div>
           </div>
-          <span className={"tag " + (p.active ? "ok" : "off")}>{p.active ? "Aktif" : "Nonaktif"}</span>
+          {(() => { const gone = !p.draft && p.active && !!p.endsAt && p.endsAt <= Date.now(); return <span className={"tag " + (p.draft ? "warn" : gone ? "off" : p.active ? "ok" : "off")}>{p.draft ? "Draf" : gone ? "Kedaluwarsa" : p.active ? "Aktif" : "Nonaktif"}</span>; })()}
+          {!p.draft && p.endsAt && <small className="muted">sampai {fmtUntil(p.endsAt)}</small>}
+          {p.draft && p.durationMin && <small className="muted">durasi {DURATIONS.find(d => d[0] === p.durationMin)?.[1] ?? p.durationMin + " mnt"}</small>}
           <button className="iconbtn" aria-label={"Pratinjau " + p.title} onClick={() => setView(p)}><Eye size={15} /></button>
-          <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><input type="checkbox" checked={p.active} disabled={toggle.isPending} onChange={() => toggle.mutate(p)} /> Aktif</label>
+          {p.draft ? <button className="btn small" disabled={publish.isPending} onClick={() => publish.mutate(p)}>Terbitkan</button> : <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><input type="checkbox" checked={p.active} disabled={toggle.isPending} onChange={() => toggle.mutate(p)} /> Aktif</label>}
           <button className="iconbtn" aria-label={"Ubah " + p.title} onClick={() => setEdit(p)}><Pencil size={15} /></button>
           <ConfirmButton className="iconbtn" ariaLabel={"Hapus " + p.title} label={<Trash2 size={15} />} armed="Hapus?" onConfirm={() => del.mutate(p.id)} />
         </div>
@@ -63,13 +69,16 @@ export function PopupAdmin() {
 function PopupEditor({ popup, onClose }: { popup: PopupDTO | null; onClose: () => void }) {
   const [title, setTitle] = useState(popup?.title ?? "");
   const [blocks, setBlocks] = useState<PopupBlock[]>(popup?.blocks ?? []);
-  const [active, setActive] = useState(popup?.active ?? true);
+  const [dur, setDur] = useState<number | "custom" | null>(popup ? (popup.durationMin ?? (popup.endsAt ? "custom" : null)) : null);
+  const [until, setUntil] = useState(popup?.endsAt ? toLocalInput(popup.endsAt) : "");
   const [preview, setPreview] = useState(false);
-  const save = useAction(async () => {
-    const json = { title, blocks, active };
+  const save = useAction(async (draft: boolean) => {
+    const endsAt = dur === "custom" && until ? new Date(until).getTime() : null;
+    if (dur === "custom" && !until) throw new Error("Pilih tanggal dan jam berakhir");
+    const json = { title, blocks, active: popup && !popup.draft ? popup.active : true, draft, durationMin: typeof dur === "number" ? dur : null, endsAt };
     if (popup) await ok(api.popups[":id"].$put({ param: { id: popup.id }, json }));
     else await ok(api.popups.$post({ json }));
-  }, { done: "Popup disimpan", refresh: [keys.popups] });
+  }, { done: draft => draft ? "Draf disimpan" : "Popup diterbitkan", refresh: [keys.popups] });
   const set = (i: number, b: PopupBlock) => setBlocks(a => a.map((x, j) => j === i ? b : x));
   const move = (i: number, d: number) => setBlocks(a => { const n = [...a], [x] = n.splice(i, 1); n.splice(i + d, 0, x!); return n; });
   const pickImage = async (i: number, b: Extract<PopupBlock, { type: "image" }>, f?: File) => {
@@ -85,7 +94,7 @@ function PopupEditor({ popup, onClose }: { popup: PopupDTO | null; onClose: () =
       <div className="scrim" onClick={onClose} aria-hidden="true" />
       <div className="dialog" role="dialog" aria-modal="true" aria-label="Editor popup" style={{ width: "min(680px, calc(100vw - 24px))" }}>
         <div className="dialog-h"><h2>{popup ? "Ubah popup" : "Popup baru"}</h2></div>
-        <form className="dialog-b" style={{ gap: 12 }} onSubmit={e => { e.preventDefault(); save.mutate(undefined, { onSuccess: onClose }); }} id="popup-form">
+        <form className="dialog-b" style={{ gap: 12 }} onSubmit={e => { e.preventDefault(); save.mutate((e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "draft", { onSuccess: onClose }); }} id="popup-form">
           <label className="field"><span>Judul</span><input className="input" value={title} onChange={e => setTitle(e.target.value)} maxLength={120} required /></label>
           {blocks.map((b, i) => (
             <fieldset key={i} style={{ border: "1px solid var(--line-2)", borderRadius: "var(--radius)", padding: 10, display: "grid", gap: 8, minWidth: 0 }}>
@@ -128,15 +137,24 @@ function PopupEditor({ popup, onClose }: { popup: PopupDTO | null; onClose: () =
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {KINDS.map(k => <button key={k.label} type="button" className="btn small ghost" disabled={blocks.length >= 20} onClick={() => setBlocks(a => [...a, structuredClone(k.blank)])}>+ {k.label}</button>)}
           </div>
-          <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Aktif (tampilkan ke anggota)</label>
+          <div className="row">
+            <label className="field"><span>Durasi aktif (dihitung sejak diterbitkan)</span>
+              <select className="input" value={String(dur)} onChange={e => setDur(e.target.value === "null" ? null : e.target.value === "custom" ? "custom" : Number(e.target.value))}>
+                {DURATIONS.map(([v, l]) => <option key={String(v)} value={String(v)}>{l}</option>)}
+              </select>
+            </label>
+            {dur === "custom" && <label className="field"><span>Berakhir pada</span><input className="input" type="datetime-local" value={until} min={toLocalInput(Date.now())} onChange={e => setUntil(e.target.value)} required /></label>}
+          </div>
+          {popup && !popup.draft && popup.endsAt && typeof dur === "number" && dur === popup.durationMin && <p className="muted" style={{ fontSize: ".8rem" }}>Berlaku sampai {fmtUntil(popup.endsAt)}. Mengubah durasi memulai hitungan dari sekarang.</p>}
         </form>
         <div className="dialog-f">
           <button type="button" className="btn ghost" onClick={() => setPreview(true)} disabled={!blocks.length}><Eye size={15} /> Pratinjau</button>
           <button type="button" className="btn ghost" onClick={onClose}>Batal</button>
-          <button className="btn" type="submit" form="popup-form" disabled={save.isPending || !blocks.length}>Simpan</button>
+          <button className="btn ghost" type="submit" value="draft" form="popup-form" disabled={save.isPending || !blocks.length}>Simpan draf</button>
+          <button className="btn" type="submit" value="publish" form="popup-form" disabled={save.isPending || !blocks.length}>{popup && !popup.draft ? "Simpan" : "Terbitkan"}</button>
         </div>
       </div>
-      {preview && <PopupDialog above popup={{ title: title || "Pratinjau", blocks }} onClose={() => setPreview(false)} closeLabel="Tutup pratinjau" />}
+      {preview && <PopupDialog above popup={{ title: title || "Pratinjau", blocks, endsAt: dur === "custom" && until ? new Date(until).getTime() : typeof dur === "number" ? Date.now() + dur * 60_000 : null }} onClose={() => setPreview(false)} closeLabel="Tutup pratinjau" />}
     </>
   );
 }

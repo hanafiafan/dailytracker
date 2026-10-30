@@ -146,8 +146,12 @@ export const popupBlock = z.discriminatedUnion("type", [
   z.object({ type: z.literal("button"), label: z.string().trim().min(1).max(60), url: httpUrl }),
 ]);
 export type PopupBlock = z.infer<typeof popupBlock>;
-export const popupInput = z.object({ title: z.string().trim().min(1).max(120), blocks: z.array(popupBlock).min(1).max(20), active: z.boolean() });
-export interface PopupDTO { id: string; title: string; blocks: PopupBlock[]; active: boolean; createdAt: number }
+/** `draft` is never shown. Once published it is shown until `endsAt`: either a preset `durationMin` (the clock starts when it is published) or a fixed `endsAt`. */
+export const popupInput = z.object({
+  title: z.string().trim().min(1).max(120), blocks: z.array(popupBlock).min(1).max(20), active: z.boolean(),
+  draft: z.boolean().default(false), durationMin: z.number().int().min(1).max(525_600).nullable().default(null), endsAt: z.number().int().nullable().default(null),
+});
+export interface PopupDTO { id: string; title: string; blocks: PopupBlock[]; active: boolean; draft: boolean; durationMin: number | null; endsAt: number | null; createdAt: number }
 export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
 
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });

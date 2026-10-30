@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { popupInput } from "@shared/schemas";
+import { eq } from "drizzle-orm";
+import { popups } from "../src/db/schema.js";
 import { OWNER, setup } from "./helpers.js";
 import { openDb } from "../src/db/index.js";
 
@@ -29,5 +31,26 @@ describe("popup input", () => {
     expect((await t.call("a@x.id", "POST", `/popups/${made.id}/seen`)).status).toBe(200);
     expect(((await (await t.call("a@x.id", "GET", "/popups/active")).json()) as unknown[]).length).toBe(0);
     expect(((await (await t.call(OWNER, "GET", "/popups/active")).json()) as unknown[]).length).toBe(1);
+  });
+
+  it("drafts and expired popups are never shown; the preset clock starts on publish", async () => {
+    const t = setup(), seen = async () => ((await (await t.call("a@x.id", "GET", "/popups/active")).json()) as { id: string }[]);
+    const body = { title: "T", active: true, blocks: [{ type: "text", text: "x" }] };
+    const draft = await (await t.call(OWNER, "POST", "/popups", { ...body, draft: true, durationMin: 60 })).json() as { id: string; endsAt: number | null };
+    expect(draft.endsAt).toBeNull(); // no clock while it is a draft
+    expect(await seen()).toHaveLength(0);
+    const before = Date.now();
+    expect((await t.call(OWNER, "PUT", `/popups/${draft.id}`, { ...body, draft: false, durationMin: 60 })).status).toBe(200);
+    const live = (await (await t.call(OWNER, "GET", "/popups")).json() as { id: string; endsAt: number }[]).find(p => p.id === draft.id)!;
+    expect(live.endsAt).toBeGreaterThanOrEqual(before + 60 * 60_000);
+    expect(await seen()).toHaveLength(1);
+    // a plain edit keeps the clock; a new preset restarts it
+    await t.call(OWNER, "PUT", `/popups/${draft.id}`, { ...body, title: "T2", durationMin: 60 });
+    expect((await (await t.call(OWNER, "GET", "/popups")).json() as { endsAt: number }[])[0]!.endsAt).toBe(live.endsAt);
+    // expired: hidden; a fixed time in the past is refused
+    t.db.update(popups).set({ endsAt: Date.now() - 1000 }).where(eq(popups.id, draft.id)).run();
+    expect(await seen()).toHaveLength(0);
+    expect((await t.call(OWNER, "POST", "/popups", { ...body, endsAt: Date.now() - 1000 })).status).toBe(400);
+    expect((await t.call(OWNER, "POST", "/popups", { ...body, draft: true, endsAt: Date.now() - 1000 })).status).toBe(201); // drafts may hold any time
   });
 });

@@ -20,6 +20,8 @@ export function videoEmbed(url: string): { embed: string } | { file: string } {
 /** `**tebal**` is the only inline markup: enough to stress a word without letting anyone inject HTML. */
 const inline = (t: string): ReactNode[] => t.split(/\*\*(.+?)\*\*/g).map((x, i) => i % 2 ? <b key={i}>{x}</b> : x);
 
+export const fmtUntil = (ms: number) => new Date(ms).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
 const TONE = { info: { icon: Info, bg: "var(--info-soft)" }, warn: { icon: AlertTriangle, bg: "var(--warn-soft)" }, ok: { icon: CheckCircle2, bg: "var(--ok-soft)" } } as const;
 
 export function PopupBlocks({ blocks }: { blocks: PopupBlock[] }) {
@@ -65,14 +67,14 @@ export function PopupBlocks({ blocks }: { blocks: PopupBlock[] }) {
   );
 }
 
-export function PopupDialog({ popup, onClose, closeLabel = "Mengerti", above }: { popup: Pick<PopupDTO, "title" | "blocks">; onClose: () => void; closeLabel?: string; /** Opened on top of another dialog (the editor preview). */ above?: boolean }) {
+export function PopupDialog({ popup, onClose, closeLabel = "Mengerti", above }: { popup: Pick<PopupDTO, "title" | "blocks"> & { endsAt?: number | null }; onClose: () => void; closeLabel?: string; /** Opened on top of another dialog (the editor preview). */ above?: boolean }) {
   return createPortal(
     <>
       <div className="scrim" onClick={onClose} aria-hidden="true" style={above ? { zIndex: 60 } : undefined} />
       <div className="dialog" role="dialog" aria-modal="true" aria-label={popup.title} style={above ? { zIndex: 61 } : undefined}>
         <div className="dialog-h"><h2>{popup.title}</h2><button className="iconbtn" onClick={onClose} aria-label="Tutup"><X size={16} /></button></div>
         <div className="dialog-b"><PopupBlocks blocks={popup.blocks} /></div>
-        <div className="dialog-f"><button className="btn" onClick={onClose} autoFocus>{closeLabel}</button></div>
+        <div className="dialog-f">{popup.endsAt && <small className="muted" style={{ marginRight: "auto", alignSelf: "center" }}>Berlaku sampai {fmtUntil(popup.endsAt)}</small>}<button className="btn" onClick={onClose} autoFocus>{closeLabel}</button></div>
       </div>
     </>,
     document.body,

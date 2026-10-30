@@ -159,6 +159,9 @@ export const popups = sqliteTable("popups", {
   title: text("title").notNull(),
   blocks: text("blocks", { mode: "json" }).$type<PopupBlock[]>().notNull(),
   active: bool("active").notNull().default(true),
+  draft: bool("draft").notNull().default(false),
+  durationMin: integer("duration_min"),
+  endsAt: integer("ends_at"),
   createdAt: integer("created_at").notNull(),
 });
 export const popupSeen = sqliteTable("popup_seen", {
