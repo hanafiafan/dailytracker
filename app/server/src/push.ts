@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { eq } from "drizzle-orm";
+import { unitsOf } from "@shared/policy";
 import type { Db } from "./db/index.js";
 import { meta, members, pushSubs } from "./db/schema.js";
 
@@ -32,12 +33,12 @@ export function createPush(db: Db, ownerEmail: string, appUrl: string) {
   }
   /** The owner, admins of all units, and admins of this person's unit (except the person themself). */
   function managersOf(email: string): string[] {
-    const team = db.select({ email: members.email, group: members.group, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
-    const group = team.find(m => m.email === email)?.group ?? "";
+    const team = db.select({ email: members.email, group: members.group, extraGroups: members.extraGroups, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
+    const mine = team.find(m => m.email === email), units = mine ? unitsOf(mine) : [];
     const out = [ownerEmail];
     for (const m of team) {
       if (!m.isAdmin || m.email === email) continue;
-      if (!m.adminGroups.length || m.adminGroups.includes(group)) out.push(m.email);
+      if (!m.adminGroups.length || units.some(g => m.adminGroups.includes(g))) out.push(m.email);
     }
     return out;
   }

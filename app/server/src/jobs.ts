@@ -76,7 +76,7 @@ export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: B
   }
 
   // Managers get one line: what is late, what waits for a decision, who is away.
-  const team = db.select({ email: members.email, group: members.group, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
+  const team = db.select({ email: members.email, group: members.group, extraGroups: members.extraGroups, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
   const allLeaves = db.select().from(leaves).all();
   const late = db.select().from(tasks).all().filter(t => t.status !== "done" && t.date < date);
   for (const to of new Set([push.ownerEmail, ...team.filter(m => m.isAdmin).map(m => m.email)])) {

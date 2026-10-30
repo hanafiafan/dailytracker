@@ -32,7 +32,7 @@ export const teamRoutes = ({ db, bus }: Deps) => new Hono<AppEnv>()
     if (db.select().from(members).where(eq(members.email, b.email)).get()) return c.json({ error: "Email itu sudah dipakai anggota lain" }, 409);
     const order = Math.max(0, ...loadTeam(db).map(m => m.sortOrder)) + 1;
     db.insert(members).values({
-      email: b.email, name: b.name, role: b.role, group: b.group, sortOrder: order,
+      email: b.email, name: b.name, role: b.role, group: b.group, extraGroups: b.extraGroups.filter(g => g !== b.group), sortOrder: order,
       jobdesk: b.jobdesk, level: b.level, accountType: b.accountType,
       canCreateProject: b.canCreateProject, canCommentAllProjects: b.canCommentAllProjects,
       allowedCommentProjectIds: b.allowedCommentProjectIds

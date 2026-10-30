@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { desc, eq, sql } from "drizzle-orm";
 import { activity, chatGroups, entities, members, messages, projects, tasks } from "../db/schema.js";
+import { unitsOf } from "@shared/policy";
 import { toActivity } from "../dto.js";
 import { loadTeam, type AppEnv, type Deps } from "../context.js";
 
@@ -44,8 +45,7 @@ export const adminRoutes = ({ db, bus, env }: Deps) => {
       // Group / entity breakdown
       const entityCounts: Record<string, number> = {};
       allTeam.forEach(m => {
-        const key = m.group || "Tanpa Unit";
-        entityCounts[key] = (entityCounts[key] || 0) + 1;
+        for (const key of unitsOf(m).length ? unitsOf(m) : ["Tanpa Unit"]) entityCounts[key] = (entityCounts[key] || 0) + 1;
       });
 
       return c.json({

@@ -18,12 +18,12 @@ import { Sheet } from "./Sheet";
 import { useIsMobile } from "../lib/useMedia";
 import { MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
 import { ymd } from "@shared/time";
-import { isBOMember, isDirectorMember } from "@shared/policy";
+import { isBOMember, isDirectorMember, unitsOf } from "@shared/policy";
 
 const LEVELS = ["Brand Owner", "Director", "Project Manager", "Lead", "Senior", "Staff", "Intern", "Client"] as const;
 
 const units = (team: MemberDTO[], entities?: { id: string; name: string }[]) => {
-  const set = new Set(team.map(m => m.group).filter(Boolean));
+  const set = new Set(team.flatMap(unitsOf));
   entities?.forEach(e => set.add(e.id));
   return [...set].sort();
 };
@@ -37,6 +37,17 @@ function UnitField({ name, defaultValue }: { name: string; defaultValue?: string
     <datalist id="unit-list">{allUnits.map(g => <option key={g} value={g} />)}</datalist></label>;
 }
 
+function ExtraUnits({ value, onChange, skip }: { value: string[]; onChange: (v: string[]) => void; skip?: string }) {
+  const { team, entities } = useViewer();
+  return (
+    <div className="field"><span>Entitas tambahan (bisa lebih dari satu)</span>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {units(team, entities).filter(g => g !== skip).map(g => <button type="button" key={g} className="chip" aria-pressed={value.includes(g)} onClick={() => onChange(value.includes(g) ? value.filter(y => y !== g) : [...value, g])}>{g}</button>)}
+      </div>
+    </div>
+  );
+}
+
 export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void }) {
   const { me, team, policy, projects } = useViewer();
   const qc = useQueryClient();
@@ -44,6 +55,7 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
   const [canCreateProj, setCanCreateProj] = useState(m.canCreateProject ?? false);
   const [canCommentAll, setCanCommentAll] = useState(m.canCommentAllProjects ?? false);
   const [allowedProjects, setAllowedProjects] = useState<string[]>(m.allowedCommentProjectIds ?? []);
+  const [extra, setExtra] = useState<string[]>(m.extraGroups ?? []);
   const [accType, setAccType] = useState<"employee" | "client">(m.accountType ?? "employee");
 
   const self = m.email === me.email;
@@ -58,6 +70,7 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
     if (canAdmin) {
       body.jobdesk = String(f.get("jobdesk") ?? "").trim();
       body.group = String(f.get("group") ?? "").trim().toUpperCase();
+      body.extraGroups = extra.filter(g => g !== body.group);
       body.managerEmail = String(f.get("manager") ?? "") || null;
       body.level = String(f.get("level") ?? "Staff");
       body.accountType = accType;
@@ -100,6 +113,7 @@ export function ProfileForm({ m, onClose }: { m: MemberDTO; onClose: () => void 
         <label className="field"><span>Jabatan</span><input className="input" name="role" defaultValue={m.role} maxLength={60} /></label>
         {canAdmin && <label className="field"><span>Email Google</span><input className="input" name="email" type="email" defaultValue={m.email} maxLength={120} /></label>}
         {canAdmin && <UnitField name="group" defaultValue={m.group} />}
+        {canAdmin && <ExtraUnits value={extra} onChange={setExtra} skip={m.group} />}
         {canAdmin && (
           <label className="field"><span>Tingkatan / Level</span>
             <select className="input" name="level" defaultValue={m.level ?? "Staff"}>
@@ -207,7 +221,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
               ) : m.isAdmin ? (
                 <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>
               ) : null}
-              {m.group && <span className="tag due">{m.group}</span>}
+              {unitsOf(m).map(g => <span key={g} className="tag due">{g}</span>)}
               {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
               {m.accountType === "client" && <span className="tag warn">Klien</span>}
               {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
@@ -251,7 +265,7 @@ function Row({ m, editing, onEdit }: { m: MemberDTO; editing: boolean; onEdit: (
           ) : m.isAdmin ? (
             <span className="tag rut">{m.adminGroups.length ? "Admin " + m.adminGroups.join("/") : "Admin penuh"}</span>
           ) : null}
-          {m.group && <span className="tag due">{m.group}</span>}
+          {unitsOf(m).map(g => <span key={g} className="tag due">{g}</span>)}
           {m.level && m.level !== "Staff" && <span className="tag rut">{m.level}</span>}
           {m.accountType === "client" && <span className="tag warn">Klien</span>}
           {m.canCreateProject && <span className="tag ok">Izin Proyek</span>}
@@ -337,10 +351,11 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
   const { policy } = useViewer();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
+  const [newExtra, setNewExtra] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const reorder = useAction((emails: string[]) => ok(api.team.order.$put({ json: { emails } })), { done: "Urutan tim disimpan" });
   const add = useAction((f: FormData) => ok(api.team.$post({ json: {
-    name: String(f.get("name")), role: String(f.get("role")), email: String(f.get("email")), group: String(f.get("group") ?? "").trim().toUpperCase(),
+    name: String(f.get("name")), role: String(f.get("role")), email: String(f.get("email")), group: String(f.get("group") ?? "").trim().toUpperCase(), extraGroups: newExtra,
     accountType: f.get("type") === "client" ? "client" as const : "employee" as const, ...(f.get("type") === "client" ? { level: "Client" } : {}),
   } })), { done: "Anggota ditambahkan" });
 
@@ -365,13 +380,14 @@ export function ManageTeam({ list, open }: { list: MemberDTO[]; open?: boolean }
       {policy.isSuper && <form className="addmember" onSubmit={e => {
         e.preventDefault(); const form = e.currentTarget, f = new FormData(form);
         if (!String(f.get("name")).trim()) return void toast.error("Tulis nama anggota");
-        add.mutate(f, { onSuccess: () => form.reset(), onError: e2 => toast.error(errorText(e2)) });
+        add.mutate(f, { onSuccess: () => { form.reset(); setNewExtra([]); }, onError: e2 => toast.error(errorText(e2)) });
       }}>
         <h2 className="addmember-h">Tambah anggota baru</h2>
         <label className="field"><span>Nama</span><input className="input" name="name" maxLength={40} placeholder="Nama panggilan" /></label>
         <label className="field"><span>Jabatan</span><input className="input" name="role" maxLength={60} placeholder="Contoh: Videografer" /></label>
         <label className="field"><span>Email Google</span><input className="input" name="email" type="email" maxLength={120} required placeholder="nama@gmail.com" /></label>
         <UnitField name="group" />
+        <ExtraUnits value={newExtra} onChange={setNewExtra} />
         <label className="field"><span>Tipe akun</span><select className="input" name="type" defaultValue="employee"><option value="employee">Karyawan</option><option value="client">Client (lihat proyeknya saja)</option></select></label>
         <button className="btn primary" type="submit" disabled={add.isPending}>Tambah anggota</button>
       </form>}

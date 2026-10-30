@@ -1,7 +1,12 @@
+/** Every unit a person belongs to: the primary one first, then the extra ones. */
+export const unitsOf = (m: { group: string; extraGroups?: string[] }) => [...new Set([m.group, ...(m.extraGroups ?? [])].filter(Boolean))];
+
 // Who may see and change what. Pure functions so the server enforces them and the web app mirrors them for the UI.
 export interface PolicyMember {
   email: string;
   group: string;
+  /** Further units this person also belongs to (the primary one stays in `group`). */
+  extraGroups?: string[];
   isAdmin: boolean;
   adminGroups: string[];
   name?: string;
@@ -82,7 +87,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
     if (isPM) return email === me || !isBOMember(t);
     if (isBoss) return true;
     if (t?.managerEmail === me) return true;
-    return !!t && isAdmin && !t.isAdmin && manages(t.group);
+    return !!t && isAdmin && !t.isAdmin && unitsOf(t).some(manages);
   };
 
   /** Who may approve someone's self-created task: a superior who manages them (cannot approve own task). */

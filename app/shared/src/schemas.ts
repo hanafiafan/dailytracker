@@ -44,6 +44,7 @@ export const memberCreate = z.object({
   name: z.string().trim().min(1).max(40),
   role: z.string().trim().max(60).default(""),
   group: unit.default(""),
+  extraGroups: z.array(unit).max(10).default([]),
   jobdesk: z.string().trim().max(500).default(""),
   level: z.string().trim().max(40).default("Staff"),
   accountType: z.enum(ACCOUNT_TYPES).default("employee"),
@@ -55,6 +56,7 @@ export const memberPatch = z.object({
   name: z.string().trim().min(1).max(40),
   role: z.string().trim().max(60),
   group: unit,
+  extraGroups: z.array(unit).max(10),
   isAdmin: z.boolean(),
   adminGroups: z.array(unit).max(20),
   managerEmail: email.nullable(),
@@ -152,7 +154,7 @@ export interface ProjectServiceDTO { id: string; projectId: string; name: string
 
 // ---- shapes returned by the API ----
 export interface MemberDTO {
-  email: string; name: string; role: string; group: string; isAdmin: boolean; adminGroups: string[];
+  email: string; name: string; role: string; group: string; extraGroups: string[]; isAdmin: boolean; adminGroups: string[];
   sortOrder: number; hasPhoto: boolean; photoV: number; seenAt: number | null; askAt: number | null; managerEmail: string | null;
   jobdesk: string; level: string; accountType: AccountType; canCreateProject: boolean; canCommentAllProjects: boolean; allowedCommentProjectIds: string[];
 }

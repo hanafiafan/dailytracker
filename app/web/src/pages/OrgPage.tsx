@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { MemberDTO } from "@shared/schemas";
-import { isBOMember, isDirectorMember } from "@shared/policy";
+import { isBOMember, isDirectorMember, unitsOf } from "@shared/policy";
 import { Avatar, PersonLink } from "../components/ui";
 import { fmtShort, today } from "../lib/format";
 import { awayOn } from "../lib/leaves";
@@ -54,7 +54,7 @@ function useOrg() {
             name: m.name,
             role,
             level,
-            unit: m.group,
+            unit: unitsOf(m).join(" · "),
             m,
             reports: root.name,
             kids: [],
@@ -76,7 +76,7 @@ function useOrg() {
       }
 
       // If in a unit with a designated head:
-      const head = m.group ? team.find(h => h.email !== m.email && h.isAdmin && h.adminGroups.includes(m.group)) : undefined;
+      const head = team.find(h => h.email !== m.email && h.isAdmin && unitsOf(m).some(g => h.adminGroups.includes(g)));
       if (head && head.email !== root.key && head.email !== m.email) return head.email;
 
       // Default for unit leads / employees: report to Director (Aziz) if present, else root
@@ -138,8 +138,8 @@ export function OrgView() {
   const [tab, setTab] = useState("bagan"), [unit, setUnit] = useState(""), [q, setQ] = useState("");
   const tq = useTasks(addDays(today(), -30), policy.isManager);
   const openOf = (email?: string) => policy.isManager && email ? (tq.data ?? []).filter(t => t.email === email && t.status !== "done").length : undefined;
-  const units = [...new Set(org.flat.map(p => p.unit).filter(Boolean))].sort();
-  const rows = org.flat.filter(p => (!unit || p.unit === unit) && (!q.trim() || (p.name + " " + p.role).toLowerCase().includes(q.trim().toLowerCase())));
+  const units = [...new Set(org.flat.flatMap(p => p.unit.split(" · ")).filter(Boolean))].sort();
+  const rows = org.flat.filter(p => (!unit || p.unit.split(" · ").includes(unit)) && (!q.trim() || (p.name + " " + p.role).toLowerCase().includes(q.trim().toLowerCase())));
   return (
     <>
       <div className="seg" role="group" aria-label="Tampilan struktur" style={{ justifySelf: "start" }}>

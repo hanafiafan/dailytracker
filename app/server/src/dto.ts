@@ -7,14 +7,14 @@ type CommentRow = typeof comments.$inferSelect;
 type RoutineRow = typeof routines.$inferSelect;
 
 export const toMember = (m: MemberRow): MemberDTO => ({
-  email: m.email, name: m.name, role: m.role, group: m.group, isAdmin: m.isAdmin, adminGroups: m.adminGroups,
+  email: m.email, name: m.name, role: m.role, group: m.group, extraGroups: m.extraGroups ?? [], isAdmin: m.isAdmin, adminGroups: m.adminGroups,
   sortOrder: m.sortOrder, hasPhoto: m.photo !== null && m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt, managerEmail: m.managerEmail,
   jobdesk: m.jobdesk ?? "", level: m.level ?? "Staff", accountType: (m.accountType ?? "employee") as MemberDTO["accountType"],
   canCreateProject: !!m.canCreateProject, canCommentAllProjects: !!m.canCommentAllProjects, allowedCommentProjectIds: m.allowedCommentProjectIds ?? [],
 });
 // Member rows are selected without the photo bytes in lists; this keeps the flag correct there.
 export const toMemberLite = (m: Omit<MemberRow, "photo">): MemberDTO => ({
-  email: m.email, name: m.name, role: m.role, group: m.group, isAdmin: m.isAdmin, adminGroups: m.adminGroups,
+  email: m.email, name: m.name, role: m.role, group: m.group, extraGroups: m.extraGroups ?? [], isAdmin: m.isAdmin, adminGroups: m.adminGroups,
   sortOrder: m.sortOrder, hasPhoto: m.photoV > 0, photoV: m.photoV, seenAt: m.seenAt, askAt: m.askAt, managerEmail: m.managerEmail,
   jobdesk: m.jobdesk ?? "", level: m.level ?? "Staff", accountType: (m.accountType ?? "employee") as MemberDTO["accountType"],
   canCreateProject: !!m.canCreateProject, canCommentAllProjects: !!m.canCommentAllProjects, allowedCommentProjectIds: m.allowedCommentProjectIds ?? [],

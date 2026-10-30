@@ -7,6 +7,7 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { COLORS, type Color, type MemberDTO, type EntityDTO, type AdminOverviewDTO } from "@shared/schemas";
+import { unitsOf } from "@shared/policy";
 import { Page } from "../components/Page";
 import { Avatar, Empty, ConfirmButton } from "../components/ui";
 import { ProfileForm } from "../components/ManageTeam";
@@ -285,7 +286,7 @@ function PermissionsMatrixSection({
                   </div>
                 </td>
                 <td style={{ padding: "10px 14px" }}>
-                  {m.group ? <span className="tag due" style={{ fontWeight: 700 }}>{m.group}</span> : <span className="muted">—</span>}
+                  {unitsOf(m).length ? unitsOf(m).map(g => <span key={g} className="tag due" style={{ fontWeight: 700 }}>{g}</span>) : <span className="muted">—</span>}
                 </td>
                 <td style={{ padding: "10px 14px" }}>
                   <span className="tag proj">{m.level || "Staff"}</span>
@@ -387,7 +388,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
         {entities.map(e => {
-          const membersInUnit = team.filter(m => m.group === e.id);
+          const membersInUnit = team.filter(m => unitsOf(m).includes(e.id));
           return (
             <div key={e.id} className="surface" style={{ padding: "18px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>

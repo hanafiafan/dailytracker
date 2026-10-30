@@ -17,6 +17,7 @@ export const members = sqliteTable("members", {
   name: text("name").notNull(),
   role: text("role").notNull().default(""),
   group: text("grp").notNull().default(""),
+  extraGroups: text("extra_groups", { mode: "json" }).$type<string[]>().notNull().default([]),
   isAdmin: bool("is_admin").notNull().default(false),
   adminGroups: text("admin_groups", { mode: "json" }).$type<string[]>().notNull().default([]),
   sortOrder: integer("sort_order").notNull().default(999),
