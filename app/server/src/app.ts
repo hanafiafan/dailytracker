@@ -112,9 +112,9 @@ export function createApp(deps: Deps) {
     .use("/chat/*", auth, team).route("/chat", chatRoutes(deps, notify))
     .use("/links/*", auth, team, noClientWrites).route("/links", linkRoutes(deps))
     .use("/popups/*", auth, team).route("/popups", popupRoutes(deps))
-    .use("/meta/*", auth, team).route("/meta", metaRoutes(deps))
+    .use("/meta/*", auth, team, noClientWrites).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth, team).route("/inbox", inboxRoutes(deps))
-    .use("/reports/*", auth, team).route("/reports", reportRoutes(deps))
+    .use("/reports/*", auth, team, noClientWrites).route("/reports", reportRoutes(deps))
     .use("/admin/*", auth, team, noClientWrites).route("/admin", adminRoutes(deps))
     // "I have nothing left to do": tells the admins.
     .post("/ask", auth, team, noClientWrites, c => {

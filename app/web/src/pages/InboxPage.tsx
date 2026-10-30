@@ -36,7 +36,7 @@ import { Avatar, ConfirmButton, Empty } from "../components/ui";
 import { GroupDialog } from "../components/GroupDialog";
 import { ChatTaskCard, ChatProjectCard, ChatPollCard, ConvertMessageToTaskModal, PinnedBar } from "../components/ChatFeatures";
 import { api, ok, putImage } from "../lib/api";
-import { fmtTime } from "../lib/format";
+import { fmtTime, stubMember } from "../lib/format";
 import { squarePhoto } from "../lib/image";
 import { keys, useAction, useChannels, useInbox, useMessages, useMeta } from "../lib/queries";
 import { useIsMobile } from "../lib/useMedia";
@@ -52,26 +52,7 @@ function useAllTeam() {
   const owner = meta.data?.owner;
   return useMemo(() => {
     if (!owner || team.some(m => m.email.toLowerCase() === owner.email.toLowerCase())) return team;
-    return [...team, {
-      email: owner.email,
-      name: owner.name || "Superadmin",
-      role: "Superadmin",
-      group: "", extraGroups: [],
-      isAdmin: true,
-      adminGroups: [],
-      sortOrder: 0,
-      hasPhoto: false,
-      photoV: 0,
-      seenAt: null,
-      askAt: null,
-      managerEmail: null,
-      jobdesk: "",
-      level: "superadmin",
-      accountType: "employee" as const,
-      canCreateProject: true,
-      canCommentAllProjects: true,
-      allowedCommentProjectIds: [],
-    }];
+    return [...team, stubMember(owner.email, { name: owner.name || "Superadmin", role: "Superadmin", isAdmin: true, level: "superadmin", canCreateProject: true, canCommentAllProjects: true })];
   }, [team, owner]);
 }
 
@@ -270,26 +251,7 @@ function ChatInfoPanel({
   const groupMembers = useMemo(() => {
     if (ch.kind === "general") return allTeam;
     if (ch.kind === "group" && ch.group?.members) {
-      return ch.group.members.map(e => allTeam.find(m => m.email.toLowerCase() === e.toLowerCase()) || {
-        email: e,
-        name: e.split("@")[0] || "Anggota",
-        role: "Anggota",
-        group: "", extraGroups: [],
-        isAdmin: false,
-        adminGroups: [] as string[],
-        hasPhoto: false,
-        photoV: 0,
-        sortOrder: 0,
-        seenAt: null,
-        askAt: null,
-        managerEmail: null,
-        jobdesk: "",
-        level: "",
-        accountType: "employee" as const,
-        canCreateProject: false,
-        canCommentAllProjects: false,
-        allowedCommentProjectIds: [] as string[],
-      });
+      return ch.group.members.map(e => allTeam.find(m => m.email.toLowerCase() === e.toLowerCase()) || stubMember(e));
     }
     return allTeam;
   }, [ch, allTeam]);

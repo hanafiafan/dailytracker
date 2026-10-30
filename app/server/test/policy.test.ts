@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { makePolicy, type PolicyMember } from "@shared/policy";
 
 const team: PolicyMember[] = [
-  { email: "hanief@x.id", name: "Hanief", role: "BO", group: "", isAdmin: true, adminGroups: [] },
-  { email: "aziz@x.id", name: "Aziz", role: "Direktur", group: "", isAdmin: true, adminGroups: [] },
-  { email: "vero@x.id", group: "", isAdmin: true, adminGroups: [] },
+  { email: "hanief@x.id", name: "Hanief", role: "BO", level: "Brand Owner", group: "", isAdmin: true, adminGroups: [] },
+  { email: "aziz@x.id", name: "Aziz", role: "Direktur", level: "Director", group: "", isAdmin: true, adminGroups: [] },
+  { email: "vero@x.id", level: "Project Manager", group: "", isAdmin: true, adminGroups: [] },
   { email: "hcs@x.id", group: "HCS", isAdmin: true, adminGroups: ["HCS"] },
   { email: "a@x.id", group: "HCS", isAdmin: false, adminGroups: [] },
   { email: "b@x.id", group: "ADS", isAdmin: false, adminGroups: [] },

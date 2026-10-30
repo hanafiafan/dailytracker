@@ -25,7 +25,7 @@ export const entityInput = z.object({
   description: z.string().trim().max(200).default(""),
   color: z.string().trim().min(1).max(35).default("lilac"),
 });
-export const entityPatch = entityInput.partial();
+export const entityPatch = entityInput.omit({ id: true }).partial(); // the code is what members point at, so it never changes
 
 export const projectServiceInput = z.object({
   name: z.string().trim().min(1).max(80),

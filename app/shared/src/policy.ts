@@ -22,33 +22,12 @@ export interface PolicyMember {
 
 export type GuideRole = "karyawan" | "unit" | "admin" | "owner";
 
-export const isBOMember = (m?: { name?: string; role?: string; level?: string; email?: string } | null) =>
-  !!m && (
-    m.role?.trim().toUpperCase() === "BO" ||
-    m.role?.trim().toLowerCase() === "business owner" ||
-    m.role?.trim().toLowerCase() === "brand owner" ||
-    m.level?.trim().toLowerCase() === "brand owner" ||
-    m.level?.trim().toUpperCase() === "BO" ||
-    /brand owner/i.test(m.role ?? "") ||
-    /brand owner/i.test(m.level ?? "") ||
-    /hanief/i.test(m.name ?? "") ||
-    /hanief/i.test(m.email ?? "")
-  );
-
-export const isDirectorMember = (m?: { name?: string; role?: string; email?: string } | null) =>
-  !!m && (
-    m.role?.trim().toLowerCase().includes("direktur") ||
-    /aziz/i.test(m.name ?? "") ||
-    /aziz/i.test(m.email ?? "")
-  );
-
-export const isProjectManagerMember = (m?: { name?: string; role?: string; level?: string; email?: string } | null) =>
-  !!m && (
-    (!!m.role && /project manager|pm\b/i.test(m.role)) ||
-    (!!m.level && /project manager/i.test(m.level)) ||
-    /vero/i.test(m.name ?? "") ||
-    /vero/i.test(m.email ?? "")
-  );
+// Special roles live in the `level` column, which only the superadmin can change. Names, emails and the free-text job title
+// (which people may edit themselves) never grant anything.
+const is = (m: { level?: string } | null | undefined, ...names: string[]) => !!m && names.includes(m.level?.trim().toLowerCase() ?? "");
+export const isBOMember = (m?: { level?: string } | null) => is(m, "brand owner", "bo");
+export const isDirectorMember = (m?: { level?: string } | null) => is(m, "director", "direktur");
+export const isProjectManagerMember = (m?: { level?: string } | null) => is(m, "project manager");
 
 export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMember[]) {
   const mine = team.find(m => m.email === me);

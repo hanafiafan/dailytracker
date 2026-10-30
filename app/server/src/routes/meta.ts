@@ -6,7 +6,8 @@ import { entityInput, entityPatch, labelInput, projectClose, projectInput, proje
 import { entities, labels, projectServices, projects, sessions, tasks } from "../db/schema.js";
 import { toLabel, toProject } from "../dto.js";
 import { logActivity } from "../services.js";
-import { newId, type AppEnv, type Deps } from "../context.js";
+import { unitsOf } from "@shared/policy";
+import { loadTeam, newId, type AppEnv, type Deps } from "../context.js";
 
 // Projects, labels, entities, and services
 export const metaRoutes = ({ db, bus, env }: Deps) => {
@@ -130,7 +131,10 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
       })
       .delete("/entities/:id", c => {
         if (!c.var.user.policy.isSuper) return c.json({ error: "forbidden" }, 403);
-        db.delete(entities).where(eq(entities.id, c.req.param("id"))).run();
+        const id = c.req.param("id");
+        const used = loadTeam(db).filter(m => unitsOf(m).includes(id) || m.adminGroups.includes(id)).length;
+        if (used) return c.json({ error: `Entitas masih dipakai ${used} anggota. Pindahkan mereka dulu.` }, 409);
+        db.delete(entities).where(eq(entities.id, id)).run();
         bus.emit("meta"); bus.emit("team");
         return c.json({ ok: true });
       }));

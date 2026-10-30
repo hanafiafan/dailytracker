@@ -1,3 +1,4 @@
+import type { MemberDTO } from "@shared/schemas";
 import { parseYmd, ymd } from "@shared/time";
 
 export const DAYN = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"] as const;
@@ -19,3 +20,9 @@ export function dur(ms: number) {
 export const hue = (str: string) => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 export const initials = (n: string) => n.replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("") || "?";
 export const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, "") + " ↗"; } catch { return "Buka link ↗"; } };
+
+/** A member record for someone who has no row (the superadmin, or a chat member who was removed): one place to keep the field list in step with MemberDTO. */
+export const stubMember = (email: string, over: Partial<MemberDTO> = {}): MemberDTO => ({
+  email, name: email.split("@")[0] || "Anggota", role: "Anggota", group: "", extraGroups: [], isAdmin: false, adminGroups: [], sortOrder: 0, hasPhoto: false, photoV: 0,
+  seenAt: null, askAt: null, managerEmail: null, jobdesk: "", level: "", accountType: "employee", canCreateProject: false, canCommentAllProjects: false, allowedCommentProjectIds: [], ...over,
+});

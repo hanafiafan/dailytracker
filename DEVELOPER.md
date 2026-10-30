@@ -1,5 +1,7 @@
 # Daily Task — Catatan Serah Terima untuk Developer
 
+> Dokumen ini menjelaskan versi lama (claude.ai / PWA). Versi aktif ada di `app/`; aturan akses terkini ada di `app/shared/src/policy.ts`.
+
 Aplikasi tugas harian untuk tim (±22 orang, unit HCS / HCM / HUC). Repo ini berisi
 dua implementasi yang sudah berjalan + snapshot database lengkap, sebagai dasar
 pembuatan **versi mandiri**.
