@@ -6,10 +6,12 @@ import { openDb } from "../src/db/index.js";
 describe("popup input", () => {
   it("accepts every block type and refuses unsafe urls", () => {
     const ok = { title: "Halo", active: true, blocks: [
-      { type: "heading", text: "H" }, { type: "text", text: "t" }, { type: "list", items: ["a"] }, { type: "callout", tone: "warn", text: "x" },
+      { type: "heading", text: "H" }, { type: "text", text: "t" }, { type: "list", items: ["a"] }, { type: "list", style: "number", items: ["a"] }, { type: "list", style: "check", items: ["a"] }, { type: "quote", text: "q" }, { type: "accordion", title: "t", text: "x" }, { type: "divider" }, { type: "callout", tone: "warn", text: "x" },
       { type: "image", src: "data:image/jpeg;base64,AAAA" }, { type: "video", url: "https://youtu.be/abcdefghijk" }, { type: "button", label: "Buka", url: "https://a.id" },
     ] };
     expect(popupInput.safeParse(ok).success).toBe(true);
+    expect(popupInput.safeParse({ ...ok, blocks: [{ type: "list", style: "roman", items: ["a"] }] }).success).toBe(false);
+    expect(popupInput.safeParse(ok).data?.blocks[2]).toMatchObject({ type: "list", style: "bullet" }); // old popups without a style stay bullets
     expect(popupInput.safeParse({ ...ok, blocks: [{ type: "button", label: "x", url: "javascript:alert(1)" }] }).success).toBe(false);
     expect(popupInput.safeParse({ ...ok, blocks: [{ type: "image", src: "https://evil/x.png" }] }).success).toBe(false);
   });

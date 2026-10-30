@@ -136,7 +136,10 @@ export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), ur
 export const popupBlock = z.discriminatedUnion("type", [
   z.object({ type: z.literal("heading"), text: z.string().trim().min(1).max(120) }),
   z.object({ type: z.literal("text"), text: z.string().trim().min(1).max(2000) }),
-  z.object({ type: z.literal("list"), items: z.array(z.string().trim().min(1).max(200)).min(1).max(20) }),
+  z.object({ type: z.literal("list"), style: z.enum(["bullet", "number", "check"]).default("bullet"), items: z.array(z.string().trim().min(1).max(200)).min(1).max(20) }),
+  z.object({ type: z.literal("quote"), text: z.string().trim().min(1).max(500), by: z.string().trim().max(80).default("") }),
+  z.object({ type: z.literal("accordion"), title: z.string().trim().min(1).max(120), text: z.string().trim().min(1).max(2000) }),
+  z.object({ type: z.literal("divider") }),
   z.object({ type: z.literal("callout"), tone: z.enum(["info", "warn", "ok"]), text: z.string().trim().min(1).max(500) }),
   z.object({ type: z.literal("image"), src: z.string().max(900_000).regex(/^data:image\/(jpeg|png|webp);base64,/), caption: z.string().trim().max(200).default("") }),
   z.object({ type: z.literal("video"), url: httpUrl }),
