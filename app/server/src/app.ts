@@ -20,6 +20,7 @@ import { leaveRoutes } from "./routes/leaves.js";
 import { timeRoutes } from "./routes/time.js";
 import { chatRoutes } from "./routes/chat.js";
 import { bookingRoutes, resourceRoutes } from "./routes/resources.js";
+import { popupRoutes } from "./routes/popups.js";
 import { linkRoutes } from "./routes/links.js";
 import { metaRoutes } from "./routes/meta.js";
 import { reportRoutes } from "./routes/reports.js";
@@ -110,6 +111,7 @@ export function createApp(deps: Deps) {
     .use("/bookings/*", auth, team, noClientWrites).route("/bookings", bookingRoutes(deps))
     .use("/chat/*", auth, team).route("/chat", chatRoutes(deps, notify))
     .use("/links/*", auth, team, noClientWrites).route("/links", linkRoutes(deps))
+    .use("/popups/*", auth, team).route("/popups", popupRoutes(deps))
     .use("/meta/*", auth, team).route("/meta", metaRoutes(deps))
     .use("/inbox/*", auth, team).route("/inbox", inboxRoutes(deps))
     .use("/reports/*", auth, team).route("/reports", reportRoutes(deps))
@@ -166,7 +168,7 @@ export function createApp(deps: Deps) {
       permissionsPolicy: { camera: [], microphone: [], geolocation: [], payment: [] },
       contentSecurityPolicy: {
         defaultSrc: ["'self'"], scriptSrc: ["'self'", "https://accounts.google.com/gsi/client"], styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com/gsi/style"],
-        connectSrc: ["'self'", "https://accounts.google.com/gsi/"], frameSrc: ["https://accounts.google.com/gsi/"], imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "https://accounts.google.com/gsi/"], frameSrc: ["https://accounts.google.com/gsi/", "https://www.youtube-nocookie.com", "https://player.vimeo.com"], mediaSrc: ["'self'", "https:"], imgSrc: ["'self'", "data:", "blob:"],
         fontSrc: ["'self'", "data:"], workerSrc: ["'self'"], manifestSrc: ["'self'"], objectSrc: ["'none'"], baseUri: ["'self'"], formAction: ["'self'"], frameAncestors: ["'none'"],
       },
     }))

@@ -130,6 +130,19 @@ export const taskStatus = z.object({ status: z.enum(STATUSES) });
 export const taskReport = z.object({ report: z.string().trim().max(600) });
 export const commentCreate = z.object({ text: z.string().trim().min(1).max(600), mentions: z.array(email).max(10).default([]) });
 export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), url: z.string().trim().url().max(500) });
+/** Info popup: an ordered list of content blocks the superadmin composes; every member sees it once. */
+export const popupBlock = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("heading"), text: z.string().trim().min(1).max(120) }),
+  z.object({ type: z.literal("text"), text: z.string().trim().min(1).max(2000) }),
+  z.object({ type: z.literal("list"), items: z.array(z.string().trim().min(1).max(200)).min(1).max(20) }),
+  z.object({ type: z.literal("callout"), tone: z.enum(["info", "warn", "ok"]), text: z.string().trim().min(1).max(500) }),
+  z.object({ type: z.literal("image"), src: z.string().max(900_000).regex(/^data:image\/(jpeg|png|webp);base64,/), caption: z.string().trim().max(200).default("") }),
+  z.object({ type: z.literal("video"), url: httpUrl }),
+  z.object({ type: z.literal("button"), label: z.string().trim().min(1).max(60), url: httpUrl }),
+]);
+export type PopupBlock = z.infer<typeof popupBlock>;
+export const popupInput = z.object({ title: z.string().trim().min(1).max(120), blocks: z.array(popupBlock).min(1).max(20), active: z.boolean() });
+export interface PopupDTO { id: string; title: string; blocks: PopupBlock[]; active: boolean; createdAt: number }
 export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
 
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });

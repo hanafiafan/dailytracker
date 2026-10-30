@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer, blob, index, primaryKey, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 
+import type { PopupBlock } from "@shared/schemas";
+
 const bool = (name: string) => integer(name, { mode: "boolean" });
 
 export const entities = sqliteTable("entities", {
@@ -149,6 +151,19 @@ export const links = sqliteTable("links", {
   url: text("url").notNull(),
   createdAt: integer("created_at").notNull(),
 });
+
+/** Info popups composed by the superadmin; `blocks` is validated by `popupBlock` before it is stored. */
+export const popups = sqliteTable("popups", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  blocks: text("blocks", { mode: "json" }).$type<PopupBlock[]>().notNull(),
+  active: bool("active").notNull().default(true),
+  createdAt: integer("created_at").notNull(),
+});
+export const popupSeen = sqliteTable("popup_seen", {
+  popupId: text("popup_id").notNull().references(() => popups.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+}, t => [primaryKey({ columns: [t.popupId, t.email] })]);
 
 export const sessions = sqliteTable("sessions", {
   tokenHash: text("token_hash").primaryKey(),

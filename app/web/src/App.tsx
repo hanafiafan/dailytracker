@@ -12,6 +12,7 @@ import { SearchDialog } from "./components/SearchDialog";
 import { TaskDrawer } from "./components/TaskDrawer";
 import { Onboarding, needsSetup, skipSetupInDev } from "./components/Onboarding";
 import { GuideGate } from "./components/GuideView";
+import { PopupGate } from "./components/Popup";
 import { Legal } from "./components/Legal";
 import { Center, Loading, PageLoading } from "./components/ui";
 import { today } from "./lib/format";
@@ -137,6 +138,7 @@ function Signed({ me }: { me: MeDTO }) {
         </div>
         <Onboarding onClose={() => setSetup(false)} />
         {!setup && me.guideAck?.version !== GUIDE_VERSION && <GuideGate role={viewer.policy.guideRole()} />}
+        {!setup && me.guideAck?.version === GUIDE_VERSION && <PopupGate />}
         {taskId && <TaskDrawer id={taskId} />}
         {newTask && <NewTaskDialog key={JSON.stringify(newTask)} prefill={newTask} date={date} onClose={() => setNewTask(null)} onTemplate={setNewTask} />}
         {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}

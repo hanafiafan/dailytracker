@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AdminOverviewDTO, ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ProjectServiceDTO, EntityDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
+import type { AdminOverviewDTO, ChannelDTO, MessageDTO, BookingDTO, ProjectReportDTO, ProjectServiceDTO, EntityDTO, ResourceDTO, ActivityDTO, AnalyticsDTO, LeaveDTO, LinkDTO, MeDTO, MemberDTO, MetaDTO, NotificationDTO, PopupDTO, RoutineDTO, RunningTimerDTO, TaskDTO, TimeEntryDTO, TimeReportDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { ApiError, api, ok } from "./api";
 
 export const keys = {
   me: ["me"] as const, team: ["team"] as const, tasks: ["tasks"] as const, routines: ["routines"] as const, links: ["links"] as const,
   meta: ["meta"] as const, inbox: ["inbox"] as const, activity: ["activity"] as const, analytics: ["analytics"] as const, leaves: ["leaves"] as const, timer: ["timer"] as const, chat: ["chat"] as const, resources: ["resources"] as const,
-  admin: ["admin"] as const,
+  admin: ["admin"] as const, popups: ["popups"] as const,
 };
 
 /** null = not signed in. */
@@ -33,6 +33,11 @@ export const useTask = (id: string | null) => useQuery({
 });
 export const useRoutines = (enabled: boolean) => useQuery({ queryKey: keys.routines, enabled, queryFn: () => ok(api.routines.$get()) as unknown as Promise<RoutineDTO[]> });
 export const useLinks = (enabled: boolean) => useQuery({ queryKey: keys.links, enabled, queryFn: () => ok(api.links.$get()) as unknown as Promise<LinkDTO[]> });
+
+export const usePopups = (mode: "active" | "all", enabled = true) => useQuery({
+  queryKey: [...keys.popups, mode], enabled,
+  queryFn: () => ok(mode === "all" ? api.popups.$get() : api.popups.active.$get()) as unknown as Promise<PopupDTO[]>,
+});
 
 export const useLeaves = (enabled: boolean) => useQuery({ queryKey: keys.leaves, enabled, queryFn: () => ok(api.leaves.$get()) as unknown as Promise<LeaveDTO[]> });
 export const useRunning = (enabled: boolean) => useQuery({ queryKey: keys.timer, enabled, queryFn: () => ok(api.time.running.$get()) as unknown as Promise<RunningTimerDTO | null> });
@@ -90,6 +95,7 @@ export function useLive(qc: QueryClient, active: boolean) {
       else if (topic === "leaves") void qc.invalidateQueries({ queryKey: keys.leaves });
       else if (topic === "chat") void qc.invalidateQueries({ queryKey: keys.chat });
       else if (topic === "resources") void qc.invalidateQueries({ queryKey: keys.resources });
+      else if (topic === "popups") void qc.invalidateQueries({ queryKey: keys.popups });
       else if (topic === "links") void qc.invalidateQueries({ queryKey: keys.links });
     });
     es.addEventListener("ready", () => void qc.invalidateQueries()); // after a reconnect, catch up on anything missed

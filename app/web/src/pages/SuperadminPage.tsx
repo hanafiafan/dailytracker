@@ -15,6 +15,7 @@ import { useViewer } from "../lib/viewer";
 import { api, ok } from "../lib/api";
 import { fmtTime } from "../lib/format";
 import { COLOR_LABEL, colorLabel } from "../lib/tasks";
+import { PopupAdmin } from "../components/PopupAdmin";
 import { ColorPicker } from "../components/ColorPicker";
 
 const ago = (ms: number) => {
@@ -24,7 +25,7 @@ const ago = (ms: number) => {
 
 export function SuperadminPage() {
   const { me, team, policy, entities, projects } = useViewer();
-  const [tab, setTab] = useState<"overview" | "permissions" | "entities" | "audit">("overview");
+  const [tab, setTab] = useState<"overview" | "permissions" | "entities" | "popups" | "audit">("overview");
   const qc = useQueryClient();
 
   const overviewQ = useAdminOverview(policy.isSuper);
@@ -62,6 +63,7 @@ export function SuperadminPage() {
         { id: "overview", label: "Ringkasan Sistem" },
         { id: "permissions", label: `Matriks Izin (${team.length})` },
         { id: "entities", label: `Entitas & Divisi (${entities?.length ?? 0})` },
+        { id: "popups", label: "Popup Informasi" },
         { id: "audit", label: "Audit Aktivitas" },
       ]}
       tab={tab}
@@ -82,6 +84,8 @@ export function SuperadminPage() {
       {tab === "entities" && (
         <EntitiesManagementSection entities={entities ?? []} team={team} />
       )}
+
+      {tab === "popups" && <PopupAdmin />}
 
       {tab === "audit" && (
         <AuditLogSection data={auditQ.data ?? []} isLoading={auditQ.isLoading} />
