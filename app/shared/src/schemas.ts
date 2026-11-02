@@ -24,6 +24,7 @@ export const entityInput = z.object({
   name: z.string().trim().min(1).max(60),
   description: z.string().trim().max(200).default(""),
   color: z.string().trim().min(1).max(35).default("lilac"),
+  services: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
 });
 export const entityPatch = entityInput.omit({ id: true }).partial(); // the code is what members point at, so it never changes
 
@@ -98,7 +99,7 @@ export const subtaskCreate = z.object({ title: z.string().trim().min(1).max(160)
 export const subtaskPatch = z.object({ title: z.string().trim().min(1).max(160), done: z.boolean() }).partial();
 const projectBase = z.object({
   name: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(35).default("lilac"), description: z.string().trim().max(300).default(""), archived: z.boolean().default(false),
-  clientEmail: email.nullish(), pmEmail: email.nullish(), startDate: date.nullish(), dueDate: date.nullish(),
+  clientEmail: email.nullish(), entityId: z.string().max(20).nullish(), pmEmail: email.nullish(), startDate: date.nullish(), dueDate: date.nullish(),
 });
 const periodOk = (p: { startDate?: string | null; dueDate?: string | null }) => !(p.startDate && p.dueDate) || p.startDate <= p.dueDate;
 export const projectInput = projectBase.refine(periodOk, { message: "Tenggat harus setelah tanggal mulai", path: ["dueDate"] });
@@ -156,7 +157,7 @@ export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p
 
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });
 
-export interface EntityDTO { id: string; name: string; description: string; color: Color; createdAt: number }
+export interface EntityDTO { id: string; name: string; description: string; color: Color; services: string[]; createdAt: number }
 export interface ProjectServiceDTO { id: string; projectId: string; name: string; description: string; status: Status; createdAt: number; targetQty: number; unit: string; dueDate: string | null; picEmails: string[] }
 
 // ---- shapes returned by the API ----
@@ -169,7 +170,7 @@ export interface CommentDTO { id: string; by: string; byEmail: string; text: str
 export interface SubtaskDTO { id: string; title: string; done: boolean }
 export interface ProjectDTO {
   id: string; name: string; color: Color; description: string; archived: boolean; createdAt: number; closedAt: number | null; closedBy: string | null; summary: string; links: string[];
-  clientEmail: string | null; pmEmail: string | null; startDate: string | null; dueDate: string | null;
+  clientEmail: string | null; entityId: string | null; pmEmail: string | null; startDate: string | null; dueDate: string | null;
 }
 export interface LabelDTO { id: string; name: string; color: Color }
 export interface ActivityDTO { id: string; taskId: string | null; taskTitle: string | null; actorEmail: string; actorName: string; kind: string; text: string; at: number }

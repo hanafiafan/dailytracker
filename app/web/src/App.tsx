@@ -20,6 +20,7 @@ import { registerPush, pushSupported } from "./lib/push";
 import { useLive, useMe, useMeta, useTeam } from "./lib/queries";
 import { UiContext, ViewerContext, type NewTaskPrefill, type Ui, type Viewer } from "./lib/viewer";
 const ProjectReportPage = lazy(() => import("./pages/ProjectReportPage").then(m => ({ default: m.ProjectReportPage })));
+const BrandPage = lazy(() => import("./pages/BrandPage").then(m => ({ default: m.BrandPage })));
 const ProjectsPage = lazy(() => import("./pages/ProjectsPage").then(m => ({ default: m.ProjectsPage })));
 const HistoryPage = lazy(() => import("./pages/HistoryPage").then(m => ({ default: m.HistoryPage })));
 const LeavePage = lazy(() => import("./pages/LeavePage").then(m => ({ default: m.LeavePage })));
@@ -121,6 +122,7 @@ function Signed({ me }: { me: MeDTO }) {
               <Route path="/tim">{viewer.policy.isManager ? <TeamPage /> : <Redirect to="/" />}</Route>
               <Route path="/superadmin">{viewer.policy.isSuper ? <SuperadminPage /> : <Redirect to="/" />}</Route>
               <Route path="/proyek"><ProjectsPage /></Route>
+              <Route path="/brand">{viewer.policy.isManager ? <BrandPage /> : <Redirect to="/" />}</Route>
               <Route path="/proyek/:id"><ProjectReportPage /></Route>
               <Route path="/riwayat"><HistoryPage /></Route>
               <Route path="/struktur"><Redirect to="/tim" /></Route>

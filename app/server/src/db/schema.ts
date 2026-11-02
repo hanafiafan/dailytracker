@@ -9,6 +9,8 @@ export const entities = sqliteTable("entities", {
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   color: text("color").notNull().default("lilac"),
+  /** The service types this brand sells (catalog); projects of the brand pick from them. */
+  services: text("services", { mode: "json" }).$type<string[]>().notNull().default([]),
   createdAt: integer("created_at").notNull(),
 });
 
@@ -49,6 +51,8 @@ export const projects = sqliteTable("projects", {
   resultLinks: text("result_links", { mode: "json" }).$type<string[]>().notNull().default([]),
   /** The client's account (a member with accountType "client") and the project manager; both optional. */
   clientEmail: text("client_email"),
+  /** The brand (entity) the project belongs to; null = none. */
+  entityId: text("entity_id"),
   pmEmail: text("pm_email"),
   /** Planned period, YYYY-MM-DD. */
   startDate: text("start_date"),

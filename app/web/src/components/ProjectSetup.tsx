@@ -14,14 +14,15 @@ const blank = (name = "", unit = ""): Row => ({ key: crypto.randomUUID(), name, 
 
 /** Create or edit a project in one dialog: who, when, and what the client bought (services with a target and the people in charge). */
 export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClose: () => void }) {
-  const { me, team, member } = useViewer();
+  const { me, team, member, entities } = useViewer();
   const existing = useProjectServices(project?.id ?? null);
   const clients = team.filter(m => m.accountType === "client"), staff = team.filter(m => m.accountType !== "client");
   const managers = staff.filter(m => m.isAdmin || /project manager|owner|direktur|bo\b/i.test(m.role + " " + m.level));
-  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email);
+  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email), [entityId, setEntity] = useState(project?.entityId ?? "");
   const [startDate, setStart] = useState(project?.startDate ?? ""), [dueDate, setDue] = useState(project?.dueDate ?? "");
   const [description, setDescription] = useState(project?.description ?? ""), [color, setColor] = useState<string>(project?.color ?? "lilac");
   const [rows, setRows] = useState<Row[]>([]), [loaded, setLoaded] = useState(!project), [more, setMore] = useState(false);
+  const brandServices = entities.find(e => e.id === entityId)?.services ?? [];
   const [removed, setRemoved] = useState<string[]>([]);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClo
   const drop = (r: Row) => { if (r.id) setRemoved(x => [...x, r.id!]); setRows(l => l.filter(x => x.key !== r.key)); };
 
   const save = useAction(async () => {
-    const body = { name: name.trim(), description: description.trim(), color: color as Color, clientEmail: client || null, pmEmail: pm || null, startDate: startDate || null, dueDate: dueDate || null };
+    const body = { name: name.trim(), description: description.trim(), color: color as Color, clientEmail: client || null, entityId: entityId || null, pmEmail: pm || null, startDate: startDate || null, dueDate: dueDate || null };
     let id = project?.id;
     if (id) await ok(api.meta.projects[":id"].$patch({ param: { id }, json: body }));
     else id = ((await ok(api.meta.projects.$post({ json: body }))) as { id: string }).id;
@@ -63,6 +64,11 @@ export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClo
             <section className="dsec">
               <label className="field"><span>Nama proyek</span><input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="mis. Foto produk Toko Maju" maxLength={60} autoFocus required /></label>
               <div className="grid2">
+                <label className="field"><span>Brand</span>
+                  <select className="input" value={entityId} onChange={e => setEntity(e.target.value)}>
+                    <option value="">Tanpa brand</option>
+                    {entities.map(e => <option key={e.id} value={e.id}>{e.id} · {e.name}</option>)}
+                  </select></label>
                 <label className="field"><span>Akun client</span>
                   <select className="input" value={client} onChange={e => setClient(e.target.value)}>
                     <option value="">{clients.length ? "Tanpa client" : "Belum ada akun client"}</option>
@@ -97,7 +103,7 @@ export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClo
                 </div>
               )) : <p className="muted">Memuat layanan…</p>}
               <div className="chips">
-                {PRESETS.map(([n, u]) => <button type="button" key={n} className="chip" onClick={() => setRows(r => [...r, blank(n, u)])}><Plus size={12} />{n}</button>)}
+                {(brandServices.length ? brandServices.map((n): [string, string] => [n, ""]) : PRESETS).map(([n, u]) => <button type="button" key={n} className="chip" onClick={() => setRows(r => [...r, blank(n, u)])}><Plus size={12} />{n}</button>)}
                 <button type="button" className="chip" onClick={() => setRows(r => [...r, blank()])}><Plus size={12} />Layanan lain</button>
               </div>
             </section>

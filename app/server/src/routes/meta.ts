@@ -43,7 +43,7 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
       const row = { id: newId(), ...c.req.valid("json"), createdAt: Date.now() };
       db.insert(projects).values(row).run();
       bus.emit("meta");
-      return c.json(toProject({ clientEmail: null, pmEmail: null, startDate: null, dueDate: null, ...row, closedAt: null, closedBy: null, summary: "", resultLinks: [] }), 201);
+      return c.json(toProject({ clientEmail: null, entityId: null, pmEmail: null, startDate: null, dueDate: null, ...row, closedAt: null, closedBy: null, summary: "", resultLinks: [] }), 201);
     })
     .route("/", guard
       .patch("/projects/:id", zValidator("json", projectPatch), c => {
@@ -124,7 +124,7 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
         return c.json(row, 201);
       })
       .patch("/entities/:id", zValidator("json", entityPatch), c => {
-        if (!c.var.user.policy.isSuper) return c.json({ error: "forbidden" }, 403);
+        if (!c.var.user.policy.canManageBrand()) return c.json({ error: "forbidden" }, 403);
         db.update(entities).set(c.req.valid("json")).where(eq(entities.id, c.req.param("id"))).run();
         bus.emit("meta"); bus.emit("team");
         return c.json({ ok: true });
@@ -134,6 +134,8 @@ export const metaRoutes = ({ db, bus, env }: Deps) => {
         const id = c.req.param("id");
         const used = loadTeam(db).filter(m => unitsOf(m).includes(id) || m.adminGroups.includes(id)).length;
         if (used) return c.json({ error: `Entitas masih dipakai ${used} anggota. Pindahkan mereka dulu.` }, 409);
+        const inProjects = db.select({ id: projects.id }).from(projects).where(eq(projects.entityId, id)).all().length;
+        if (inProjects) return c.json({ error: `Entitas masih dipakai ${inProjects} proyek. Pindahkan proyeknya dulu.` }, 409);
         db.delete(entities).where(eq(entities.id, id)).run();
         bus.emit("meta"); bus.emit("team");
         return c.json({ ok: true });

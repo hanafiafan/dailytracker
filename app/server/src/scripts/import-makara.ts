@@ -41,7 +41,7 @@ const pic = (s: string) => s.startsWith("Veronica") ? veronica : hanafi;
 
 const now = Date.now(), today = wib().date;
 let project: typeof projects.$inferSelect | undefined = db.select().from(projects).where(eq(projects.name, "Makara")).get();
-if (!project) { project = { id: newId(), name: "Makara", color: "mint", description: "Perbaikan dan migrasi situs makaratrust.id", archived: false, createdAt: now, closedAt: null, closedBy: null, summary: "", resultLinks: [], clientEmail: null, pmEmail: veronica.email, startDate: null, dueDate: null }; db.insert(projects).values(project).run(); }
+if (!project) { project = { id: newId(), name: "Makara", color: "mint", description: "Perbaikan dan migrasi situs makaratrust.id", archived: false, createdAt: now, closedAt: null, closedBy: null, summary: "", resultLinks: [], clientEmail: null, entityId: null, pmEmail: veronica.email, startDate: null, dueDate: null }; db.insert(projects).values(project).run(); }
 const labelId = new Map<string, string>();
 const label = (name: string) => {
   if (!labelId.has(name)) labelId.set(name, db.select().from(labels).where(eq(labels.name, name)).get()?.id ?? (() => { const id = newId(); db.insert(labels).values({ id, name, color: "sky" }).run(); return id; })());

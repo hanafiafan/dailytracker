@@ -59,6 +59,8 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
       return isDirectorMember(t);
     }
     const t = target(email);
+    // A Director (Aziz, Tutik, ...) takes tasks only from the Superadmin and the BO, not from other admins or PMs, nor from a fellow Director.
+    if (isDirectorMember(t) && email !== me) return false;
     if (isBOMember(t)) {
       // BO ranks above Admin and Director; only Superadmin (isOwner) can manage BO
       return false;
@@ -95,6 +97,8 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   /** Superadmin: the owner account (Hellens). Brand Owner is separated from Superadmin. */
   const isSuper = isOwner;
   const canCreateMember = () => isSuper;
+  /** Edit a brand's name, description and service types: Superadmin, admins, Directors and the BO (creating/deleting brands stays Superadmin). */
+  const canManageBrand = () => isOwner || isAdmin || isDirector || isBO;
 
   /** Project creation switch: Managers (Owner, Admin, PM, BO) or members with canCreateProject switch enabled */
   const canCreateProject = () => isManager || !!mine?.canCreateProject;
@@ -143,7 +147,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
 
   return {
     me, isOwner, isSuper, isBO, isDirector, isPM, isClient, guideRole, isMember, isAdmin, isBoss, isManager,
-    groups, manages, canManage, canSee, canCreateMember, canEditMember, canApproveTask, needsTaskApproval,
+    groups, manages, canManage, canSee, canCreateMember, canManageBrand, canEditMember, canApproveTask, needsTaskApproval,
     canCreateProject, canCommentTask, canChatWith
   };
 }

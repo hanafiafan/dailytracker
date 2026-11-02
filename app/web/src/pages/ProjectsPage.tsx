@@ -61,10 +61,10 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
 import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
 
 export function ProjectsPage() {
-  const { me, projects, policy, member } = useViewer();
+  const { me, projects, policy, member, entities } = useViewer();
   const { date } = useUi();
   const [tab, setTab] = useState("ringkas"), [closing, setClosing] = useState<string | null>(null);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(""), [brand, setBrand] = useState("");
   const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [showAddProject, setShowAddProject] = useState(false);
   const [, go] = useLocation();
@@ -80,6 +80,7 @@ export function ProjectsPage() {
       .filter(p => {
         // A client only sees the projects that carry their account.
         if (policy.isClient && p.clientEmail !== me.email) return false;
+        if (brand && p.entityId !== brand) return false;
         // Status filter
         if (statusFilter === "active" && (p.closedAt || p.archived)) return false;
         if (statusFilter === "archived" && !p.closedAt && !p.archived) return false;
@@ -107,7 +108,7 @@ export function ProjectsPage() {
         return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length };
       })
       .sort((a, b) => b.open - a.open);
-  }, [tq.data, projects, member, statusFilter, q, policy.isClient, me.email, stats]);
+  }, [tq.data, projects, member, statusFilter, brand, q, policy.isClient, me.email, stats]);
 
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
@@ -138,6 +139,10 @@ export function ProjectsPage() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {entities.length > 0 && <select className="input" aria-label="Filter brand" value={brand} onChange={e => setBrand(e.target.value)}>
+                <option value="">Semua brand</option>
+                {entities.map(e => <option key={e.id} value={e.id}>{e.id}</option>)}
+              </select>}
               <div className="seg" role="group" aria-label="Filter status">
                 <button aria-pressed={statusFilter === "active"} onClick={() => setStatusFilter("active")}>
                   Aktif ({projects.filter(p => !p.closedAt && !p.archived).length})

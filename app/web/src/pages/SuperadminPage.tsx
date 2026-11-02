@@ -342,6 +342,8 @@ function PermissionsMatrixSection({
   );
 }
 
+const svcLines = (f: FormData) => String(f.get("services") ?? "").split("\n").map(s => s.trim()).filter(Boolean);
+
 function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; team: MemberDTO[] }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<EntityDTO | null>(null);
@@ -353,7 +355,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
     const description = String(f.get("description") ?? "").trim();
     const color = (String(f.get("color") ?? "blue") as Color);
     if (!id || !name) return toast.error("Kode dan Nama entitas wajib diisi");
-    await ok(api.meta.entities.$post({ json: { id, name, description, color } }));
+    await ok(api.meta.entities.$post({ json: { id, name, description, color, services: svcLines(f) } }));
     await qc.invalidateQueries({ queryKey: keys.meta });
   }, { done: "Entitas baru berhasil dibuat" });
 
@@ -362,7 +364,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
     const name = String(f.get("name")).trim();
     const description = String(f.get("description") ?? "").trim();
     const color = (String(f.get("color") ?? "blue") as Color);
-    await ok(api.meta.entities[":id"].$patch({ param: { id: editing.id }, json: { name, description, color } }));
+    await ok(api.meta.entities[":id"].$patch({ param: { id: editing.id }, json: { name, description, color, services: svcLines(f) } }));
     await qc.invalidateQueries({ queryKey: keys.meta });
     setEditing(null);
   }, { done: "Entitas berhasil diperbarui" });
@@ -426,6 +428,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
                 <label className="field"><span>Kode Entitas (misal: HCS, HCM, ADS)</span><input className="input" name="id" required maxLength={10} placeholder="HCS" autoFocus /></label>
                 <label className="field"><span>Nama Lengkap Entitas</span><input className="input" name="name" required maxLength={60} placeholder="HAN Creative Studio" /></label>
                 <label className="field"><span>Deskripsi</span><input className="input" name="description" maxLength={200} placeholder="Fokus pada layanan konten visual dan branding..." /></label>
+                <label className="field"><span>Jenis layanan (satu per baris)</span><textarea className="input" name="services" rows={4} placeholder={"Foto produk\nVideo\nDesain"} /></label>
                 <label className="field"><span>Warna Identitas</span>
                   <ColorPicker name="color" defaultValue="blue" />
                 </label>
@@ -452,6 +455,7 @@ function EntitiesManagementSection({ entities, team }: { entities: EntityDTO[]; 
               <div className="dialog-b" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <label className="field"><span>Nama Lengkap Entitas</span><input className="input" name="name" defaultValue={editing.name} required maxLength={60} /></label>
                 <label className="field"><span>Deskripsi</span><input className="input" name="description" defaultValue={editing.description} maxLength={200} /></label>
+                <label className="field"><span>Jenis layanan (satu per baris)</span><textarea className="input" name="services" rows={4} defaultValue={editing.services.join("\n")} /></label>
                 <label className="field"><span>Warna Identitas</span>
                   <ColorPicker name="color" defaultValue={editing.color} />
                 </label>

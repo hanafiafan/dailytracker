@@ -107,3 +107,23 @@ describe("policy", () => {
     }
   });
 });
+
+describe("Director peers (Aziz, Tutik)", () => {
+  it("only the Superadmin and BO can manage a Director; other admins, PMs and fellow Directors cannot", () => {
+    const team = [
+      { email: "aziz@x.id", level: "Director", isAdmin: true, adminGroups: [], group: "" },
+      { email: "tutik@x.id", level: "Director", isAdmin: true, adminGroups: [], group: "" },
+      { email: "yoga@x.id", level: "Staff", isAdmin: true, adminGroups: [], group: "" },
+      { email: "vero@x.id", level: "Project Manager", isAdmin: false, adminGroups: [], group: "" },
+      { email: "hanief@x.id", level: "Brand Owner", isAdmin: false, adminGroups: [], group: "" },
+    ];
+    const as = (e: string, owner = false) => makePolicy(e, owner, team);
+    expect(as("yoga@x.id").canManage("tutik@x.id")).toBe(false);
+    expect(as("vero@x.id").canManage("aziz@x.id")).toBe(false);
+    expect(as("aziz@x.id").canManage("tutik@x.id")).toBe(false);
+    expect(as("hanief@x.id").canManage("tutik@x.id")).toBe(true);
+    expect(as("owner@x.id", true).canManage("tutik@x.id")).toBe(true);
+    expect(as("yoga@x.id").canManageBrand()).toBe(true);
+    expect(as("vero@x.id").canManageBrand()).toBe(false);
+  });
+});

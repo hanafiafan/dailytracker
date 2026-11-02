@@ -5,7 +5,7 @@ import type { Policy } from "@shared/policy";
 export interface Viewer {
   me: MeDTO; team: MemberDTO[]; policy: Policy;
   projects: ProjectDTO[]; labels: LabelDTO[];
-  entities?: EntityDTO[];
+  entities: EntityDTO[];
   member: (email: string) => MemberDTO | undefined;
   project: (id: string | null) => ProjectDTO | undefined;
   label: (id: string) => LabelDTO | undefined;
