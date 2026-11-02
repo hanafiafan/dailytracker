@@ -6,6 +6,7 @@ import { ColorPicker } from "./ColorPicker";
 import { Avatar } from "./ui";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useProjectServices } from "../lib/queries";
+import { unitsOf } from "@shared/policy";
 import { useViewer } from "../lib/viewer";
 
 interface Row { key: string; id?: string; name: string; targetQty: string; unit: string; picEmails: string[] }
@@ -18,7 +19,7 @@ export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClo
   const existing = useProjectServices(project?.id ?? null);
   const clients = team.filter(m => m.accountType === "client"), staff = team.filter(m => m.accountType !== "client");
   const managers = staff.filter(m => m.isAdmin || /project manager|owner|direktur|bo\b/i.test(m.role + " " + m.level));
-  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email), [entityId, setEntity] = useState(project?.entityId ?? "");
+  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email), [entityId, setEntity] = useState(project?.entityId ?? (unitsOf(member(me.email) ?? { group: "" }).find(u => entities.some(e => e.id === u)) ?? ""));
   const [startDate, setStart] = useState(project?.startDate ?? ""), [dueDate, setDue] = useState(project?.dueDate ?? "");
   const [description, setDescription] = useState(project?.description ?? ""), [color, setColor] = useState<string>(project?.color ?? "lilac");
   const [rows, setRows] = useState<Row[]>([]), [loaded, setLoaded] = useState(!project), [more, setMore] = useState(false);

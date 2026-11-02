@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta, useTasks, windowFrom } from "../lib/queries";
-import { HEALTH_LABEL, pct as pctOf, type Health } from "../lib/projects";
+import { HEALTH_LABEL, brandOf, pct as pctOf, type Health } from "../lib/projects";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -80,7 +80,7 @@ export function ProjectsPage() {
       .filter(p => {
         // A client only sees the projects that carry their account.
         if (policy.isClient && p.clientEmail !== me.email) return false;
-        if (brand && p.entityId !== brand) return false;
+        if (brand && brandOf(p, member, entities.map(e => e.id)) !== brand) return false;
         // Status filter
         if (statusFilter === "active" && (p.closedAt || p.archived)) return false;
         if (statusFilter === "archived" && !p.closedAt && !p.archived) return false;

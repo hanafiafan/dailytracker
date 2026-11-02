@@ -4,6 +4,7 @@ import { Page } from "../components/Page";
 import { Avatar, Empty } from "../components/ui";
 import { api, ok } from "../lib/api";
 import { keys, useAction } from "../lib/queries";
+import { brandOf } from "../lib/projects";
 import { useViewer } from "../lib/viewer";
 
 /** One tab per brand (entity): its service catalog, and its clients split into active and history, derived from the projects. */
@@ -11,21 +12,22 @@ export function BrandPage() {
   const { entities, projects, member, policy } = useViewer();
   const [pick, setPick] = useState(""), [show, setShow] = useState<"active" | "history" | "all">("active"), [edit, setEdit] = useState<string | null>(null);
   const save = useAction((v: { id: string; services: string[] }) => ok(api.meta.entities[":id"].$patch({ param: { id: v.id }, json: { services: v.services } })), { done: "Layanan brand disimpan", refresh: [keys.meta] });
+  const assign = useAction((v: { id: string; entityId: string }) => ok(api.meta.projects[":id"].$patch({ param: { id: v.id }, json: { entityId: v.entityId } })), { done: "Brand proyek disimpan", refresh: [keys.meta] });
   const [, go] = useLocation();
   const brand = entities.find(e => e.id === pick) ?? entities[0];
 
   const data = useMemo(() => {
     if (!brand) return null;
-    const mine = projects.filter(p => p.entityId === brand.id), live = (p: (typeof mine)[number]) => !p.closedAt && !p.archived;
+    const ids = entities.map(e => e.id), mine = projects.filter(p => brandOf(p, member, ids) === brand.id), live = (p: (typeof mine)[number]) => !p.closedAt && !p.archived;
     const byClient = new Map<string, typeof mine>();
     for (const p of mine) if (p.clientEmail) byClient.set(p.clientEmail, [...(byClient.get(p.clientEmail) ?? []), p]);
     const clients = [...byClient].map(([email, ps]) => ({ email, ps, active: ps.some(live), since: Math.min(...ps.map(p => p.createdAt)) }))
       .sort((a, b) => Number(b.active) - Number(a.active) || a.since - b.since);
-    return { mine, live, clients, noClient: mine.filter(p => !p.clientEmail).length };
-  }, [brand, projects]);
+    return { mine, live, clients, noClient: mine.filter(p => !p.clientEmail).length, loose: projects.filter(p => !brandOf(p, member, ids)) };
+  }, [brand, projects, entities, member]);
 
   if (!brand || !data) return <Page title="Brand" sub="Belum ada brand"><div className="bc"><Empty art="tasks" title="Belum ada brand">Superadmin dapat menambah brand di menu Superadmin → Entitas.</Empty></div></Page>;
-  const { mine, live, clients, noClient } = data, activeN = clients.filter(c => c.active).length;
+  const { mine, live, clients, noClient, loose } = data, activeN = clients.filter(c => c.active).length;
   const rows = clients.filter(c => show === "all" || (show === "active") === c.active);
 
   return (
@@ -75,6 +77,19 @@ export function BrandPage() {
         }) : <Empty art="tasks" title={show === "history" ? "Belum ada riwayat client" : "Belum ada client"}>Pilih brand dan akun client saat membuat proyek agar tampil di sini.</Empty>}
         {noClient > 0 && <p className="muted" style={{ marginTop: 10 }}>{noClient} proyek brand ini belum punya akun client.</p>}
       </section>
+      {loose.length > 0 && policy.canCreateProject() && (
+        <section className="bc">
+          <div className="bc-h"><h2>Proyek tanpa brand ({loose.length})</h2></div>
+          <p className="muted">Pilih brand agar proyek ini masuk ke daftar client brand.</p>
+          {loose.map(p => (
+            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: "1px solid var(--border)" }}>
+              <b className="clamp1" style={{ flex: 1 }}>{p.name}</b>
+              <select className="input" aria-label={"Brand " + p.name} value="" onChange={e => e.target.value && assign.mutate({ id: p.id, entityId: e.target.value })}>
+                <option value="">Pilih brand…</option>
+                {entities.map(e => <option key={e.id} value={e.id}>{e.id}</option>)}
+              </select>
+            </div>))}
+        </section>)}
     </Page>
   );
 }

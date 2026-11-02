@@ -1,5 +1,11 @@
 import type { ProjectReportDTO, ProjectServiceDTO } from "@shared/schemas";
+import type { MemberDTO, ProjectDTO } from "@shared/schemas";
+import { unitsOf } from "@shared/policy";
 import { addDays, parseYmd, wib } from "@shared/time";
+
+/** A project's brand: the one set on it, else the brand unit of its client or PM (so older projects line up without editing each). */
+export const brandOf = (p: ProjectDTO, member: (email: string) => MemberDTO | undefined, brandIds: string[]) =>
+  p.entityId ?? [p.clientEmail, p.pmEmail].flatMap(e => (e ? unitsOf(member(e) ?? { group: "" }) : [])).find(u => brandIds.includes(u)) ?? null;
 
 type T = ProjectReportDTO["tasks"][number];
 export type Health = "ok" | "risk" | "late" | "done" | "idle";
