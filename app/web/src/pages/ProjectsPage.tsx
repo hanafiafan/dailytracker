@@ -105,10 +105,10 @@ export function ProjectsPage() {
         const left = p.dueDate ? Math.round((new Date(p.dueDate + "T12:00:00+07:00").getTime() - new Date(today() + "T12:00:00+07:00").getTime()) / 86_400_000) : null;
         const elapsed = p.startDate && p.dueDate ? pctOf(Math.max(0, Math.round((new Date(today()).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1), Math.round((new Date(p.dueDate).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1) : null;
         const health: Health = p.closedAt || pct >= 100 ? "done" : left !== null && left < 0 ? "late" : elapsed !== null && pct + 15 < elapsed ? "risk" : total || withT.length ? "ok" : "idle";
-        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length };
+        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)) };
       })
       .sort((a, b) => b.open - a.open);
-  }, [tq.data, projects, member, statusFilter, brand, q, policy.isClient, me.email, stats]);
+  }, [tq.data, projects, member, entities, statusFilter, brand, q, policy.isClient, me.email, stats]);
 
   return (
     <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
@@ -139,10 +139,10 @@ export function ProjectsPage() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {entities.length > 0 && <select className="input" aria-label="Filter brand" value={brand} onChange={e => setBrand(e.target.value)}>
-                <option value="">Semua brand</option>
-                {entities.map(e => <option key={e.id} value={e.id}>{e.id}</option>)}
-              </select>}
+              {entities.length > 0 && <div className="seg" role="group" aria-label="Filter brand">
+                <button aria-pressed={!brand} onClick={() => setBrand("")}>Semua</button>
+                {entities.map(e => <button key={e.id} aria-pressed={brand === e.id} onClick={() => setBrand(e.id)}>{e.id}</button>)}
+              </div>}
               <div className="seg" role="group" aria-label="Filter status">
                 <button aria-pressed={statusFilter === "active"} onClick={() => setStatusFilter("active")}>
                   Aktif ({projects.filter(p => !p.closedAt && !p.archived).length})
@@ -167,19 +167,19 @@ export function ProjectsPage() {
           {showAddProject && policy.canCreateProject() && <ProjectSetup onClose={() => setShowAddProject(false)} />}
 
           {rows.length && mobile ? (
-            <div className="mpgrid">{rows.map(({ p, total, late, open, pct }, i) => (
+            <div className="mpgrid">{rows.map(({ p, total, late, open, pct, brandId }, i) => (
               <button key={p.id} className={"mproj " + (p.closedAt ? "" : i % 3 === 0 ? "lime" : i % 3 === 1 ? "dark" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-                <span className="mt-go"><ArrowUpRight size={16} /></span><small className="clamp2">{p.name}{p.closedAt ? " · selesai" : ""}</small><b>{pct}<span>%</span></b>
+                <span className="mt-go"><ArrowUpRight size={16} /></span><small className="clamp2">{brandId ? brandId + " · " : ""}{p.name}{p.closedAt ? " · selesai" : ""}</small><b>{pct}<span>%</span></b>
                 <em>{open} terbuka · {total} tugas{late ? ` · ${late} terlambat` : ""}</em><span className="mprog"><i style={{ width: `${pct}%` }} /></span>
               </button>))}</div>
           ) : rows.length ? (
             <div className="pcards">
-              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services }) => {
+              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId }) => {
                 const client = p.clientEmail ? member(p.clientEmail) : null, pm = p.pmEmail ? member(p.pmEmail) : null;
                 return (
                 <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
                   <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a></h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p>
-                    <div className="chips" style={{ marginTop: 6 }}><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}</div></div></div>
+                    <div className="chips" style={{ marginTop: 6 }}><span className="chip" data-c={entities.find(e => e.id === brandId)?.color} title="Brand pemilik proyek"><b>{brandId ?? "Tanpa brand"}</b></span><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}</div></div></div>
                   {(client || pm || services > 0) && <div className="pj-meta">
                     <span><small>Client</small><b className="clamp1">{client?.name ?? "–"}</b></span>
                     <span><small>PM</small><b className="clamp1">{pm?.name ?? "–"}</b></span>
