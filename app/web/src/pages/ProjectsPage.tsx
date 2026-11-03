@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta, useTasks, windowFrom } from "../lib/queries";
-import { HEALTH_LABEL, brandOf, calcPace, formatCombinedPace, pct as pctOf, type Health } from "../lib/projects";
+import { HEALTH_LABEL, brandOf, pct as pctOf, type Health } from "../lib/projects";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -105,23 +105,13 @@ export function ProjectsPage() {
         const left = p.dueDate ? Math.round((new Date(p.dueDate + "T12:00:00+07:00").getTime() - new Date(today() + "T12:00:00+07:00").getTime()) / 86_400_000) : null;
         const elapsed = p.startDate && p.dueDate ? pctOf(Math.max(0, Math.round((new Date(today()).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1), Math.round((new Date(p.dueDate).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1) : null;
         const health: Health = p.closedAt || pct >= 100 ? "done" : left !== null && left < 0 ? "late" : elapsed !== null && pct + 15 < elapsed ? "risk" : total || withT.length ? "ok" : "idle";
-        let paceText: string | null = null;
-        if (withT.length > 0 && !p.closedAt) {
-          if (one) {
-            const pace = calcPace(one.t, one.d, units[0] ?? "", p.dueDate, today());
-            if (pace.paceText && one.t > one.d) paceText = pace.paceText;
-          } else {
-            const paces = withT.map(x => calcPace(x.target, x.delivered, x.unit, p.dueDate, today())).filter(x => x.needed > 0 && x.paceText);
-            if (paces.length) paceText = formatCombinedPace(paces.map(x => x.paceText));
-          }
-        }
-        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)), paceText };
+        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)) };
       })
       .sort((a, b) => b.open - a.open);
   }, [tq.data, projects, member, entities, statusFilter, brand, q, policy.isClient, me.email, stats]);
 
   return (
-    <Page title="Proyek" sub="Monitoring progres proyek, target kuantitatif, kecepatan harian tim, dan laporan klien"
+    <Page title="Proyek" sub="Monitoring progres proyek, target kuantitatif, dan laporan klien"
       tabs={[
         { id: "ringkas", label: "Ringkasan" },
         { id: "waktu", label: "Garis waktu" },
@@ -184,7 +174,7 @@ export function ProjectsPage() {
               </button>))}</div>
           ) : rows.length ? (
             <div className="pcards">
-              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId, paceText }) => {
+              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId }) => {
                 const client = p.clientEmail ? member(p.clientEmail) : null, pm = p.pmEmail ? member(p.pmEmail) : null;
                 return (
                   <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
@@ -221,9 +211,9 @@ export function ProjectsPage() {
                         <b className="clamp1" title={pm?.name ?? "–"}>{pm?.name ?? "–"}</b>
                       </span>
                       <span>
-                        <small>{paceText ? "Ritme" : result ? "Target" : "Layanan"}</small>
-                        <b className="clamp1" style={{ color: paceText ? "var(--blue)" : undefined }} title={paceText ? `Kebutuhan ritme harian: ${paceText}` : (result ?? (services ? `${services} layanan` : "–"))}>
-                          {paceText ? `⚡ ${paceText}` : (result ?? (services ? `${services} layanan` : "–"))}
+                        <small>{result ? "Target" : "Layanan"}</small>
+                        <b className="clamp1" title={result ?? (services ? `${services} layanan` : "–")}>
+                          {result ?? (services ? `${services} layanan` : "–")}
                         </b>
                       </span>
                     </div>

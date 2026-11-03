@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
-import { ArrowLeft, CalendarRange, CheckCheck, ExternalLink, FolderKanban, History, Image as ImageIcon, ListChecks, Pencil, Plus, Printer, RotateCcw, ShieldCheck, Timer, Users, Zap } from "lucide-react";
+import { ArrowLeft, CalendarRange, CheckCheck, ExternalLink, FolderKanban, History, Image as ImageIcon, ListChecks, Pencil, Plus, Printer, RotateCcw, ShieldCheck, Timer, Users } from "lucide-react";
 import type { ProjectReportDTO } from "@shared/schemas";
 import { CloseProject } from "../components/CloseProject";
 import { ProjectSetup } from "../components/ProjectSetup";
@@ -69,12 +69,6 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
       <header><b className="clamp1">{s.name}</b><span className="pj-pct">{x.progress}%</span></header>
       <div className="pj-bar" role="progressbar" aria-valuenow={x.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Progres ${s.name}`}><i style={{ width: `${x.progress}%` }} /></div>
       <p className="pj-fig">{num ? <><b>{x.delivered.toLocaleString("id-ID")}</b> / {qtyText(s.targetQty, s.unit)}</> : <><b>{x.done}</b> / {x.tasks.length} tugas</>}{s.dueDate && <span className="muted"> · tenggat {fmtShort(s.dueDate)}</span>}</p>
-      {x.paceText && (
-        <div className="pj-pace" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: "var(--r-sm)", fontSize: ".76rem", fontWeight: 700, margin: "2px 0 6px", background: x.progress >= 100 ? "var(--ok-soft)" : x.daysLeft !== null && x.daysLeft < 0 ? "var(--bad-soft)" : "var(--info-soft)", color: x.progress >= 100 ? "var(--ok)" : x.daysLeft !== null && x.daysLeft < 0 ? "var(--bad)" : "var(--blue)" }}>
-          <Zap size={11} />
-          <span>{x.paceText}</span>
-        </div>
-      )}
       <footer>
         <People emails={x.people} />
         <span className="muted pj-sub">{x.done}/{x.tasks.length} tugas · {x.proofs} bukti{x.late ? <b className="bad"> · {x.late} terlambat</b> : null}</span>
@@ -318,12 +312,6 @@ export function ProjectReportPage() {
           <div className="chips"><span className={"pj-health " + m.health} title={m.healthNote}>{HEALTH_LABEL[m.health]}</span>
             {(m.start || m.due) && <span className="chip"><CalendarRange size={13} />{m.start ? fmtShort(m.start) : "…"} – {m.due ? fmtShort(m.due) : "…"}</span>}
             {m.daysLeft !== null && !p.closedAt && <span className={"chip" + (m.daysLeft < 0 ? " bad" : "")}>{m.daysLeft < 0 ? `Lewat ${-m.daysLeft} hari` : m.daysLeft === 0 ? "Tenggat hari ini" : `${m.daysLeft} hari lagi`}</span>}
-            {m.overallPaceText && !p.closedAt && (
-              <span className="chip" style={{ background: "var(--volt)", color: "var(--ink)", fontWeight: 700 }} title="Rekomendasi target harian untuk mencapai tenggat">
-                <Zap size={11} style={{ marginRight: 3, verticalAlign: -1 }} />
-                {m.overallPaceText}
-              </span>
-            )}
           </div>
           <p className="muted" style={{ maxWidth: "62ch" }}>{p.description || m.healthNote}</p>
           <div className="pj-who">
@@ -342,7 +330,7 @@ export function ProjectReportPage() {
         </div>
       </section>
       <div className="pj-kpis">
-        <Kpi label="Hasil terkumpul" value={m.lines.length === 1 ? `${m.lines[0]!.delivered.toLocaleString("id-ID")} / ${m.lines[0]!.target.toLocaleString("id-ID")}` : m.lines.length ? `${m.progress}%` : String(tasks.filter(t => t.status === "done").reduce((n, t) => n + t.qty, 0))} sub={m.overallPaceText ? `⚡ ${m.overallPaceText}` : m.lines.length === 1 ? m.lines[0]!.unit : m.lines.length ? linesText(m) : "belum ada target"} />
+        <Kpi label="Hasil terkumpul" value={m.lines.length === 1 ? `${m.lines[0]!.delivered.toLocaleString("id-ID")} / ${m.lines[0]!.target.toLocaleString("id-ID")}` : m.lines.length ? `${m.progress}%` : String(tasks.filter(t => t.status === "done").reduce((n, t) => n + t.qty, 0))} sub={m.lines.length === 1 ? m.lines[0]!.unit : m.lines.length ? linesText(m) : "belum ada target"} />
         <Kpi label="Tugas selesai" value={`${s.done}/${s.total}`} sub={`${s.open} terbuka`} />
         <Kpi label="Bukti terlampir" value={String(s.withProof)} sub={s.done ? `${pct(s.withProof, s.done)}% dari selesai` : "–"} />
         <Kpi label="Terlambat" value={String(tasks.filter(t => t.status !== "done" && t.date < today()).length)} sub="tugas belum selesai" tone={tasks.some(t => t.status !== "done" && t.date < today()) ? "bad" : undefined} />

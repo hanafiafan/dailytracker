@@ -8,7 +8,6 @@ import { api, ok } from "../lib/api";
 import { keys, useAction, useProjectServices } from "../lib/queries";
 import { unitsOf } from "@shared/policy";
 import { useViewer } from "../lib/viewer";
-import { calcPace } from "../lib/projects";
 import { today } from "../lib/format";
 
 interface Row { key: string; id?: string; name: string; targetQty: string; unit: string; picEmails: string[] }
@@ -66,8 +65,6 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
 
         const targetQty = Number(r.targetQty) || 0;
         const unit = r.unit.trim();
-        const pace = calcPace(targetQty, 0, unit, dueDate || null, today());
-        const paceDesc = pace.paceText ? ` (⚡ ${pace.paceText})` : targetQty ? ` (${targetQty} ${unit})` : "";
         const taskDate = startDate && startDate > today() ? startDate : today();
 
         for (const picEmail of targetPics) {
@@ -75,8 +72,8 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
             await ok(api.tasks.$post({
               json: {
                 emails: [picEmail],
-                title: `${r.name.trim()} · ${name.trim()}${paceDesc}`,
-                note: `Ditugaskan dari proyek "${name.trim()}". Layanan: ${r.name.trim()}${targetQty ? ` · Target: ${targetQty} ${unit}` : ""}${dueDate ? ` · Tenggat: ${dueDate}` : ""}.${paceDesc}`,
+                title: `${r.name.trim()} · ${name.trim()}`,
+                note: `Ditugaskan dari proyek "${name.trim()}". Layanan: ${r.name.trim()}${targetQty ? ` · Target: ${targetQty} ${unit}` : ""}${dueDate ? ` · Tenggat: ${dueDate}` : ""}.`,
                 date: taskDate,
                 projectId: id,
                 serviceId,
@@ -151,7 +148,7 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
               <div className="dsec-h">
                 <div>
                   <h3>Layanan yang diambil</h3>
-                  <span className="muted">Target & satuan (mis. 50 foto) dipakai untuk menghitung progres dan ritme harian PIC</span>
+                  <span className="muted">Target & satuan (mis. 50 foto) dipakai untuk menghitung progres proyek</span>
                 </div>
               </div>
 
