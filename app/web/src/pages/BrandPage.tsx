@@ -360,19 +360,24 @@ export function BrandPage() {
       {subTab === "clients" && (
         <section className="bc">
           <div className="bc-h" style={{ flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", flex: "1 1 280px" }}>
-              <h2>Hubungan Klien ({clients.length})</h2>
-              <div className="seg" role="group" aria-label="Filter status klien">
-                <button aria-pressed={clientFilter === "all"} onClick={() => setClientFilter("all")}>
-                  Semua ({clients.length})
-                </button>
-                <button aria-pressed={clientFilter === "active"} onClick={() => setClientFilter("active")}>
-                  Aktif ({activeN})
-                </button>
-                <button aria-pressed={clientFilter === "history"} onClick={() => setClientFilter("history")}>
-                  Riwayat ({historyN})
-                </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 280px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <h2>Hubungan Klien ({clients.length})</h2>
+                <div className="seg" role="group" aria-label="Filter status klien">
+                  <button aria-pressed={clientFilter === "all"} onClick={() => setClientFilter("all")}>
+                    Semua ({clients.length})
+                  </button>
+                  <button aria-pressed={clientFilter === "active"} onClick={() => setClientFilter("active")}>
+                    Aktif ({activeN})
+                  </button>
+                  <button aria-pressed={clientFilter === "history"} onClick={() => setClientFilter("history")}>
+                    Riwayat ({historyN})
+                  </button>
+                </div>
               </div>
+              <p className="muted" style={{ fontSize: ".8rem", margin: 0 }}>
+                Klien yang terhubung dengan brand {brand.id}. Klien dapat login ke sistem untuk melihat laporan dan bukti hasil kerja.
+              </p>
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -534,19 +539,24 @@ export function BrandPage() {
       {subTab === "projects" && (
         <section className="bc">
           <div className="bc-h" style={{ flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", flex: "1 1 280px" }}>
-              <h2>Daftar Proyek Brand {brand.id} ({mine.length})</h2>
-              <div className="seg" role="group" aria-label="Filter status proyek">
-                <button aria-pressed={projectFilter === "all"} onClick={() => setProjectFilter("all")}>
-                  Semua ({mine.length})
-                </button>
-                <button aria-pressed={projectFilter === "live"} onClick={() => setProjectFilter("live")}>
-                  Berjalan ({activeProjects.length})
-                </button>
-                <button aria-pressed={projectFilter === "done"} onClick={() => setProjectFilter("done")}>
-                  Selesai ({closedProjects.length})
-                </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 280px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <h2>Daftar Proyek Brand {brand.id} ({mine.length})</h2>
+                <div className="seg" role="group" aria-label="Filter status proyek">
+                  <button aria-pressed={projectFilter === "all"} onClick={() => setProjectFilter("all")}>
+                    Semua ({mine.length})
+                  </button>
+                  <button aria-pressed={projectFilter === "live"} onClick={() => setProjectFilter("live")}>
+                    Berjalan ({activeProjects.length})
+                  </button>
+                  <button aria-pressed={projectFilter === "done"} onClick={() => setProjectFilter("done")}>
+                    Selesai ({closedProjects.length})
+                  </button>
+                </div>
               </div>
+              <p className="muted" style={{ fontSize: ".8rem", margin: 0 }}>
+                Proyek operasional brand ini. Tugas proyek otomatis terhubung ke dasbor harian PIC lengkap dengan target kecepatan harian.
+              </p>
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

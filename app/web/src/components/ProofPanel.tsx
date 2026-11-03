@@ -51,7 +51,15 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
         ? <div className="pv"><img src={file.preview} alt="Pratinjau bukti" /><button type="button" className="linkbtn" onClick={() => { URL.revokeObjectURL(file.preview); setFile(null); }}>Ganti foto</button></div>
         : <label className="drop"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) setFile({ file: f, preview: URL.createObjectURL(f) }); }} /><span className="iconline"><Camera size={18} />Pilih foto / screenshot</span></label>}
       <input className="input" name="link" type="url" inputMode="url" placeholder="atau tempel link hasil kerja" maxLength={500} aria-label="Link bukti" />
-      {t.serviceId && <label className="field"><span>Jumlah hasil{svc?.unit ? ` (${svc.unit})` : ""}{svc?.targetQty ? ` — target ${svc.targetQty}` : ""}</span><input className="input" name="qty" type="number" min={0} max={100000} inputMode="numeric" defaultValue={t.qty || ""} placeholder="mis. 25" /></label>}
+      {t.serviceId && (
+        <label className="field">
+          <span>Jumlah hasil{svc?.unit ? ` (${svc.unit})` : ""}{svc?.targetQty ? ` — target ${svc.targetQty}` : ""}</span>
+          <input className="input" name="qty" type="number" min={0} max={100000} inputMode="numeric" defaultValue={t.qty || ""} placeholder="mis. 5" />
+          <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".74rem" }}>
+            Berapa banyak yang kamu selesaikan hari ini (mis. 5 untuk 5 {svc?.unit || "hasil"}). Angka ini otomatis memperbarui progres proyek & laporan klien.
+          </small>
+        </label>
+      )}
       <textarea className="input" name="note" rows={2} maxLength={600} placeholder="Keterangan / catatan penyelesaian tugas" aria-label="Keterangan bukti" defaultValue={t.report ?? ""} />
       <div className="actions">
         <button type="button" className="btn small ghost" onClick={onClose}>Batal</button>

@@ -121,7 +121,7 @@ export function ProjectsPage() {
   }, [tq.data, projects, member, entities, statusFilter, brand, q, policy.isClient, me.email, stats]);
 
   return (
-    <Page title="Proyek" sub="Kemajuan tiap proyek dari tugas 30 hari terakhir dan seterusnya"
+    <Page title="Proyek" sub="Monitoring progres proyek, target kuantitatif, kecepatan harian tim, dan laporan klien"
       tabs={[
         { id: "ringkas", label: "Ringkasan" },
         { id: "waktu", label: "Garis waktu" },
@@ -136,7 +136,7 @@ export function ProjectsPage() {
       ) : (
         <>
           {/* Controls: Search, Filter Tabs, Add Button */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 240px", maxWidth: 360, position: "relative" }}>
               <Search size={16} className="muted" style={{ position: "absolute", left: 10 }} />
               <input
@@ -173,6 +173,10 @@ export function ProjectsPage() {
               )}
             </div>
           </div>
+
+          <p className="muted" style={{ fontSize: ".78rem", margin: "0 0 14px", lineHeight: 1.45 }}>
+            💡 <b>Alur otomatis:</b> Tugas proyek otomatis terhubung ke Dasbor/Papan harian PIC. Saat PIC menyelesaikan tugas & mengisi kuantitas hasil (qty), progres di kartu proyek langsung terbarui real-time.
+          </p>
 
           {showAddProject && policy.canCreateProject() && <ProjectSetup onClose={() => setShowAddProject(false)} />}
 

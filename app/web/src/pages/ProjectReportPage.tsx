@@ -79,7 +79,16 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
         <People emails={x.people} />
         <span className="muted pj-sub">{x.done}/{x.tasks.length} tugas · {x.proofs} bukti{x.late ? <b className="bad"> · {x.late} terlambat</b> : null}</span>
       </footer>
-      {onNew && <div className="actions"><button className="btn small" onClick={onNew}><Plus size={13} />Tugas</button></div>}
+      {onNew && (
+        <div className="actions" style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button className="btn small blue" onClick={onNew} title="Buat tugas harian untuk PIC layanan ini">
+            <Plus size={13} /> Buat Tugas Harian PIC
+          </button>
+        </div>
+      )}
+      <small className="muted" style={{ display: "block", marginTop: 4, fontSize: ".72rem" }}>
+        Tugas yang selesai & diisi kuantitasnya otomatis menambah progres layanan di atas.
+      </small>
       {onOpen && x.tasks.length > 0 && (
         <ul className="pj-tasks">{x.tasks.slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => (
           <li key={t.id}><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left" }} onClick={() => onOpen(t.id)}>{t.title}</button><small className="muted">{t.name} · {fmtShort(t.date)}</small>{t.qty > 0 && <span className="tag off">{t.qty}{s.unit ? " " + s.unit : ""}</span>}<span className={"stpill " + t.status}>{ST[t.status]}</span></li>))}
@@ -90,15 +99,30 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
 }
 
 function Overview({ d, m }: { d: ProjectReportDTO; m: ProjectMetrics }) {
-  const { member, policy } = useViewer(), { openTask } = useUi();
+  const { member, policy } = useViewer(), { openTask, newTask } = useUi();
   const { stats: s, tasks, project: p } = d, svc = serviceStats(d, today());
+  const closed = !!p.closedAt;
+  const canAssign = !closed && !policy.isClient && (policy.isManager || policy.canCreateProject());
   const people = useMemo(() => [...Map.groupBy(tasks, t => t.email)].map(([email, l]) => ({ email, name: l[0]!.name, total: l.length, done: l.filter(t => t.status === "done").length, qty: l.filter(t => t.status === "done").reduce((n, t) => n + t.qty, 0), proofs: l.filter(t => t.status === "done" && (t.hasPhoto || t.proofLink)).length })).sort((a, b) => b.qty - a.qty || b.done - a.done), [tasks]);
   const next = tasks.filter(t => t.status !== "done").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   return (
     <div className="bento pov" data-c={p.color}>
       <section className="bc s12">
         <div className="bc-h"><span className="bc-ico lime"><FolderKanban size={18} /></span><h2>Layanan dan target</h2><span className="muted">{svc.length} layanan</span></div>
-        {svc.length ? <div className="pj-svcgrid">{svc.map(x => <ServiceCard key={x.s.id} x={x} />)}</div> : <Empty art="tasks" title="Belum ada layanan">{policy.canCreateProject() ? "Buka \"Ubah proyek\" untuk menambahkan layanan, target, dan PIC." : "Layanan akan tampil di sini."}</Empty>}
+        {svc.length ? <div className="pj-svcgrid">{svc.map(x => (
+          <ServiceCard
+            key={x.s.id}
+            x={x}
+            onOpen={policy.isClient ? undefined : openTask}
+            onNew={canAssign ? () => newTask({
+              projectId: p.id,
+              serviceId: x.s.id,
+              emails: x.s.picEmails.length ? [x.s.picEmails[0]!] : undefined,
+              title: `${x.s.name} · ${p.name}`,
+              date: today(),
+            }) : undefined}
+          />
+        ))}</div> : <Empty art="tasks" title="Belum ada layanan">{policy.canCreateProject() ? "Buka \"Ubah proyek\" untuk menambahkan layanan, target, dan PIC." : "Layanan akan tampil di sini."}</Empty>}
       </section>
 
       <section className="bc s8">
