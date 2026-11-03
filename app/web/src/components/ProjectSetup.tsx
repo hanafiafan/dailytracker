@@ -14,12 +14,12 @@ const PRESETS: [string, string][] = [["Foto produk", "foto"], ["Video", "video"]
 const blank = (name = "", unit = ""): Row => ({ key: crypto.randomUUID(), name, targetQty: "", unit, picEmails: [] });
 
 /** Create or edit a project in one dialog: who, when, and what the client bought (services with a target and the people in charge). */
-export function ProjectSetup({ project, onClose }: { project?: ProjectDTO; onClose: () => void }) {
+export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: ProjectDTO; defaultEntityId?: string; onClose: () => void }) {
   const { me, team, member, entities } = useViewer();
   const existing = useProjectServices(project?.id ?? null);
   const clients = team.filter(m => m.accountType === "client"), staff = team.filter(m => m.accountType !== "client");
   const managers = staff.filter(m => m.isAdmin || /project manager|owner|direktur|bo\b/i.test(m.role + " " + m.level));
-  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email), [entityId, setEntity] = useState(project?.entityId ?? (unitsOf(member(me.email) ?? { group: "" }).find(u => entities.some(e => e.id === u)) ?? ""));
+  const [name, setName] = useState(project?.name ?? ""), [client, setClient] = useState(project?.clientEmail ?? ""), [pm, setPm] = useState(project?.pmEmail ?? me.email), [entityId, setEntity] = useState(project?.entityId ?? defaultEntityId ?? (unitsOf(member(me.email) ?? { group: "" }).find(u => entities.some(e => e.id === u)) ?? ""));
   const [startDate, setStart] = useState(project?.startDate ?? ""), [dueDate, setDue] = useState(project?.dueDate ?? "");
   const [description, setDescription] = useState(project?.description ?? ""), [color, setColor] = useState<string>(project?.color ?? "lilac");
   const [rows, setRows] = useState<Row[]>([]), [loaded, setLoaded] = useState(!project), [more, setMore] = useState(false);

@@ -48,7 +48,7 @@ function Signed({ me }: { me: MeDTO }) {
   const [, nav] = useLocation();
   const [newTask, setNewTask] = useState<NewTaskPrefill | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  skipSetupInDev(!!me.dev);
+  skipSetupInDev(!!me.dev || me.member?.accountType === "client"); // clients only view progress: no install/notification setup
   const [setup, setSetup] = useState(() => needsSetup(me.email));
   const [, tick] = useReducer(n => n + 1, 0);
   const lastDay = useRef(today());

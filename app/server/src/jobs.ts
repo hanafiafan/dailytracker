@@ -96,7 +96,7 @@ export function startJobs(db: Db, push: Push, bus: Bus, backupDir?: string) {
     try {
       if (ensureRoutines(db, wib().date)) bus.emit("tasks");
       runReminders(db, push, Date.now(), bus).catch(e => console.error("reminders", e));
-      if (backupDir) runBackup(db, backupDir).then(f => f && console.log("backup", f)).catch(e => console.error("backup", e));
+      if (backupDir) runBackup(db, backupDir).then(f => f.length && console.log("backup", f)).catch(e => console.error("backup", e));
     } catch (e) { console.error("jobs", e); }
   };
   tick();

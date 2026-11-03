@@ -9,6 +9,8 @@ import type { Push } from "./push.js";
 export interface GoogleIdentity { email: string; name: string; verified: boolean }
 export interface Deps {
   db: Db; env: Env; push: Push; bus: Bus;
+  /** Restarts the process (a supervisor brings it back); needed after restoring a backup. Absent in tests. */
+  restart?: () => void;
   /** Checks a Google ID token; injected so tests need no network. */
   verifyGoogle: (credential: string) => Promise<GoogleIdentity>;
 }

@@ -2704,6 +2704,242 @@
 @layer components { .ttable .pbadge, .htable .pbadge { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: .82rem; } .ttable .pbadge::before, .htable .pbadge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--d, var(--c-gray)); flex: none; } }
 @layer components { .ttable td:last-child, .ttable th:last-child { min-width: 124px; white-space: nowrap; } }
 
+/* ============================================================ Brand Hub & CRM */
+@layer components {
+  .brand-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-xl);
+    padding: 22px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: grid;
+    gap: 16px;
+    box-shadow: 0 4px 20px -8px rgb(0 0 0 / .08);
+  }
+  .brand-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--d, var(--blue));
+  }
+  .brand-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand-hero-identity {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    min-width: 0;
+  }
+  .brand-monogram {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--r-lg);
+    background: var(--d, var(--c-gray));
+    color: var(--on-ink, #000);
+    font-weight: 900;
+    font-size: 1.3rem;
+    letter-spacing: -0.03em;
+    display: grid;
+    place-items: center;
+    flex: none;
+    box-shadow: 0 6px 16px -4px rgb(0 0 0 / .15);
+  }
+  :root[data-theme="dark"] .brand-monogram {
+    color: #101114;
+  }
+  .brand-hero-meta h1, .brand-hero-meta h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .brand-hero-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .brand-hero-desc {
+    margin: 0;
+    font-size: .88rem;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 80ch;
+  }
+  .brand-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Brand KPIs Grid */
+  .brand-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .brand-kpi-card {
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .brand-kpi-card:hover {
+    border-color: var(--d, var(--blue));
+    transform: translateY(-1px);
+  }
+  .brand-kpi-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-kpi-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .brand-kpi-num {
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+  .brand-kpi-num small {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .brand-kpi-footer {
+    font-size: .76rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Brand Subnav Segment Control */
+  .brand-subnav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin: 16px 0 14px;
+    overflow-x: auto;
+  }
+  .brand-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 15px;
+    border-radius: 999px;
+    font-size: .84rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    background: var(--glass);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s ease;
+    white-space: nowrap;
+  }
+  .brand-tab-btn:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .brand-tab-btn[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--on-ink, #000);
+    border-color: var(--ink);
+  }
+  :root[data-theme="dark"] .brand-tab-btn[aria-pressed="true"] {
+    background: var(--volt);
+    color: #101114;
+    border-color: var(--volt);
+  }
+
+  /* Brand Items List & Cards */
+  .brand-card-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 16px 18px;
+    display: grid;
+    gap: 12px;
+    transition: border-color .15s ease;
+  }
+  .brand-card-item:hover {
+    border-color: var(--line);
+  }
+
+  /* Alert box for unassigned client projects */
+  .brand-alert-banner {
+    background: var(--warn-soft);
+    border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+    border-radius: var(--r-md);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: var(--ink);
+    font-size: .84rem;
+  }
+
+  /* Grid of services */
+  .brand-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 12px;
+  }
+  .brand-svc-chip-card {
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    transition: all .15s ease;
+  }
+  .brand-svc-chip-card:hover {
+    border-color: var(--line);
+    background: var(--surface);
+  }
+}
+
 /* ============================================================ printed project report */
 .print-only { display: none; }
 @media print {

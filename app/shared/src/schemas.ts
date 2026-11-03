@@ -153,6 +153,16 @@ export const popupInput = z.object({
   draft: z.boolean().default(false), durationMin: z.number().int().min(1).max(525_600).nullable().default(null), endsAt: z.number().int().nullable().default(null),
 });
 export interface PopupDTO { id: string; title: string; blocks: PopupBlock[]; active: boolean; draft: boolean; durationMin: number | null; endsAt: number | null; createdAt: number }
+/** Backup sessions: each time of day (WIB) writes one copy; only scheduled copies are pruned to `keep`. */
+export const backupSettings = z.object({
+  enabled: z.boolean().default(true),
+  times: z.array(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)).min(1).max(12).transform(a => [...new Set(a)].sort()).default(["00:00"]),
+  keep: z.number().int().min(1).max(90).default(14),
+});
+export type BackupSettings = z.infer<typeof backupSettings>;
+export interface BackupDTO { file: string; kind: "auto" | "manual" | "pre-reset"; size: number; at: number }
+export const resetInput = z.object({ chat: z.boolean().default(false), leaves: z.boolean().default(false), acks: z.boolean().default(false) });
+export const resetRun = resetInput.extend({ confirm: z.literal("RESET") });
 export const pushSub = z.object({ endpoint: z.string().url(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
 
 export const taskApproval = z.object({ status: z.enum(["approved", "rejected"]) });

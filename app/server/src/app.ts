@@ -41,7 +41,7 @@ export function createApp(deps: Deps) {
 
   const api = new Hono<AppEnv>()
     // No request needs more than a compressed photo (about 1.5 MB); anything bigger is refused before it is read into memory.
-    .use((c, next) => c.req.path === "/api/chat/attachments" ? next() : bodyLimit({ maxSize: 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) })(c, next))
+    .use((c, next) => c.req.path === "/api/chat/attachments" ? next() : bodyLimit({ maxSize: c.req.path === "/api/admin/backups/upload" ? 512 * 1024 * 1024 : 2 * 1024 * 1024, onError: c => c.json({ error: "Berkas terlalu besar" }, 413) })(c, next))
     // Every write must carry this header: cross-site forms and images cannot add it.
     .use(async (c, next) => c.req.method !== "GET" && c.req.path !== "/api/auth/google-redirect" && c.req.header("x-app") !== "1" ? c.json({ error: "bad request" }, 400) : next())
     .get("/config", c => c.json({ googleClientId: env.GOOGLE_CLIENT_ID, vapidPublicKey: push.publicKey }))

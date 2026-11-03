@@ -20,6 +20,7 @@ const google = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 const api = createApp({
   db, env, push, bus,
+  restart: () => setTimeout(() => process.exit(0), 500),
   verifyGoogle: async credential => {
     const p = (await google.verifyIdToken({ idToken: credential, audience: env.GOOGLE_CLIENT_ID })).getPayload();
     if (!p?.email) throw new Error("no email in token");

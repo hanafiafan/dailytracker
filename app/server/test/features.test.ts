@@ -308,16 +308,16 @@ describe("daily backup", () => {
     const t = setup();
     const dir = mkdtempSync(join(tmpdir(), "bk-"));
     const day0 = Date.UTC(2026, 0, 1, 5);
-    const first = await runBackup(t.db, dir, day0);
+    const first = (await runBackup(t.db, dir, day0))[0];
     expect(first).toBeTruthy();
-    expect(await runBackup(t.db, dir, day0 + 3600e3)).toBeNull();
+    expect(await runBackup(t.db, dir, day0 + 3600e3)).toEqual([]);
     const copy = new Database(first!, { readonly: true });
     expect((copy.prepare("select count(*) c from members").get() as { c: number }).c).toBe(4);
     copy.close();
     for (let d = 1; d <= 20; d++) await runBackup(t.db, dir, day0 + d * 864e5);
     const files = readdirSync(dir).filter(f => f.endsWith(".db")).sort();
     expect(files).toHaveLength(14);
-    expect(files.at(-1)).toBe("app-2026-01-21.db");
+    expect(files.at(-1)).toBe("auto-2026-01-21-0000.db");
   });
 });
 

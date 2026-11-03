@@ -9,9 +9,9 @@ import { createHash } from "node:crypto";
 export const OWNER = "owner@x.id";
 export const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
 
-export function setup() {
+export function setup(dataDir = "") {
   const db = openDb(":memory:");
-  const env = { GOOGLE_CLIENT_ID: "cid", OWNER_EMAIL: OWNER, PUBLIC_URL: "http://localhost/", DATA_DIR: "", PORT: 0, HOST: "", WEB_DIR: "", ALLOW_DEV_LOGIN: false };
+  const env = { GOOGLE_CLIENT_ID: "cid", OWNER_EMAIL: OWNER, PUBLIC_URL: "http://localhost/", DATA_DIR: dataDir, PORT: 0, HOST: "", WEB_DIR: "", ALLOW_DEV_LOGIN: false };
   const bus = createBus();
   const push = createPush(db, OWNER, env.PUBLIC_URL);
   const sent: { to: string[]; title: string; path: string }[] = [];
