@@ -86,12 +86,12 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
             </section>
 
             <section className="dsec">
-              <div className="dsec-h"><h3>Layanan yang diambil</h3><span className="muted">Target dan PIC dipakai untuk progres otomatis</span></div>
+              <div className="dsec-h"><h3>Layanan yang diambil</h3><span className="muted">Target & PIC dipakai untuk menghitung progres dan target harian otomatis (mis. ~4 foto/hari)</span></div>
               {loaded ? rows.map(r => (
                 <div key={r.key} className="svcrow">
                   <input className="input" aria-label="Nama layanan" value={r.name} onChange={e => patch(r.key, { name: e.target.value })} placeholder="Nama layanan" maxLength={80} />
-                  <input className="input num" aria-label="Target jumlah" type="number" min={0} max={100000} inputMode="numeric" value={r.targetQty} onChange={e => patch(r.key, { targetQty: e.target.value })} placeholder="Target" />
-                  <input className="input unit" aria-label="Satuan" value={r.unit} onChange={e => patch(r.key, { unit: e.target.value })} placeholder="satuan" maxLength={20} />
+                  <input className="input num" aria-label="Target jumlah" type="number" min={0} max={100000} inputMode="numeric" value={r.targetQty} onChange={e => patch(r.key, { targetQty: e.target.value })} placeholder="Target (angka)" />
+                  <input className="input unit" aria-label="Satuan" value={r.unit} onChange={e => patch(r.key, { unit: e.target.value })} placeholder="Satuan (mis. foto)" maxLength={20} />
                   <button type="button" className="iconbtn" aria-label="Hapus layanan" onClick={() => drop(r)}><Trash2 size={15} /></button>
                   <div className="picrow">
                     <span className="lbl">PIC</span>

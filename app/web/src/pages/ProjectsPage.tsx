@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta, useTasks, windowFrom } from "../lib/queries";
-import { HEALTH_LABEL, brandOf, pct as pctOf, type Health } from "../lib/projects";
+import { HEALTH_LABEL, brandOf, calcPace, pct as pctOf, type Health } from "../lib/projects";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -58,7 +58,7 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
   );
 }
 
-import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
+import { ArrowUpRight, FolderPlus, Plus, Search, Archive, Zap } from "lucide-react";
 
 export function ProjectsPage() {
   const { me, projects, policy, member, entities } = useViewer();
@@ -105,7 +105,17 @@ export function ProjectsPage() {
         const left = p.dueDate ? Math.round((new Date(p.dueDate + "T12:00:00+07:00").getTime() - new Date(today() + "T12:00:00+07:00").getTime()) / 86_400_000) : null;
         const elapsed = p.startDate && p.dueDate ? pctOf(Math.max(0, Math.round((new Date(today()).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1), Math.round((new Date(p.dueDate).getTime() - new Date(p.startDate).getTime()) / 86_400_000) + 1) : null;
         const health: Health = p.closedAt || pct >= 100 ? "done" : left !== null && left < 0 ? "late" : elapsed !== null && pct + 15 < elapsed ? "risk" : total || withT.length ? "ok" : "idle";
-        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)) };
+        let paceText: string | null = null;
+        if (withT.length > 0 && !p.closedAt) {
+          if (one) {
+            const pace = calcPace(one.t, one.d, units[0] ?? "", p.dueDate, today());
+            if (pace.paceText && one.t > one.d) paceText = pace.paceText;
+          } else {
+            const paces = withT.map(x => calcPace(x.target, x.delivered, x.unit, p.dueDate, today())).filter(x => x.needed > 0 && x.paceText);
+            if (paces.length) paceText = paces.map(x => x.paceText).join(" · ");
+          }
+        }
+        return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)), paceText };
       })
       .sort((a, b) => b.open - a.open);
   }, [tq.data, projects, member, entities, statusFilter, brand, q, policy.isClient, me.email, stats]);
@@ -174,16 +184,17 @@ export function ProjectsPage() {
               </button>))}</div>
           ) : rows.length ? (
             <div className="pcards">
-              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId }) => {
+              {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId, paceText }) => {
                 const client = p.clientEmail ? member(p.clientEmail) : null, pm = p.pmEmail ? member(p.pmEmail) : null;
                 return (
                 <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
                   <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a></h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p>
-                    <div className="chips" style={{ marginTop: 6 }}><span className="chip" data-c={entities.find(e => e.id === brandId)?.color} title="Brand pemilik proyek"><b>{brandId ?? "Tanpa brand"}</b></span><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}</div></div></div>
-                  {(client || pm || services > 0) && <div className="pj-meta">
+                    <div className="chips" style={{ marginTop: 6 }}><span className="chip" data-c={entities.find(e => e.id === brandId)?.color} title="Brand pemilik proyek"><b>{brandId ?? "Tanpa brand"}</b></span><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}{paceText && <span className="chip" style={{ background: "rgba(214, 244, 63, 0.18)", color: "var(--ink)", border: "1px solid rgba(214, 244, 63, 0.4)", fontWeight: 700 }} title="Rekomendasi target harian"><Zap size={11} style={{ marginRight: 3, verticalAlign: -1 }} />{paceText}</span>}</div></div></div>
+                  {(client || pm || services > 0 || paceText) && <div className="pj-meta">
                     <span><small>Client</small><b className="clamp1">{client?.name ?? "–"}</b></span>
                     <span><small>PM</small><b className="clamp1">{pm?.name ?? "–"}</b></span>
                     <span><small>{result ? "Hasil" : "Layanan"}</small><b className="clamp1">{result ?? (services || "–")}</b></span>
+                    {paceText && <span><small>Target Harian</small><b className="clamp1" style={{ color: "var(--blue)" }}>{paceText}</b></span>}
                   </div>}
                   <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

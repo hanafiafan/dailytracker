@@ -11,8 +11,40 @@ type T = ProjectReportDTO["tasks"][number];
 export type Health = "ok" | "risk" | "late" | "done" | "idle";
 
 const dayOf = (ms: number) => wib(ms).date;
-const diffDays = (a: string, b: string) => Math.round((parseYmd(b).getTime() - parseYmd(a).getTime()) / 86_400_000);
+export const diffDays = (a: string, b: string) => Math.round((parseYmd(b).getTime() - parseYmd(a).getTime()) / 86_400_000);
 export const pct = (a: number, b: number) => (b ? Math.min(100, Math.round(a / b * 100)) : 0);
+
+export interface PaceInfo {
+  needed: number;
+  daysLeft: number | null;
+  neededPerDay: number | null;
+  paceText: string | null;
+}
+
+/** Computes remaining deliverables and daily pace needed to finish before the due date. */
+export function calcPace(targetQty: number, delivered: number, unit: string, dueDate: string | null, todayStr: string): PaceInfo {
+  if (targetQty <= 0) return { needed: 0, daysLeft: null, neededPerDay: null, paceText: null };
+  const needed = Math.max(0, targetQty - delivered);
+  const u = unit ? " " + unit : "";
+  if (needed === 0) {
+    return { needed: 0, daysLeft: null, neededPerDay: 0, paceText: "Target tercapai ✓" };
+  }
+  if (!dueDate) {
+    return { needed, daysLeft: null, neededPerDay: null, paceText: `Sisa ${needed.toLocaleString("id-ID")}${u}` };
+  }
+  const daysLeft = diffDays(todayStr, dueDate);
+  if (daysLeft < 0) {
+    return { needed, daysLeft, neededPerDay: null, paceText: `Lewat tenggat (sisa ${needed.toLocaleString("id-ID")}${u})` };
+  }
+  if (daysLeft === 0) {
+    return { needed, daysLeft: 0, neededPerDay: needed, paceText: `Butuh ${needed.toLocaleString("id-ID")}${u} hari ini!` };
+  }
+  const rawRate = needed / daysLeft;
+  const rateRounded = rawRate >= 1 ? `~${Math.ceil(rawRate)}` : `~${(Math.round(rawRate * 10) / 10).toLocaleString("id-ID")}`;
+  const neededPerDay = Math.ceil(rawRate);
+  const paceText = `Butuh ${rateRounded}${u}/hari`;
+  return { needed, daysLeft, neededPerDay, paceText };
+}
 
 export interface ServiceStat {
   s: ProjectServiceDTO;
@@ -26,18 +58,28 @@ export interface ServiceStat {
   late: number;
   /** Declared PICs plus anyone who has a task in this service. */
   people: string[];
+  daysLeft: number | null;
+  needed: number;
+  neededPerDay: number | null;
+  paceText: string | null;
 }
 
 export function serviceStats(d: ProjectReportDTO, todayStr: string): ServiceStat[] {
   return (d.services ?? []).map(s => {
     const tasks = d.tasks.filter(t => t.serviceId === s.id), done = tasks.filter(t => t.status === "done");
     const delivered = done.reduce((n, t) => n + t.qty, 0);
+    const targetDueDate = s.dueDate ?? d.project.dueDate;
+    const pace = calcPace(s.targetQty, delivered, s.unit, targetDueDate, todayStr);
     return {
       s, tasks, done: done.length, delivered,
       progress: s.targetQty > 0 ? pct(delivered, s.targetQty) : pct(done.length, tasks.length),
       proofs: done.filter(t => t.hasPhoto || t.proofLink).length,
       late: tasks.filter(t => t.status !== "done" && t.date < todayStr).length,
       people: [...new Set([...s.picEmails, ...tasks.map(t => t.email)])],
+      daysLeft: pace.daysLeft,
+      needed: pace.needed,
+      neededPerDay: pace.neededPerDay,
+      paceText: pace.paceText,
     };
   });
 }
@@ -46,12 +88,13 @@ export interface ProjectMetrics {
   /** Overall 0-100: the mean of the services' progress (each against its own target, capped at 100), else done/total tasks. */
   progress: number;
   /** Deliverables per unit (photos and videos are never added together). */
-  lines: { unit: string; target: number; delivered: number }[];
+  lines: { unit: string; target: number; delivered: number; neededPerDay: number | null; paceText: string | null }[];
   start: string | null; due: string | null;
   daysLeft: number | null; elapsedPct: number | null;
   health: Health; healthNote: string;
   /** One point per day from the start to today: overall progress and the straight-line plan, both in percent. */
   series: { date: string; progress: number; plan: number | null }[];
+  overallPaceText: string | null;
 }
 
 const mean = (l: number[]) => (l.length ? Math.round(l.reduce((a, b) => a + b, 0) / l.length) : 0);
@@ -70,6 +113,13 @@ export function projectMetrics(d: ProjectReportDTO, todayStr: string): ProjectMe
   const elapsed = start && total ? Math.max(0, Math.min(total, diffDays(start, todayStr) + 1)) : null;
   const elapsedPct = total && elapsed !== null ? pct(elapsed, total) : null;
   const daysLeft = due ? diffDays(todayStr, due) : null;
+
+  const lines = [...byUnit.values()].map(l => {
+    const pace = calcPace(l.target, l.delivered, l.unit, due, todayStr);
+    return { ...l, neededPerDay: pace.neededPerDay, paceText: pace.paceText };
+  });
+  const activePaces = lines.filter(l => l.paceText && l.target > l.delivered).map(l => l.paceText);
+  const overallPaceText = activePaces.length ? activePaces.join(" · ") : lines.some(l => l.target > 0) ? "Target tercapai ✓" : null;
 
   let health: Health = "idle", healthNote = "Belum ada jadwal";
   if (p.closedAt) { health = "done"; healthNote = "Proyek selesai"; }
@@ -90,7 +140,7 @@ export function projectMetrics(d: ProjectReportDTO, todayStr: string): ProjectMe
       series.push({ date: day, progress: mean(per), plan: total ? pct(diffDays(start, day) + 1, total) : null });
     }
   }
-  return { progress, lines: [...byUnit.values()], start, due, daysLeft, elapsedPct, health, healthNote, series };
+  return { progress, lines, start, due, daysLeft, elapsedPct, health, healthNote, series, overallPaceText };
 }
 
 export const HEALTH_LABEL: Record<Health, string> = { ok: "Sesuai rencana", risk: "Berisiko", late: "Terlambat", done: "Selesai", idle: "Belum mulai" };

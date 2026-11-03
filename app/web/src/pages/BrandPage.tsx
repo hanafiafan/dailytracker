@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Building2, Users, FolderKanban, CheckCircle2, AlertTriangle, Search,
   Plus, Pencil, Trash2, X, Check, Briefcase, ExternalLink, Layers, Sparkles,
-  ChevronDown, ChevronUp, Clock, AlertCircle, MessageSquare
+  ChevronDown, ChevronUp, Clock, AlertCircle, MessageSquare, Zap
 } from "lucide-react";
 import type { Color, EntityDTO, ProjectDTO } from "@shared/schemas";
 import { unitsOf } from "@shared/policy";
@@ -16,7 +16,7 @@ import { ProjectSetup } from "../components/ProjectSetup";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
-import { brandOf, HEALTH_LABEL, pct, type Health } from "../lib/projects";
+import { brandOf, HEALTH_LABEL, pct, calcPace, type Health } from "../lib/projects";
 import { COLOR_LABEL } from "../lib/tasks";
 import { today } from "../lib/format";
 
@@ -579,6 +579,19 @@ export function BrandPage() {
                 const projPct = st ? pct(st.done, st.total) : 0;
                 const clientM = p.clientEmail ? member(p.clientEmail) : null;
                 const pmM = p.pmEmail ? member(p.pmEmail) : null;
+                const sv = st?.services ?? [], withT = sv.filter(x => x.target > 0);
+                let paceText: string | null = null;
+                if (withT.length > 0 && isLive) {
+                  const units = [...new Set(withT.map(x => x.unit))];
+                  if (units.length === 1) {
+                    const totalT = withT.reduce((a, x) => a + x.target, 0), totalD = withT.reduce((a, x) => a + x.delivered, 0);
+                    const pace = calcPace(totalT, totalD, units[0] ?? "", p.dueDate, today());
+                    if (pace.paceText && totalT > totalD) paceText = pace.paceText;
+                  } else {
+                    const paces = withT.map(x => calcPace(x.target, x.delivered, x.unit, p.dueDate, today())).filter(x => x.needed > 0 && x.paceText);
+                    if (paces.length) paceText = paces.map(x => x.paceText).join(" · ");
+                  }
+                }
 
                 return (
                   <div
@@ -593,12 +606,18 @@ export function BrandPage() {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                       <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <b style={{ fontSize: "1.02rem" }}>{p.name}</b>
                           <span className={"pj-health " + health}>
                             {HEALTH_LABEL[health]}
                           </span>
                           {!isLive && <span className="tag off">Selesai</span>}
+                          {paceText && (
+                            <span className="chip" style={{ background: "rgba(214, 244, 63, 0.18)", color: "var(--ink)", border: "1px solid rgba(214, 244, 63, 0.4)", fontWeight: 700, fontSize: ".72rem", padding: "1px 7px" }} title="Rekomendasi target harian">
+                              <Zap size={10} style={{ marginRight: 3, verticalAlign: -1 }} />
+                              {paceText}
+                            </span>
+                          )}
                         </div>
                         <p className="muted clamp1" style={{ fontSize: ".82rem", margin: "4px 0 0" }}>
                           {p.description || "Tanpa deskripsi"}
