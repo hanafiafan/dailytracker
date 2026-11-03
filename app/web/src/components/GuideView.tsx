@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, CheckCheck, ClipboardList, Clock, Crown, CalendarOff, MessageSquare, ScrollText, ShieldCheck, Sparkles, Sun, Users, Eye } from "lucide-react";
+import { Check, CheckCheck, ClipboardList, Clock, Crown, CalendarOff, MessageSquare, ScrollText, ShieldCheck, Sparkles, Sun, Users, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { GUIDE_VERSION } from "@shared/schemas";
@@ -61,17 +61,40 @@ export function AckForm({ locked, onDone }: { locked?: boolean; onDone?: () => v
 
 /** Blocks the app after first sign-in (and after a guide update) until the guide for the person's role is read and confirmed. */
 export function GuideGate({ role }: { role: GuideRole }) {
+  const qc = useQueryClient();
   const box = useRef<HTMLDivElement>(null);
   const [end, setEnd] = useState(false);
   const check = () => { const el = box.current; if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 40) setEnd(true); };
   useEffect(() => { const t = setTimeout(check, 150); return () => clearTimeout(t); }, [role]);
+
+  const dismissClient = async () => {
+    try {
+      await ok(api.guide.ack.$post({ json: { version: GUIDE_VERSION } }));
+      await qc.invalidateQueries({ queryKey: keys.me });
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <>
-      <div className="scrim" />
+      <div className="scrim" onClick={role === "client" ? dismissClient : undefined} />
       <div className="dialog guidegate" role="dialog" aria-modal="true" aria-label="Panduan sistem">
-        <div className="dialog-h"><div><h2>Panduan sistem untuk {GUIDE[role].label}</h2><p className="muted">Baca sampai akhir, lalu konfirmasi untuk mulai memakai aplikasi.</p></div></div>
+        <div className="dialog-h">
+          <div>
+            <h2>Panduan sistem untuk {GUIDE[role].label}</h2>
+            <p className="muted">
+              {role === "client" ? "Panduan singkat memantau proyek dan koordinasi dengan tim." : "Baca sampai akhir, lalu konfirmasi untuk mulai memakai aplikasi."}
+            </p>
+          </div>
+          {role === "client" && (
+            <button type="button" className="iconbtn" aria-label="Tutup" onClick={dismissClient}>
+              <X size={16} />
+            </button>
+          )}
+        </div>
         <div className="dialog-b" ref={box} onScroll={check}><GuideView role={role} compact /></div>
-        <div className="dialog-f"><AckForm locked={!end} /></div>
+        <div className="dialog-f"><AckForm locked={role !== "client" && !end} onDone={role === "client" ? dismissClient : undefined} /></div>
       </div>
     </>
   );

@@ -20,7 +20,7 @@ export interface PolicyMember {
   managerEmail?: string | null;
 }
 
-export type GuideRole = "karyawan" | "unit" | "admin" | "owner";
+export type GuideRole = "karyawan" | "unit" | "admin" | "owner" | "client";
 
 // Special roles live in the `level` column, which only the superadmin can change. Names, emails and the free-text job title
 // (which people may edit themselves) never grant anything.
@@ -125,7 +125,7 @@ export function makePolicy(me: string, isOwner: boolean, team: readonly PolicyMe
   };
 
   /** Which guide this account reads (and confirms). */
-  const guideRole = (): GuideRole => isOwner ? "owner" : isBO ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
+  const guideRole = (): GuideRole => isClient ? "client" : isOwner ? "owner" : isBO ? "owner" : isBoss ? "admin" : isPM ? "admin" : isAdmin ? "unit" : "karyawan";
 
   /** Who this person can start a direct message with:
    *  - Superadmin & Director: anyone on the team.

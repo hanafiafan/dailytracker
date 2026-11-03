@@ -94,9 +94,30 @@ const ownerExtra: GuideSection[] = [
   ] },
 ];
 
+const clientGuide: GuideSection[] = [
+  { id: "proyek", icon: "watch", h: "Memantau Proyek & Progres", items: [
+    "Buka menu Proyek untuk melihat daftar proyek aktif dan riwayat proyek yang sedang dikerjakan tim untuk brand Anda.",
+    "Di setiap kartu proyek, Anda dapat memantau persentase kemajuan pengerjaan, sisa waktu/tenggat, dan status rencana.",
+    "Klik kartu proyek untuk melihat detail target kuantitatif layanan, garis waktu pengerjaan, dan daftar tugas tim.",
+  ] },
+  { id: "laporan", icon: "check", h: "Laporan & Bukti Kerja", items: [
+    "Hasil dan bukti fisik/digital dari tugas yang telah diselesaikan (foto atau link dokumen) tersaji transparan pada tab Bukti.",
+    "Anda dapat mencetak atau mengunduh ringkasan laporan akhir proyek kapan saja melalui tombol cetak laporan.",
+  ] },
+  { id: "komunikasi", icon: "chat", h: "Komunikasi & Koordinasi", items: [
+    "Gunakan menu Inbox untuk berkoordinasi langsung dengan Project Manager (PM) atau tim pengelola proyek Anda.",
+    "Semua pengumuman dan catatan penting terkait proyek dapat didiskusikan secara terpusat.",
+  ] },
+  terms([
+    "Akun klien diperuntukkan khusus bagi mitra dan perwakilan klien resmi untuk memantau progres proyek.",
+    "Harap menjaga kerahasiaan akses login dan seluruh dokumen proyek yang dibagikan melalui platform ini.",
+  ]),
+];
+
 export const GUIDE: Record<GuideRole, RoleGuide> = {
   karyawan: { label: "Karyawan", intro: "Cara memakai aplikasi untuk tugas harianmu, dari membuka hari sampai menyelesaikan tugas dengan bukti.", highlights: ["Ubah status tugas: Belum, Dikerjakan, Selesai", "Tugas Wajib bukti perlu foto atau link", "Pasang aplikasi dan aktifkan notifikasi"], sections: employee },
   unit: { label: "Admin unit", intro: "Memantau dan memberi tugas untuk unit yang kamu kelola, serta mengerjakan tugasmu sendiri.", highlights: ["Beri tugas dengan jam dan peringatan tenggat", "Putuskan izin dan cuti unitmu", "Pantau yang terlambat dan minta tugas"], sections: [...unitOnly, terms(["Gunakan kewenangan admin secara wajar dan adil, dan jaga kerahasiaan data anggota unitmu."])] },
   admin: { label: "Admin semua unit", intro: "Mengelola seluruh tim tanpa batas unit.", highlights: ["Pantau semua unit dan proyek", "Beri tugas ke siapa pun, termasuk admin", "Kelola alat, izin, dan laporan"], sections: [...wide(false), ...adminExtra, terms(["Gunakan kewenangan admin secara wajar dan adil, dan jaga kerahasiaan data seluruh tim."])] },
   owner: { label: "Superadmin", intro: "Kendali penuh atas tim, akses, dan data.", highlights: ["Hanya kamu yang mengelola anggota dan admin", "Isi atasan langsung agar bagan sesuai", "Jaga akses dan data pribadi karyawan"], sections: [{ id: "mulai", icon: "sun", h: "Mulai hari", items: ["Dasbor menampilkan progres seluruh tim dan orang yang belum punya tugas aktif. Orang yang menekan Minta tugas ditandai ikon tangan dan kamu mendapat pemberitahuan."] }, ...wide(true).filter(s => s.id !== "mulai"), ...adminExtra, ...ownerExtra, terms(["Sebagai Superadmin, kamu bertanggung jawab atas pemberian akses dan keamanan data seluruh tim."])] },
+  client: { label: "Klien", intro: "Cara memantau progres proyek brand Anda, melihat laporan kerja, dan berkoordinasi dengan tim kami.", highlights: ["Pantau kemajuan proyek dan target layanan secara real-time", "Lihat laporan berkala dan bukti fisik/digital hasil kerja tim", "Koordinasi dan komunikasi terpusat via menu Inbox"], sections: clientGuide },
 };

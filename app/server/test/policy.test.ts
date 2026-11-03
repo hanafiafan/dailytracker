@@ -8,6 +8,7 @@ const team: PolicyMember[] = [
   { email: "hcs@x.id", group: "HCS", isAdmin: true, adminGroups: ["HCS"] },
   { email: "a@x.id", group: "HCS", isAdmin: false, adminGroups: [] },
   { email: "b@x.id", group: "ADS", isAdmin: false, adminGroups: [] },
+  { email: "client@x.id", name: "Client", group: "", isAdmin: false, adminGroups: [], accountType: "client" },
 ];
 const as = (me: string, owner = false) => makePolicy(me, owner, team);
 
@@ -105,6 +106,11 @@ describe("policy", () => {
     for (const m of team) {
       expect(bo.canSee(m.email)).toBe(true);
     }
+  });
+  it("client account has client guide role and restricted visibility", () => {
+    const p = as("client@x.id");
+    expect(p.isClient).toBe(true);
+    expect(p.guideRole()).toBe("client");
   });
 });
 
