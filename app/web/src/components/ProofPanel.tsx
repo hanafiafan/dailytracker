@@ -55,9 +55,6 @@ export function ProofPanel({ t, onClose }: { t: TaskDTO; onClose: () => void }) 
         <label className="field">
           <span>Jumlah hasil{svc?.unit ? ` (${svc.unit})` : ""}{svc?.targetQty ? ` — target ${svc.targetQty}` : ""}</span>
           <input className="input" name="qty" type="number" min={0} max={100000} inputMode="numeric" defaultValue={t.qty || ""} placeholder="mis. 5" />
-          <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".74rem" }}>
-            Berapa banyak yang kamu selesaikan hari ini (mis. 5 untuk 5 {svc?.unit || "hasil"}). Angka ini otomatis memperbarui progres proyek & laporan klien.
-          </small>
         </label>
       )}
       <textarea className="input" name="note" rows={2} maxLength={600} placeholder="Keterangan / catatan penyelesaian tugas" aria-label="Keterangan bukti" defaultValue={t.report ?? ""} />

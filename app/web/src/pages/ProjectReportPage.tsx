@@ -70,8 +70,8 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
       <div className="pj-bar" role="progressbar" aria-valuenow={x.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Progres ${s.name}`}><i style={{ width: `${x.progress}%` }} /></div>
       <p className="pj-fig">{num ? <><b>{x.delivered.toLocaleString("id-ID")}</b> / {qtyText(s.targetQty, s.unit)}</> : <><b>{x.done}</b> / {x.tasks.length} tugas</>}{s.dueDate && <span className="muted"> · tenggat {fmtShort(s.dueDate)}</span>}</p>
       {x.paceText && (
-        <div className="pj-pace" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: "var(--r-sm, 6px)", fontSize: ".76rem", fontWeight: 700, margin: "2px 0 6px", background: x.progress >= 100 ? "rgba(46, 213, 115, 0.12)" : x.daysLeft !== null && x.daysLeft < 0 ? "rgba(255, 71, 87, 0.12)" : "rgba(47, 107, 255, 0.10)", color: x.progress >= 100 ? "var(--good, #2ed573)" : x.daysLeft !== null && x.daysLeft < 0 ? "var(--bad, #ff4757)" : "var(--blue, #2f6bff)" }}>
-          <Zap size={12} />
+        <div className="pj-pace" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: "var(--r-sm)", fontSize: ".76rem", fontWeight: 700, margin: "2px 0 6px", background: x.progress >= 100 ? "var(--ok-soft)" : x.daysLeft !== null && x.daysLeft < 0 ? "var(--bad-soft)" : "var(--info-soft)", color: x.progress >= 100 ? "var(--ok)" : x.daysLeft !== null && x.daysLeft < 0 ? "var(--bad)" : "var(--blue)" }}>
+          <Zap size={11} />
           <span>{x.paceText}</span>
         </div>
       )}
@@ -86,9 +86,6 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
           </button>
         </div>
       )}
-      <small className="muted" style={{ display: "block", marginTop: 4, fontSize: ".72rem" }}>
-        Tugas yang selesai & diisi kuantitasnya otomatis menambah progres layanan di atas.
-      </small>
       {onOpen && x.tasks.length > 0 && (
         <ul className="pj-tasks">{x.tasks.slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => (
           <li key={t.id}><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left" }} onClick={() => onOpen(t.id)}>{t.title}</button><small className="muted">{t.name} · {fmtShort(t.date)}</small>{t.qty > 0 && <span className="tag off">{t.qty}{s.unit ? " " + s.unit : ""}</span>}<span className={"stpill " + t.status}>{ST[t.status]}</span></li>))}
@@ -322,7 +319,7 @@ export function ProjectReportPage() {
             {(m.start || m.due) && <span className="chip"><CalendarRange size={13} />{m.start ? fmtShort(m.start) : "…"} – {m.due ? fmtShort(m.due) : "…"}</span>}
             {m.daysLeft !== null && !p.closedAt && <span className={"chip" + (m.daysLeft < 0 ? " bad" : "")}>{m.daysLeft < 0 ? `Lewat ${-m.daysLeft} hari` : m.daysLeft === 0 ? "Tenggat hari ini" : `${m.daysLeft} hari lagi`}</span>}
             {m.overallPaceText && !p.closedAt && (
-              <span className="chip" style={{ background: "rgba(214, 244, 63, 0.18)", color: "var(--ink)", border: "1px solid rgba(214, 244, 63, 0.4)", fontWeight: 700 }} title="Rekomendasi target harian untuk mencapai tenggat">
+              <span className="chip" style={{ background: "var(--volt)", color: "var(--ink)", fontWeight: 700 }} title="Rekomendasi target harian untuk mencapai tenggat">
                 <Zap size={11} style={{ marginRight: 3, verticalAlign: -1 }} />
                 {m.overallPaceText}
               </span>

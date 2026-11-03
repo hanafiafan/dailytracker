@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, X, Zap } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Color, ProjectDTO } from "@shared/schemas";
 import { ColorPicker } from "./ColorPicker";
@@ -113,9 +113,6 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
               <label className="field">
                 <span>Nama proyek</span>
                 <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="mis. Foto produk Toko Maju" maxLength={60} autoFocus required />
-                <small className="muted" style={{ display: "block", marginTop: 4, fontSize: ".76rem" }}>
-                  Contoh: Kampanye Lebaran 2026, Foto Katalog Produk, Rebranding Social Media
-                </small>
               </label>
               <div className="grid2">
                 <label className="field">
@@ -124,9 +121,6 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
                     <option value="">Tanpa brand</option>
                     {entities.map(e => <option key={e.id} value={e.id}>{e.id} · {e.name}</option>)}
                   </select>
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".73rem" }}>
-                    Brand / entitas bisnis internal pemilik proyek.
-                  </small>
                 </label>
                 <label className="field">
                   <span>Akun client</span>
@@ -134,9 +128,6 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
                     <option value="">{clients.length ? "Tanpa client" : "Belum ada akun client"}</option>
                     {clients.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}
                   </select>
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".73rem" }}>
-                    Klien yang berhak memantau progres proyek ini.
-                  </small>
                 </label>
                 <label className="field">
                   <span>Penanggung jawab (PM)</span>
@@ -144,23 +135,14 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
                     <option value="">Belum ditentukan</option>
                     {(managers.length ? managers : staff).map(m => <option key={m.email} value={m.email}>{m.name}</option>)}
                   </select>
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".73rem" }}>
-                    PM yang mengontrol jadwal dan tim.
-                  </small>
                 </label>
                 <label className="field">
                   <span>Mulai</span>
                   <input className="input" type="date" value={startDate} onChange={e => setStart(e.target.value)} />
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".73rem" }}>
-                    Tanggal kick-off proyek.
-                  </small>
                 </label>
                 <label className="field">
                   <span>Tenggat</span>
                   <input className="input" type="date" value={dueDate} min={startDate || undefined} onChange={e => setDue(e.target.value)} />
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".73rem" }}>
-                    Dipakai untuk hitung target harian otomatis.
-                  </small>
                 </label>
               </div>
             </section>
@@ -169,21 +151,13 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
               <div className="dsec-h">
                 <div>
                   <h3>Layanan yang diambil</h3>
-                  <span className="muted">Target & PIC dipakai untuk menghitung progres dan kebutuhan harian otomatis</span>
+                  <span className="muted">Target & satuan (mis. 50 foto) dipakai untuk menghitung progres dan ritme harian PIC</span>
                 </div>
-              </div>
-
-              <div style={{ padding: "8px 12px", background: "var(--tile, rgba(0,0,0,0.03))", borderRadius: "var(--r-sm, 6px)", margin: "4px 0 12px", fontSize: ".78rem", borderLeft: "3px solid var(--blue, #2f6bff)" }}>
-                <b style={{ color: "var(--ink)" }}>💡 Panduan Target, Satuan, dan Tugas Harian:</b>
-                <p className="muted" style={{ margin: "3px 0 0", lineHeight: 1.45 }}>
-                  • <b>Target & Satuan:</b> Jumlah output yang harus diserahkan (mis. <code>50</code> dan <code>foto</code>, atau <code>12</code> dan <code>video</code>). Jika tidak ada target pasti, kosongkan saja.<br/>
-                  • <b>PIC:</b> Tim pelaksana. Tugas otomatis dibuatkan di dasbor harian PIC sesuai kebutuhan harian (misal: <i>~5 foto/hari</i>).
-                </p>
               </div>
 
               {loaded ? rows.map(r => (
                 <div key={r.key} className="svcrow">
-                  <input className="input" aria-label="Nama layanan" value={r.name} onChange={e => patch(r.key, { name: e.target.value })} placeholder="Nama layanan (mis. Foto Katalog)" maxLength={80} />
+                  <input className="input" aria-label="Nama layanan" value={r.name} onChange={e => patch(r.key, { name: e.target.value })} placeholder="Nama layanan (mis. Foto katalog)" maxLength={80} />
                   <input className="input num" aria-label="Target jumlah" type="number" min={0} max={100000} inputMode="numeric" value={r.targetQty} onChange={e => patch(r.key, { targetQty: e.target.value })} placeholder="Target (mis. 50)" />
                   <input className="input unit" aria-label="Satuan" value={r.unit} onChange={e => patch(r.key, { unit: e.target.value })} placeholder="Satuan (mis. foto)" maxLength={20} />
                   <button type="button" className="iconbtn" aria-label="Hapus layanan" onClick={() => drop(r)}><Trash2 size={15} /></button>
@@ -202,12 +176,12 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
                 <button type="button" className="chip" onClick={() => setRows(r => [...r, blank()])}><Plus size={12} />Layanan lain</button>
               </div>
 
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: ".82rem", marginTop: 14, cursor: "pointer", background: "rgba(47, 107, 255, 0.06)", border: "1px dashed rgba(47, 107, 255, 0.3)", padding: "10px 12px", borderRadius: "var(--r-md, 8px)" }}>
+              <label className="check" style={{ marginTop: 14, alignItems: "flex-start", cursor: "pointer" }}>
                 <input type="checkbox" checked={autoCreateTasks} onChange={e => setAutoCreateTasks(e.target.checked)} style={{ marginTop: 2 }} />
                 <div>
-                  <b style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: 4 }}><Zap size={13} style={{ color: "var(--blue)" }} />Otomatis buat tugas perdana untuk PIC di daftar tugas harian mereka</b>
-                  <small className="muted" style={{ display: "block", marginTop: 3, fontSize: ".75rem", lineHeight: 1.4 }}>
-                    Tugas akan langsung muncul di halaman Dasbor, Papan, dan Daftar tugas setiap PIC yang dipilih pada hari ini lengkap dengan target harian.
+                  <span style={{ fontSize: ".84rem", fontWeight: 600 }}>Hubungkan ke tugas harian PIC otomatis</span>
+                  <small className="muted" style={{ display: "block", fontSize: ".76rem", marginTop: 1 }}>
+                    Tugas perdana otomatis tampil di Dasbor dan Papan kerja PIC yang ditugaskan.
                   </small>
                 </div>
               </label>

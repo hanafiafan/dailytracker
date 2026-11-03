@@ -37,13 +37,25 @@ export function calcPace(targetQty: number, delivered: number, unit: string, due
     return { needed, daysLeft, neededPerDay: null, paceText: `Lewat tenggat (sisa ${needed.toLocaleString("id-ID")}${u})` };
   }
   if (daysLeft === 0) {
-    return { needed, daysLeft: 0, neededPerDay: needed, paceText: `Butuh ${needed.toLocaleString("id-ID")}${u} hari ini!` };
+    return { needed, daysLeft: 0, neededPerDay: needed, paceText: `${needed.toLocaleString("id-ID")}${u} hari ini` };
   }
   const rawRate = needed / daysLeft;
   const rateRounded = rawRate >= 1 ? `~${Math.ceil(rawRate)}` : `~${(Math.round(rawRate * 10) / 10).toLocaleString("id-ID")}`;
   const neededPerDay = Math.ceil(rawRate);
-  const paceText = `Butuh ${rateRounded}${u}/hari`;
+  const paceText = `${rateRounded}${u}/hari`;
   return { needed, daysLeft, neededPerDay, paceText };
+}
+
+/** Combines multiple pace strings into a compact single-line text (e.g. "~5 foto · ~1 video/hari"). */
+export function formatCombinedPace(paces: (string | null | undefined)[]): string | null {
+  const valid = paces.filter((p): p is string => Boolean(p && p.trim()));
+  if (!valid.length) return null;
+  if (valid.length === 1) return valid[0] ?? null;
+  const allDaily = valid.every(p => p.endsWith("/hari"));
+  if (allDaily) {
+    return valid.map(p => p.replace(/\/hari$/, "")).join(" · ") + "/hari";
+  }
+  return valid.join(" · ");
 }
 
 export interface ServiceStat {
@@ -119,7 +131,7 @@ export function projectMetrics(d: ProjectReportDTO, todayStr: string): ProjectMe
     return { ...l, neededPerDay: pace.neededPerDay, paceText: pace.paceText };
   });
   const activePaces = lines.filter(l => l.paceText && l.target > l.delivered).map(l => l.paceText);
-  const overallPaceText = activePaces.length ? activePaces.join(" · ") : lines.some(l => l.target > 0) ? "Target tercapai ✓" : null;
+  const overallPaceText = formatCombinedPace(activePaces) ?? (lines.some(l => l.target > 0) ? "Target tercapai ✓" : null);
 
   let health: Health = "idle", healthNote = "Belum ada jadwal";
   if (p.closedAt) { health = "done"; healthNote = "Proyek selesai"; }

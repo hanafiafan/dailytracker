@@ -186,9 +186,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
               <label className="field">
                 <span>Judul tugas</span>
                 <input className="input" name="title" autoFocus defaultValue={prefill.title ?? ""} placeholder={mode === "self" ? "Apa yang ingin diselesaikan? (mis. Retouch 10 foto)" : "mis. Foto produk 12 SKU model gamis"} maxLength={120} />
-                <small className="muted" style={{ display: "block", marginTop: 4, fontSize: ".76rem" }}>
-                  {mode === "self" ? "Contoh: Retouch 10 foto katalog, Edit reels teaser 30 dtk, Riset hashtag" : "Contoh: Foto 12 SKU baju koko, Edit video reels unboxing, Buat 5 desain poster"}
-                </small>
               </label>
               {mode === "self" && (
                 <div className="chips">
@@ -225,9 +222,6 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
                     </select></label>
                 )}
               </div>
-              <small className="muted" style={{ display: "block", marginTop: 4, fontSize: ".76rem" }}>
-                💡 Hubungkan ke proyek & layanan agar saat tugas ini selesai, jumlah hasil (qty) otomatis mengisi progres proyek dan dihitung ke target harian.
-              </small>
               {mode === "team" && templates.length > 0 && (
                 <div className="chips">
                   <span className="muted" style={{ fontSize: ".76rem" }}>Templat:</span>

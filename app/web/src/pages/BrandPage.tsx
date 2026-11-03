@@ -16,7 +16,7 @@ import { ProjectSetup } from "../components/ProjectSetup";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta } from "../lib/queries";
 import { useViewer } from "../lib/viewer";
-import { brandOf, HEALTH_LABEL, pct, calcPace, type Health } from "../lib/projects";
+import { brandOf, HEALTH_LABEL, pct, calcPace, formatCombinedPace, type Health } from "../lib/projects";
 import { COLOR_LABEL } from "../lib/tasks";
 import { today } from "../lib/format";
 
@@ -599,7 +599,7 @@ export function BrandPage() {
                     if (pace.paceText && totalT > totalD) paceText = pace.paceText;
                   } else {
                     const paces = withT.map(x => calcPace(x.target, x.delivered, x.unit, p.dueDate, today())).filter(x => x.needed > 0 && x.paceText);
-                    if (paces.length) paceText = paces.map(x => x.paceText).join(" · ");
+                    if (paces.length) paceText = formatCombinedPace(paces.map(x => x.paceText));
                   }
                 }
 
@@ -623,7 +623,7 @@ export function BrandPage() {
                           </span>
                           {!isLive && <span className="tag off">Selesai</span>}
                           {paceText && (
-                            <span className="chip" style={{ background: "rgba(214, 244, 63, 0.18)", color: "var(--ink)", border: "1px solid rgba(214, 244, 63, 0.4)", fontWeight: 700, fontSize: ".72rem", padding: "1px 7px" }} title="Rekomendasi target harian">
+                            <span className="chip" style={{ background: "var(--volt)", color: "var(--ink)", fontWeight: 700, fontSize: ".72rem", padding: "1px 8px" }} title="Rekomendasi target harian">
                               <Zap size={10} style={{ marginRight: 3, verticalAlign: -1 }} />
                               {paceText}
                             </span>

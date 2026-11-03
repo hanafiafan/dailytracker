@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useIsMobile } from "../lib/useMedia";
 import { api, ok } from "../lib/api";
 import { keys, useAction, useMeta, useTasks, windowFrom } from "../lib/queries";
-import { HEALTH_LABEL, brandOf, calcPace, pct as pctOf, type Health } from "../lib/projects";
+import { HEALTH_LABEL, brandOf, calcPace, formatCombinedPace, pct as pctOf, type Health } from "../lib/projects";
 import { useUi, useViewer } from "../lib/viewer";
 
 function Ring({ pct }: { pct: number }) {
@@ -58,7 +58,7 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
   );
 }
 
-import { ArrowUpRight, FolderPlus, Plus, Search, Archive, Zap } from "lucide-react";
+import { ArrowUpRight, FolderPlus, Plus, Search, Archive } from "lucide-react";
 
 export function ProjectsPage() {
   const { me, projects, policy, member, entities } = useViewer();
@@ -112,7 +112,7 @@ export function ProjectsPage() {
             if (pace.paceText && one.t > one.d) paceText = pace.paceText;
           } else {
             const paces = withT.map(x => calcPace(x.target, x.delivered, x.unit, p.dueDate, today())).filter(x => x.needed > 0 && x.paceText);
-            if (paces.length) paceText = paces.map(x => x.paceText).join(" · ");
+            if (paces.length) paceText = formatCombinedPace(paces.map(x => x.paceText));
           }
         }
         return { p, total, done, late, open: total - done, pct, who, result, left, health, services: sv.length, brandId: brandOf(p, member, entities.map(e => e.id)), paceText };
@@ -174,10 +174,6 @@ export function ProjectsPage() {
             </div>
           </div>
 
-          <p className="muted" style={{ fontSize: ".78rem", margin: "0 0 14px", lineHeight: 1.45 }}>
-            💡 <b>Alur otomatis:</b> Tugas proyek otomatis terhubung ke Dasbor/Papan harian PIC. Saat PIC menyelesaikan tugas & mengisi kuantitas hasil (qty), progres di kartu proyek langsung terbarui real-time.
-          </p>
-
           {showAddProject && policy.canCreateProject() && <ProjectSetup onClose={() => setShowAddProject(false)} />}
 
           {rows.length && mobile ? (
@@ -191,25 +187,65 @@ export function ProjectsPage() {
               {rows.map(({ p, total, done, late, open, pct, who, result, left, health, services, brandId, paceText }) => {
                 const client = p.clientEmail ? member(p.clientEmail) : null, pm = p.pmEmail ? member(p.pmEmail) : null;
                 return (
-                <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
-                  <div className="ph"><Ring pct={pct} /><div style={{ minWidth: 0 }}><h2 className="clamp1"><a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>{p.name}</a></h2><p className="clamp2">{p.description || "Tanpa deskripsi"}</p>
-                    <div className="chips" style={{ marginTop: 6 }}><span className="chip" data-c={entities.find(e => e.id === brandId)?.color} title="Brand pemilik proyek"><b>{brandId ?? "Tanpa brand"}</b></span><span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>{left !== null && !p.closedAt && <span className={"chip" + (left < 0 ? " bad" : "")}>{left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}</span>}{paceText && <span className="chip" style={{ background: "rgba(214, 244, 63, 0.18)", color: "var(--ink)", border: "1px solid rgba(214, 244, 63, 0.4)", fontWeight: 700 }} title="Rekomendasi target harian"><Zap size={11} style={{ marginRight: 3, verticalAlign: -1 }} />{paceText}</span>}</div></div></div>
-                  {(client || pm || services > 0 || paceText) && <div className="pj-meta">
-                    <span><small>Client</small><b className="clamp1">{client?.name ?? "–"}</b></span>
-                    <span><small>PM</small><b className="clamp1">{pm?.name ?? "–"}</b></span>
-                    <span><small>{result ? "Hasil" : "Layanan"}</small><b className="clamp1">{result ?? (services || "–")}</b></span>
-                    {paceText && <span><small>Target Harian</small><b className="clamp1" style={{ color: "var(--blue)" }}>{paceText}</b></span>}
-                  </div>}
-                  <div className="nums"><div><b>{open}</b><small>Terbuka</small></div><div><b>{done}</b><small>Selesai</small></div><div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div></div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
-                    <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
-                  </div>
-                  <div className="chips">
-                    <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
-                    {(policy.isManager || policy.canCreateProject()) && !policy.isClient && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
-                  </div>
-                </article>); })}
+                  <article key={p.id} className={"pcard link" + (p.closedAt ? " closed" : "")} data-c={p.color} onClick={() => go("/proyek/" + p.id)}>
+                    <div className="ph">
+                      <Ring pct={pct} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <h2 className="clamp1">
+                          <a href={"/proyek/" + p.id} className="plink" onClick={e => { e.preventDefault(); e.stopPropagation(); go("/proyek/" + p.id); }}>
+                            {p.name}
+                          </a>
+                        </h2>
+                        <p className="clamp1">{p.description || "Tanpa deskripsi"}</p>
+                        <div className="chips" style={{ marginTop: 6 }}>
+                          <span className="chip" data-c={entities.find(e => e.id === brandId)?.color} title="Brand pemilik proyek">
+                            <b>{brandId ?? "Tanpa brand"}</b>
+                          </span>
+                          <span className={"pj-health " + health}>{HEALTH_LABEL[health]}</span>
+                          {left !== null && !p.closedAt && (
+                            <span className={"chip" + (left < 0 ? " bad" : "")}>
+                              {left < 0 ? `Lewat ${-left} hari` : left === 0 ? "Tenggat hari ini" : `${left} hari lagi`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pj-meta">
+                      <span>
+                        <small>Klien</small>
+                        <b className="clamp1" title={client?.name ?? "–"}>{client?.name ?? "–"}</b>
+                      </span>
+                      <span>
+                        <small>PM</small>
+                        <b className="clamp1" title={pm?.name ?? "–"}>{pm?.name ?? "–"}</b>
+                      </span>
+                      <span>
+                        <small>{paceText ? "Ritme" : result ? "Target" : "Layanan"}</small>
+                        <b className="clamp1" style={{ color: paceText ? "var(--blue)" : undefined }} title={paceText ? `Kebutuhan ritme harian: ${paceText}` : (result ?? (services ? `${services} layanan` : "–"))}>
+                          {paceText ? `⚡ ${paceText}` : (result ?? (services ? `${services} layanan` : "–"))}
+                        </b>
+                      </span>
+                    </div>
+
+                    <div className="nums">
+                      <div><b>{open}</b><small>Terbuka</small></div>
+                      <div><b>{done}</b><small>Selesai</small></div>
+                      <div><b style={{ color: late ? "var(--bad)" : undefined }}>{late}</b><small>Terlambat</small></div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span className="avatars">{who.slice(0, 5).map(m => <Avatar key={m!.email} m={m!} />)}</span>
+                      <span className="muted" style={{ fontSize: ".78rem", fontWeight: 600 }}>{total} tugas</span>
+                    </div>
+
+                    <div className="chips">
+                      <button className="btn small" onClick={e => { e.stopPropagation(); go("/proyek/" + p.id); }}>{p.closedAt ? "Laporan akhir" : "Detail"}</button>
+                      {(policy.isManager || policy.canCreateProject()) && !policy.isClient && (p.closedAt ? <button className="btn small ghost" onClick={e => { e.stopPropagation(); reopen.mutate(p.id); }}>Buka kembali</button> : <button className="btn small primary" onClick={e => { e.stopPropagation(); setClosing(p.id); }}>Tutup proyek</button>)}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="bc">
