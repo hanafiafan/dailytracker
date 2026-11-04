@@ -32,9 +32,11 @@ export function ensureRoutines(db: Db, date: string, now = Date.now()) {
 /** Deadline reminders every run; the morning summary once, at 08:00-08:14 WIB. */
 export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: Bus) {
   const { date, hour, minute } = wib(now);
-  const today = db.select().from(tasks).where(eq(tasks.date, date)).all();
+  const taskDueDay = (t: { date: string; dueDate?: string | null }) => t.dueDate || t.date;
+  const allTasks = db.select().from(tasks).all();
+  const dueToday = allTasks.filter(t => taskDueDay(t) === date);
 
-  for (const t of today) {
+  for (const t of dueToday) {
     if (t.status === "done" || !t.due) continue;
     const dl = atMs(date, t.due);
     if (now > dl && !t.remLate) {
@@ -49,9 +51,9 @@ export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: B
   // 15+ minutes past the end time: one automatic comment per task (fixed id, so reruns never repeat it),
   // the person gets it in their bell, and so do the admins who manage them.
   const names = new Map(db.select({ email: members.email, name: members.name }).from(members).all().map(m => [m.email, m.name]));
-  const yesterday = db.select().from(tasks).where(eq(tasks.date, addDays(date, -1))).all();
-  for (const t of [...yesterday, ...today]) {
-    if (t.status === "done" || !t.due || now - atMs(t.date, t.due) < AUTO_LATE_MS) continue;
+  const dueYesterdayOrToday = allTasks.filter(t => taskDueDay(t) === date || taskDueDay(t) === addDays(date, -1));
+  for (const t of dueYesterdayOrToday) {
+    if (t.status === "done" || !t.due || now - atMs(taskDueDay(t), t.due) < AUTO_LATE_MS) continue;
     const text = `Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai ${t.due}. Mohon segera diselesaikan atau beri kabar di komentar.`;
     const res = db.insert(comments).values({ id: "auto-" + t.id, taskId: t.id, by: "Pengingat otomatis", byEmail: "", text, at: now }).onConflictDoNothing().run();
     if (!res.changes) continue;
@@ -71,14 +73,14 @@ export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: B
   const subscribed = new Set(db.select({ email: pushSubs.email }).from(pushSubs).all().map(x => x.email));
   for (const m of db.select({ email: members.email, isAdmin: members.isAdmin }).from(members).all()) {
     if (m.isAdmin || !subscribed.has(m.email)) continue;
-    const open = today.filter(t => t.email === m.email && t.status !== "done").length;
+    const open = allTasks.filter(t => t.email === m.email && t.status !== "done" && t.date <= date && taskDueDay(t) >= date).length;
     if (open) await push.send([m.email], "Selamat pagi", `Kamu punya ${open} tugas hari ini.`, "morning-" + date);
   }
 
   // Managers get one line: what is late, what waits for a decision, who is away.
   const team = db.select({ email: members.email, group: members.group, extraGroups: members.extraGroups, isAdmin: members.isAdmin, adminGroups: members.adminGroups }).from(members).all();
   const allLeaves = db.select().from(leaves).all();
-  const late = db.select().from(tasks).all().filter(t => t.status !== "done" && t.date < date);
+  const late = allTasks.filter(t => t.status !== "done" && taskDueDay(t) < date);
   for (const to of new Set([push.ownerEmail, ...team.filter(m => m.isAdmin).map(m => m.email)])) {
     if (!subscribed.has(to)) continue;
     const p = makePolicy(to, to === push.ownerEmail, team);

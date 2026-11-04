@@ -61,17 +61,21 @@ export function colorStyle(c?: string | null): React.CSSProperties | undefined {
   return undefined;
 }
 
+export const taskEndDate = (t: Pick<TaskDTO, "date" | "dueDate">) => t.dueDate || t.date;
+export const isMultiDay = (t: Pick<TaskDTO, "date" | "dueDate">) => !!t.dueDate && t.dueDate > t.date;
+
 export const sortTasks = (arr: TaskDTO[]) => arr.slice().sort((a, b) => {
   const st = { todo: 0, doing: 0, done: 1 };
   const da = a.start || a.due || "99:99", db = b.start || b.due || "99:99";
-  return st[a.status] - st[b.status] || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (da < db ? -1 : da > db ? 1 : 0) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || a.createdAt - b.createdAt;
+  const ea = taskEndDate(a), eb = taskEndDate(b);
+  return st[a.status] - st[b.status] || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (da < db ? -1 : da > db ? 1 : 0) || (ea < eb ? -1 : ea > eb ? 1 : 0) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || a.createdAt - b.createdAt;
 });
 
-/** The day's tasks plus (when viewing today) unfinished ones from earlier days. */
+/** The day's tasks (single-day or active across multi-day span) plus (when viewing today) unfinished ones whose deadline has passed. */
 export function splitDay(all: TaskDTO[], date: string) {
   return {
-    day: sortTasks(all.filter(t => t.date === date)),
-    late: date === today() ? sortTasks(all.filter(t => t.date < date && t.status !== "done")) : [],
+    day: sortTasks(all.filter(t => t.date <= date && taskEndDate(t) >= date)),
+    late: date === today() ? sortTasks(all.filter(t => taskEndDate(t) < date && t.status !== "done")) : [],
   };
 }
 /** Idle = nothing unfinished for today (including leftovers from earlier days). */

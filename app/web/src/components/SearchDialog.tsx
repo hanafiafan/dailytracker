@@ -58,7 +58,7 @@ export function SearchDialog({ onClose }: { onClose: () => void }) {
             </button></li>
           ) : (
             <li key={r.t!.id}><button aria-selected={i === sel} onClick={() => go(r.t!.id)} onMouseEnter={() => setSel(i)}>
-              <span style={{ flex: 1, minWidth: 0 }}><b className="clamp1">{r.t!.title}</b><small className="muted clamp1" style={{ display: "block" }}>{member(r.t!.email)?.name} · {fmtShort(r.t!.date)}{project(r.t!.projectId) ? " · " + project(r.t!.projectId)!.name : ""}</small></span>
+              <span style={{ flex: 1, minWidth: 0 }}><b className="clamp1">{r.t!.title}</b><small className="muted clamp1" style={{ display: "block" }}>{member(r.t!.email)?.name} · {r.t!.dueDate && r.t!.dueDate !== r.t!.date ? `${fmtShort(r.t!.date)} – ${fmtShort(r.t!.dueDate)}` : fmtShort(r.t!.date)}{project(r.t!.projectId) ? " · " + project(r.t!.projectId)!.name : ""}</small></span>
               <span className={"tag " + (r.t!.status === "done" ? "on" : "off")}>{STATUS[r.t!.status]}</span>
             </button></li>
           ))}

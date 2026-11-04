@@ -23,7 +23,7 @@ export function Workload() {
   const people = team.filter(m => !m.isAdmin && policy.canManage(m.email));
   const open = (tq.data ?? []).filter(t => t.status !== "done");
   const cell = (email: string, d: string) => {
-    const l = open.filter(t => t.email === email && t.date === d);
+    const l = open.filter(t => t.email === email && (t.date === d || (t.dueDate ? d >= t.date && d <= t.dueDate : false)));
     const h = l.reduce((s, t) => s + (t.start && t.due ? Math.max(0, mins(t.due) - mins(t.start)) : 0), 0) / 60;
     const away = !!awayOn(leaves, email, d);
     return { n: l.length, h, away, over: !away && (l.length >= OVER_TASKS || h > OVER_HOURS) };

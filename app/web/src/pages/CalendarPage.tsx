@@ -56,9 +56,9 @@ function Slot({ id, h, onNew }: { id: string; h: number; onNew: () => void }) {
 function DayBoard({ date, tasks, canEdit }: { date: string; tasks: TaskDTO[]; canEdit: (t: TaskDTO) => boolean }) {
   const { team, policy, project, member } = useViewer();
   const { newTask } = useUi();
-  const day = tasks.filter(t => t.date === date);
+  const day = tasks.filter(t => t.date === date || (t.dueDate ? date >= t.date && date <= t.dueDate : false));
   const rows = team.filter(m => day.some(t => t.email === m.email));
-  const untimed = day.filter(t => !t.start && !t.due);
+  const untimed = day.filter(t => (!t.start && !t.due) || (t.dueDate && t.dueDate > t.date && date > t.date && date < t.dueDate));
   const t0 = today(), nowMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
   const width = (H1 - H0) * HW;
   return (
@@ -144,7 +144,22 @@ export function CalendarPage() {
   const m0 = parseYmd(date); m0.setDate(1);
   const gridStart = weekStart(ymd(m0));
   const cells = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  const counts = useMemo(() => { const c = new Map<string, number>(); for (const t of tq.data ?? []) c.set(t.date, (c.get(t.date) ?? 0) + 1); return c; }, [tq.data]);
+  const counts = useMemo(() => {
+    const c = new Map<string, number>();
+    for (const t of tq.data ?? []) {
+      const end = t.dueDate || t.date;
+      if (t.date === end) {
+        c.set(t.date, (c.get(t.date) ?? 0) + 1);
+      } else {
+        let cur = t.date;
+        while (cur <= end) {
+          c.set(cur, (c.get(cur) ?? 0) + 1);
+          cur = addDays(cur, 1);
+        }
+      }
+    }
+    return c;
+  }, [tq.data]);
   const t0 = today();
   const nowMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
   const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss || policy.isBO) && policy.canSee(m.email));

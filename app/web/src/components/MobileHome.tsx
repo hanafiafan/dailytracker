@@ -30,8 +30,11 @@ export function MobileHome({ all, day, date, people, manager, attention, onAtten
   const dismiss = () => { setToast(false); try { sessionStorage.setItem(toastKey, "1"); } catch { /* private mode */ } };
   const c = tally(day), total = day.length, pct = total ? Math.round(c.done / total * 100) : 0, open = total - c.done;
   const now = Date.now();
-  const late = all.filter(t => t.status !== "done" && (t.date < today() || (t.due && t.date === today() && now > atMs(t.date, t.due)))).length;
-  const wk = weekStart(date), weekDone = all.filter(t => t.status === "done" && t.date >= wk && t.date <= addDays(wk, 6)).length;
+  const late = all.filter(t => {
+    const end = t.dueDate || t.date;
+    return t.status !== "done" && (end < today() || (t.due && end === today() && now > atMs(end, t.due)));
+  }).length;
+  const wk = weekStart(date), weekDone = all.filter(t => t.status === "done" && t.date <= addDays(wk, 6) && (t.dueDate || t.date) >= wk).length;
   const cards = useMemo(() => day.slice().sort((a, b) => Number(a.status === "done") - Number(b.status === "done") || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99")).slice(0, manager ? 5 : 12), [day]);
   const proj = useMemo(() => projects.filter(p => !p.archived).map(p => { const l = all.filter(t => t.projectId === p.id), d = l.filter(t => t.status === "done").length; return { p, total: l.length, pct: l.length ? Math.round(d / l.length * 100) : 0 }; }).filter(x => x.total).sort((a, b) => b.total - a.total).slice(0, 8), [projects, all]);
   return (

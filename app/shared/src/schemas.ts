@@ -76,6 +76,7 @@ export const taskCreate = z.object({
   title: z.string().trim().min(1).max(120),
   note: z.string().trim().max(600).default(""),
   date: date.optional(),
+  dueDate: date.nullish(),
   start: hm.nullish(), due: hm.nullish(),
   hot: z.boolean().default(false),
   priority: z.enum(PRIORITIES).default("normal"),
@@ -87,11 +88,12 @@ export const taskCreate = z.object({
   warnMin: z.number().int().min(15).max(1440).nullish(),
   // Routine: appears automatically on the chosen weekdays (0 = Sunday).
   routineDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
-}).refine(t => !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
+}).refine(t => !(t.date && t.dueDate) || t.date <= t.dueDate, { message: "Tanggal selesai harus setelah atau sama dengan tanggal mulai", path: ["dueDate"] })
+  .refine(t => !(!t.dueDate || t.date === t.dueDate) || !(t.start && t.due) || t.start < t.due, { message: "Jam selesai harus setelah jam mulai", path: ["due"] });
 /** Partial edit of a task: title/notes/schedule/priority/project/labels, or reassigning to someone else. */
 export const taskPatch = z.object({
   title: z.string().trim().min(1).max(120), note: z.string().trim().max(600),
-  date, start: hm.nullable(), due: hm.nullable(),
+  date, dueDate: date.nullable(), start: hm.nullable(), due: hm.nullable(),
   priority: z.enum(PRIORITIES), projectId: z.string().nullable(), serviceId: z.string().nullable(), labelIds: z.array(z.string()).max(10),
   needProof: z.boolean(), email, warnMin: z.number().int().min(15).max(1440).nullable(), qty: z.number().int().min(0).max(100000),
 }).partial();
@@ -196,7 +198,7 @@ export interface AnalyticsDTO {
   byLabel: { labelId: string; total: number; done: number }[];
 }
 export interface TaskDTO {
-  id: string; email: string; date: string; title: string; note: string; start: string | null; due: string | null;
+  id: string; email: string; date: string; dueDate: string | null; title: string; note: string; start: string | null; due: string | null;
   status: Status; hot: boolean; priority: Priority; projectId: string | null; serviceId: string | null; labelIds: string[]; subtasks: SubtaskDTO[]; needProof: boolean; warnMin: number | null; by: "owner" | "self"; fromAdmin: string | null; routineId: string | null;
   approvalStatus: "pending" | "approved" | "rejected"; approvedBy: string | null; approvedAt: number | null;
   qty: number;
@@ -227,7 +229,7 @@ export interface ProjectReportDTO {
   project: ProjectDTO;
   services?: ProjectServiceDTO[];
   stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number; revisions: number };
-  tasks: { id: string; title: string; email: string; name: string; date: string; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null; qty: number; startedAt: number | null }[];
+  tasks: { id: string; title: string; email: string; name: string; date: string; dueDate?: string | null; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null; qty: number; startedAt: number | null }[];
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }

@@ -82,7 +82,7 @@ function ServiceCard({ x, onNew, onOpen }: { x: ServiceStat; onNew?: () => void;
       )}
       {onOpen && x.tasks.length > 0 && (
         <ul className="pj-tasks">{x.tasks.slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => (
-          <li key={t.id}><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left" }} onClick={() => onOpen(t.id)}>{t.title}</button><small className="muted">{t.name} · {fmtShort(t.date)}</small>{t.qty > 0 && <span className="tag off">{t.qty}{s.unit ? " " + s.unit : ""}</span>}<span className={"stpill " + t.status}>{ST[t.status]}</span></li>))}
+          <li key={t.id}><button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left" }} onClick={() => onOpen(t.id)}>{t.title}</button><small className="muted">{t.name} · {t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}</small>{t.qty > 0 && <span className="tag off">{t.qty}{s.unit ? " " + s.unit : ""}</span>}<span className={"stpill " + t.status}>{ST[t.status]}</span></li>))}
         </ul>
       )}
     </article>
@@ -140,7 +140,7 @@ function Overview({ d, m }: { d: ProjectReportDTO; m: ProjectMetrics }) {
         <div className="bc-h"><span className="bc-ico red"><ListChecks size={18} /></span><h2>Berikutnya</h2><span className="muted">{s.open} terbuka</span></div>
         <ul className="alist">{next.map(t => (
           <li key={t.id} className="arow" style={{ gridTemplateColumns: "minmax(0,1fr) auto" }}>
-            <div style={{ minWidth: 0 }}>{policy.isClient ? <b className="clamp1">{t.title}</b> : <button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left", maxWidth: "100%" }} onClick={() => openTask(t.id)}>{t.title}</button>}<small className="muted">{t.name} · {fmtShort(t.date)}</small></div>
+            <div style={{ minWidth: 0 }}>{policy.isClient ? <b className="clamp1">{t.title}</b> : <button className="linkbtn clamp1" style={{ textDecoration: "none", textAlign: "left", maxWidth: "100%" }} onClick={() => openTask(t.id)}>{t.title}</button>}<small className="muted">{t.name} · {t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}</small></div>
             <span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span>
           </li>))}</ul>
         {!next.length && <Empty art="calendar" title="Tidak ada tugas terbuka" />}
@@ -183,7 +183,7 @@ function Tracking({ d, m }: { d: ProjectReportDTO; m: ProjectMetrics }) {
         {groups.map(g => (
           <div key={g.date} className="pj-day">
             <header><b>{dayLong(g.date)}</b><span className="muted">{g.doneCount}/{g.tasks.length} selesai{g.qty ? ` · ${g.qty.toLocaleString("id-ID")} hasil` : ""}</span></header>
-            <ul>{g.tasks.map(t => { const mm = member(t.email), sv = t.serviceId ? svcName.get(t.serviceId) : null, late = t.status !== "done" && t.date < today(); return (
+            <ul>{g.tasks.map(t => { const mm = member(t.email), sv = t.serviceId ? svcName.get(t.serviceId) : null, late = t.status !== "done" && (t.dueDate || t.date) < today(); return (
               <li key={t.id}>
                 <span className="who">{mm && <Avatar m={mm} />}</span>
                 <div style={{ minWidth: 0 }}>
@@ -210,11 +210,11 @@ function Tasks({ tasks }: { tasks: T[] }) {
       <div className="bc-h"><h2>Semua tugas</h2><div className="seg" role="group" aria-label="Status"><button aria-pressed={!f} onClick={() => setF("")}>Semua {tasks.length}</button>{(["todo", "doing", "done"] as const).map(s => <button key={s} aria-pressed={f === s} onClick={() => setF(s)}>{ST[s]} {tasks.filter(t => t.status === s).length}</button>)}</div></div>
       <table className="htable" style={{ tableLayout: "fixed" }}>
         <thead><tr><th style={{ width: "38%" }}>Tugas</th><th className="hide-s">Penerima</th><th>Tanggal</th><th className="hide-s">Hasil</th><th style={{ width: 120 }}>Status</th></tr></thead>
-        <tbody>{rows.map(t => { const m = member(t.email), late = t.status !== "done" && t.date < today(); return (
+        <tbody>{rows.map(t => { const m = member(t.email), late = t.status !== "done" && (t.dueDate || t.date) < today(); return (
           <tr key={t.id} className={policy.isClient ? "" : "hr"} onClick={policy.isClient ? undefined : () => openTask(t.id)}>
             <td><span className="nm"><b>{t.title}</b>{t.revisions > 0 && <span className="tag off">Revisi {t.revisions}×</span>}</span></td>
             <td className="hide-s"><span className="nm">{m && <Avatar m={m} />}<span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span></span></td>
-            <td>{fmtShort(t.date)}</td><td className="hide-s">{t.qty || "–"}</td>
+            <td>{t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}</td><td className="hide-s">{t.qty || "–"}</td>
             <td><span className={"stpill " + (late ? "late" : t.status)}>{late ? "Terlambat" : ST[t.status]}</span></td>
           </tr>); })}</tbody>
       </table>
@@ -333,7 +333,7 @@ export function ProjectReportPage() {
         <Kpi label="Hasil terkumpul" value={m.lines.length === 1 ? `${m.lines[0]!.delivered.toLocaleString("id-ID")} / ${m.lines[0]!.target.toLocaleString("id-ID")}` : m.lines.length ? `${m.progress}%` : String(tasks.filter(t => t.status === "done").reduce((n, t) => n + t.qty, 0))} sub={m.lines.length === 1 ? m.lines[0]!.unit : m.lines.length ? linesText(m) : "belum ada target"} />
         <Kpi label="Tugas selesai" value={`${s.done}/${s.total}`} sub={`${s.open} terbuka`} />
         <Kpi label="Bukti terlampir" value={String(s.withProof)} sub={s.done ? `${pct(s.withProof, s.done)}% dari selesai` : "–"} />
-        <Kpi label="Terlambat" value={String(tasks.filter(t => t.status !== "done" && t.date < today()).length)} sub="tugas belum selesai" tone={tasks.some(t => t.status !== "done" && t.date < today()) ? "bad" : undefined} />
+        <Kpi label="Terlambat" value={String(tasks.filter(t => t.status !== "done" && (t.dueDate || t.date) < today()).length)} sub="tugas belum selesai" tone={tasks.some(t => t.status !== "done" && (t.dueDate || t.date) < today()) ? "bad" : undefined} />
         <Kpi label="Revisi" value={`${s.revisions}×`} sub={s.minutes ? hm(s.minutes) + " tercatat" : undefined} />
       </div>
       {(tab === "ringkas" || printing) && <Overview d={d} m={m} />}

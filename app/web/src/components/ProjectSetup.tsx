@@ -75,6 +75,7 @@ export function ProjectSetup({ project, defaultEntityId, onClose }: { project?: 
                 title: `${r.name.trim()} · ${name.trim()}`,
                 note: `Ditugaskan dari proyek "${name.trim()}". Layanan: ${r.name.trim()}${targetQty ? ` · Target: ${targetQty} ${unit}` : ""}${dueDate ? ` · Tenggat: ${dueDate}` : ""}.`,
                 date: taskDate,
+                dueDate: (dueDate && dueDate > taskDate) ? dueDate : undefined,
                 projectId: id,
                 serviceId,
                 needProof: true,

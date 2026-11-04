@@ -484,5 +484,54 @@ describe("instant self tasks and proof completion", () => {
     expect(allTasks.some(x => x.title === "Tugas Vero")).toBe(true);
     expect(allTasks.some(x => x.title === "Tugas dari Superadmin")).toBe(true);
   });
+
+  it("supports multi-day tasks spanning across multiple dates", async () => {
+    const t = setup();
+    // 1. Invalid: dueDate before date
+    const bad = await t.call(OWNER, "POST", "/tasks", {
+      emails: ["a@x.id"],
+      title: "Invalid dates",
+      date: "2026-11-10",
+      dueDate: "2026-11-08",
+    });
+    expect(bad.status).toBe(400);
+
+    // 2. Valid multi-day creation
+    const res = await t.call(OWNER, "POST", "/tasks", {
+      emails: ["a@x.id"],
+      title: "Desain UI Website Baru",
+      date: "2026-11-10",
+      dueDate: "2026-11-14",
+      start: "09:00",
+      due: "17:00",
+    });
+    expect(res.status).toBe(201);
+    const { ids } = await json(res);
+    const taskId = ids[0];
+
+    // 3. Fetch single task
+    const task = await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`));
+    expect(task.date).toBe("2026-11-10");
+    expect(task.dueDate).toBe("2026-11-14");
+
+    // 4. Query with `from` within multi-day range (e.g. 2026-11-12) finds it
+    const list = (await json(await t.call(OWNER, "GET", "/tasks?from=2026-11-12"))) as J[];
+    expect(list.some(x => x.id === taskId)).toBe(true);
+
+    // 5. Update dueDate via PATCH
+    const patchRes = await t.call(OWNER, "PATCH", `/tasks/${taskId}`, {
+      dueDate: "2026-11-16",
+    });
+    expect(patchRes.status).toBe(200);
+
+    const updated = await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`));
+    expect(updated.dueDate).toBe("2026-11-16");
+
+    // 6. Invalid PATCH with dueDate before start date
+    const badPatch = await t.call(OWNER, "PATCH", `/tasks/${taskId}`, {
+      dueDate: "2026-11-05",
+    });
+    expect(badPatch.status).toBe(400);
+  });
 });
 

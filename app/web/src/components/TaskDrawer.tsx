@@ -120,8 +120,15 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
           {manager && people.length > 1
             ? <select className="input" aria-label="Ditugaskan ke" value={t.email} onChange={e => a.patch.mutate({ email: e.target.value })}>{people.concat(who && !people.some(p => p.email === who.email) ? [who] : []).map(m => <option key={m.email} value={m.email}>{m.name}</option>)}</select>
             : <div className="chips">{who && <Avatar m={who} />}<b>{who?.name ?? t.email}</b></div>}
-          <span>Tanggal</span>
-          {canEdit ? <input className="input" aria-label="Tanggal" type="date" defaultValue={t.date} onBlur={e => e.target.value && e.target.value !== t.date && a.patch.mutate({ date: e.target.value })} /> : <b>{fmtShort(t.date)}</b>}
+          <span>Mulai</span>
+          {canEdit ? <input className="input" aria-label="Tanggal mulai" type="date" defaultValue={t.date} onBlur={e => e.target.value && e.target.value !== t.date && a.patch.mutate({ date: e.target.value })} /> : <b>{fmtShort(t.date)}</b>}
+          <span>Tenggat</span>
+          {canEdit
+            ? <input className="input" aria-label="Tanggal tenggat" type="date" min={t.date} defaultValue={t.dueDate ?? ""} placeholder="Sama dengan mulai" onBlur={e => {
+                const next = e.target.value || null;
+                if (next !== (t.dueDate ?? null)) a.patch.mutate({ dueDate: next });
+              }} />
+            : <b>{t.dueDate && t.dueDate !== t.date ? fmtShort(t.dueDate) : "Sama dengan mulai"}</b>}
           <span>Jam kerja</span>
           {canEdit
             ? <div className="row" style={{ gap: 8 }}>

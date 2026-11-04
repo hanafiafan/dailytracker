@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { AlarmClock, CheckCheck, Clock, ListChecks, MessageSquare, Paperclip, Repeat } from "lucide-react";
+import { AlarmClock, Calendar, CheckCheck, Clock, ListChecks, MessageSquare, Paperclip, Repeat } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { atMs } from "@shared/time";
 import { dur, fmtShort, fmtTime } from "../lib/format";
-import { PRIORITY_LABEL, subtaskProgress } from "../lib/tasks";
+import { PRIORITY_LABEL, isMultiDay, subtaskProgress } from "../lib/tasks";
 import { useViewer } from "../lib/viewer";
 
 const I = 12;
@@ -11,7 +11,11 @@ const I = 12;
 /** Time-related tags (schedule, on time / late). Each returns [key, node] so callers can limit how many to show. */
 function timeTags(t: TaskDTO, compact?: boolean): [string, ReactNode][] {
   const now = Date.now(), out: [string, ReactNode][] = [];
-  const dl = t.due ? atMs(t.date, t.due) : null, st = t.start ? atMs(t.date, t.start) : null;
+  const end = t.dueDate || t.date;
+  const dl = t.due ? atMs(end, t.due) : null, st = t.start ? atMs(t.date, t.start) : null;
+  if (isMultiDay(t)) {
+    out.push(["range", <span className="tag off" title={`Rentang tugas: ${fmtShort(t.date)} s/d ${fmtShort(t.dueDate!)}`}><Calendar size={I} />{fmtShort(t.date)} – {fmtShort(t.dueDate!)}</span>]);
+  }
   if (st || dl) out.push(["time", <span className="tag due"><Clock size={I} />{t.start && t.due ? `${t.start}–${t.due}` : t.start ? "mulai " + t.start : "s/d " + t.due}</span>]);
   if (t.status === "done" && t.doneAt && dl) out.push(["punct", t.doneAt - dl <= 60000 ? <span className="tag on">Tepat waktu</span> : <span className="tag late">Telat {dur(t.doneAt - dl)}</span>]);
   else if (t.status !== "done" && dl && now > dl) out.push(["over", <span className="tag hot"><AlarmClock size={I} />Terlambat {dur(now - dl)}</span>]);
@@ -38,7 +42,7 @@ export function TaskMeta({ t, isLate, time = true, compact, max }: { t: TaskDTO;
   if (t.priority === "high" || t.priority === "urgent") add("prio", <span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span>, `Prioritas ${PRIORITY_LABEL[t.priority]}`);
   if (p) add("proj", <span className="tag proj" data-c={p.color} title={p.name}>{p.name}</span>, p.name);
   if (t.serviceId) add("srv", <span className="tag off" style={{ background: "rgba(99, 102, 241, 0.12)", color: "color-mix(in srgb, #6366f1 60%, var(--ink))", borderColor: "rgba(99, 102, 241, 0.25)" }} title="Tugas dalam sub-layanan proyek">Sub-layanan</span>, "Sub-layanan");
-  if (isLate) add("late", <span className="tag late">Dari {fmtShort(t.date)}</span>, "Tugas hari sebelumnya");
+  if (isLate) add("late", <span className="tag late">Dari {fmtShort(t.dueDate || t.date)}</span>, "Tugas hari sebelumnya");
   if (t.returnedAt && t.status !== "done") add("back", <span className="tag late" style={{ background: "rgba(239, 68, 68, 0.15)", color: "#dc2626", borderColor: "rgba(239, 68, 68, 0.3)", fontWeight: 600 }}>Revisi</span>, "Tugas dalam status revisi");
   if (t.revisions > 0) add("rev", <span className="tag off" title="Berapa kali dikembalikan untuk diperbaiki">Revisi {t.revisions}×</span>, `Revisi ${t.revisions} kali`);
   if (sp.total > 0) add("sub", <span className="tag off"><ListChecks size={I} />{sp.done}/{sp.total}</span>, `Checklist ${sp.done}/${sp.total}`);

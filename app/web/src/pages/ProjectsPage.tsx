@@ -34,9 +34,9 @@ function Gantt({ tasks }: { tasks: TaskDTO[] }) {
   const days = Array.from({ length: DAYS }, (_, i) => addDays(start, i));
   const pos = (d: string) => Math.max(0, Math.min(DAYS - 1, days.indexOf(d) >= 0 ? days.indexOf(d) : d < start ? 0 : DAYS - 1));
   const rows = projects.filter(p => !p.archived).map(p => {
-    const l = tasks.filter(t => t.projectId === p.id && t.date <= end && t.date >= start);
+    const l = tasks.filter(t => t.projectId === p.id && t.date <= end && (t.dueDate || t.date) >= start);
     if (!l.length) return null;
-    const a = l.reduce((m, t) => (t.date < m ? t.date : m), l[0]!.date), b = l.reduce((m, t) => (t.date > m ? t.date : m), l[0]!.date);
+    const a = l.reduce((m, t) => (t.date < m ? t.date : m), l[0]!.date), b = l.reduce((m, t) => ((t.dueDate || t.date) > m ? (t.dueDate || t.date) : m), l[0]!.dueDate || l[0]!.date);
     const done = l.filter(t => t.status === "done").length;
     return { p, a: pos(a), b: pos(b), pct: Math.round(done / l.length * 100), l };
   }).filter(Boolean) as { p: (typeof projects)[number]; a: number; b: number; pct: number; l: TaskDTO[] }[];
@@ -96,7 +96,7 @@ export function ProjectsPage() {
       .map(p => {
         const l = all.filter(t => t.projectId === p.id), st = stats[p.id];
         const total = st?.total ?? l.length, done = st?.done ?? l.filter(t => t.status === "done").length;
-        const late = l.filter(t => t.status !== "done" && t.date < today()).length;
+        const late = l.filter(t => t.status !== "done" && (t.dueDate || t.date) < today()).length;
         const who = [...new Set(l.map(t => t.email))].map(e => member(e)).filter(Boolean);
         const sv = st?.services ?? [], withT = sv.filter(x => x.target > 0);
         const pct = withT.length ? Math.round(withT.reduce((n, x) => n + pctOf(x.delivered, x.target), 0) / withT.length) : pctOf(done, total);

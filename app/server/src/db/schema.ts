@@ -84,6 +84,8 @@ export const tasks = sqliteTable("tasks", {
   id: text("id").primaryKey(),
   email: text("email").notNull().references(() => members.email, { onDelete: "cascade", onUpdate: "cascade" }),
   date: text("date").notNull(),
+  /** Optional multi-day deadline date (YYYY-MM-DD). Null means single-day task on `date`. */
+  dueDate: text("due_date"),
   title: text("title").notNull(),
   note: text("note").notNull().default(""),
   /** How many times a manager sent it back for fixes. */
@@ -118,7 +120,7 @@ export const tasks = sqliteTable("tasks", {
   remLate: bool("rem_late").notNull().default(false),
   /** Minutes before the end time to send the "deadline soon" reminder; chosen by whoever gave the task (null = 30). */
   warnMin: integer("warn_min"),
-}, t => [index("tasks_email_date").on(t.email, t.date), index("tasks_date").on(t.date), index("tasks_project").on(t.projectId)]);
+}, t => [index("tasks_email_date").on(t.email, t.date), index("tasks_date").on(t.date), index("tasks_due_date").on(t.dueDate), index("tasks_project").on(t.projectId)]);
 
 export const proofs = sqliteTable("proofs", {
   taskId: text("task_id").primaryKey().references(() => tasks.id, { onDelete: "cascade" }),

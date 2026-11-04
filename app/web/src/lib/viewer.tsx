@@ -28,6 +28,7 @@ export interface NewTaskPrefill {
   mode?: "team" | "self";
   emails?: string[];
   date?: string;
+  dueDate?: string | null;
   start?: string;
   due?: string;
   projectId?: string;

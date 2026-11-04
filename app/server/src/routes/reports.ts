@@ -23,7 +23,7 @@ function range(q: (k: string) => string | undefined) {
   const from = q("from") && DATE.test(q("from")!) ? q("from")! : addDays(to, -29);
   return { from, to };
 }
-const dueMs = (t: typeof tasks.$inferSelect) => (t.due ? atMs(t.date, t.due) : null);
+const dueMs = (t: typeof tasks.$inferSelect) => (t.due ? atMs(t.dueDate ?? t.date, t.due) : null);
 const csv = (v: unknown) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s; };
 
 export const reportRoutes = (deps: Deps) => {
@@ -46,7 +46,7 @@ export const reportRoutes = (deps: Deps) => {
         project: toProject(p),
         services: db.select().from(projectServices).where(eq(projectServices.projectId, p.id)).orderBy(asc(projectServices.createdAt)).all(),
         stats: { total: rows.length, done: done.length, open: rows.length - done.length, onTime, late: done.length - onTime, minutes: Math.round([...mins.values()].reduce((s, v) => s + v, 0)), withProof: done.filter(t => t.proofLink || t.hasPhoto).length, revisions: rows.reduce((s, t) => s + t.revisions, 0) },
-        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0), revisions: t.revisions, serviceId: t.serviceId ?? null, qty: t.qty ?? 0, startedAt: t.startedAt })),
+        tasks: rows.map(t => ({ id: t.id, title: t.title, email: t.email, name: names.get(t.email) ?? t.email, date: t.date, dueDate: t.dueDate ?? null, status: t.status, priority: t.priority, doneAt: t.doneAt, hasPhoto: t.hasPhoto, proofLink: t.proofLink, report: t.report, minutes: Math.round(mins.get(t.id) ?? 0), revisions: t.revisions, serviceId: t.serviceId ?? null, qty: t.qty ?? 0, startedAt: t.startedAt })),
       };
       return c.json(out);
     })

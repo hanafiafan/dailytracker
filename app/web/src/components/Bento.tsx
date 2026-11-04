@@ -43,9 +43,9 @@ function Hero({ tasks, all, date, people }: { tasks: TaskDTO[]; all: TaskDTO[]; 
 
 function StatDone({ all, date }: { all: TaskDTO[]; date: string }) {
   const [, go] = useLocation();
-  const wk = weekStart(date), inW = (t: TaskDTO, from: string) => t.date >= from && t.date <= addDays(from, 6);
+  const wk = weekStart(date), inW = (t: TaskDTO, from: string) => t.date <= addDays(from, 6) && (t.dueDate || t.date) >= from;
   const done = all.filter(t => t.status === "done" && inW(t, wk)), prev = all.filter(t => t.status === "done" && inW(t, addDays(wk, -7))).length;
-  const onTime = done.filter(t => !t.due || (t.doneAt ?? 0) <= atMs(t.date, t.due)).length;
+  const onTime = done.filter(t => !t.due || (t.doneAt ?? 0) <= atMs(t.dueDate ?? t.date, t.due)).length;
   return (
     <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=done")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=done")}>
       <div className="bc-h"><span className="bc-ico green"><CheckCheck size={18} /></span><h2>Selesai</h2><span className="muted" style={{ fontSize: ".74rem", fontWeight: 600 }}>Minggu ini</span></div>
@@ -59,7 +59,10 @@ function StatDone({ all, date }: { all: TaskDTO[]; date: string }) {
 function StatOpen({ all }: { all: TaskDTO[] }) {
   const [, go] = useLocation();
   const open = all.filter(t => t.status !== "done"), now = Date.now();
-  const late = open.filter(t => t.date < today() || (t.due && now > atMs(t.date, t.due))).length;
+  const late = open.filter(t => {
+    const end = t.dueDate || t.date;
+    return end < today() || (t.due && end === today() && now > atMs(end, t.due));
+  }).length;
   const hi = open.filter(t => t.priority === "urgent" || t.priority === "high").length, rest = open.length - hi;
   return (
     <div className="bc s3 link" role="link" tabIndex={0} onClick={() => go("/daftar?st=open")} onKeyDown={e => e.key === "Enter" && go("/daftar?st=open")}>

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { commentCreate, subtaskCreate, subtaskPatch, taskApproval, taskCreate, taskPatch, taskReport, taskStatus, type Priority } from "@shared/schemas";
 import { addDays, weekday, wib } from "@shared/time";
 import { activity, comments, labels, members, meta, projectServices, projects, proofs, routines, subtasks, taskLabels, tasks } from "../db/schema.js";
@@ -38,8 +38,9 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const team = loadTeam(db);
       const visible = (u.policy.isBoss || u.policy.isBO) ? null : team.map(m => m.email).filter(e => u.policy.canSee(e));
       if (visible && !visible.length) return c.json([]);
+      const dateCond = or(gte(tasks.date, from), and(isNotNull(tasks.dueDate), gte(tasks.dueDate, from)), ne(tasks.status, "done"));
       const rows = db.select().from(tasks)
-        .where(visible ? and(gte(tasks.date, from), inArray(tasks.email, visible)) : gte(tasks.date, from)).all();
+        .where(visible ? and(dateCond, inArray(tasks.email, visible)) : dateCond).all();
       return c.json(hydrate(db, rows));
     })
     .get("/:id", c => {
@@ -87,7 +88,7 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
               tx.insert(activity).values({ id: newId(), taskId: row.id, actorEmail: u.email, actorName: who(u), kind: "created", text: "membuat tugas rutin", at: now }).run();
             }
           } else {
-            const row = { ...base, id: newId(), date: b.date ?? today };
+            const row = { ...base, id: newId(), date: b.date ?? today, dueDate: b.dueDate ?? null };
             tx.insert(tasks).values(row).run();
             b.subtasks.forEach((title, i) => tx.insert(subtasks).values({ id: newId(), taskId: row.id, title, position: i }).run());
             for (const labelId of b.labelIds) tx.insert(taskLabels).values({ taskId: row.id, labelId }).onConflictDoNothing().run();
@@ -124,15 +125,20 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       const patch: Partial<typeof tasks.$inferInsert> = { ...cols };
       if (b.projectId !== undefined && b.projectId !== t.projectId && b.serviceId === undefined) patch.serviceId = null; // a service belongs to its project
       if (b.priority) patch.hot = isHot(b.priority);
-      if (b.date !== undefined || b.start !== undefined || b.due !== undefined || b.warnMin !== undefined) { patch.remDue = false; patch.remLate = false; }
+      if (b.date !== undefined || b.dueDate !== undefined || b.start !== undefined || b.due !== undefined || b.warnMin !== undefined) { patch.remDue = false; patch.remLate = false; }
+      const startDate = b.date === undefined ? t.date : b.date;
+      const targetDueDate = b.dueDate === undefined ? t.dueDate : b.dueDate;
+      if (targetDueDate && startDate > targetDueDate) return c.json({ error: "Tanggal selesai harus setelah atau sama dengan tanggal mulai" }, 400);
       const start = b.start === undefined ? t.start : b.start, due = b.due === undefined ? t.due : b.due;
-      if (start && due && start >= due) return c.json({ error: "Jam selesai harus setelah jam mulai" }, 400);
+      if ((!targetDueDate || startDate === targetDueDate) && start && due && start >= due) return c.json({ error: "Jam selesai harus setelah jam mulai" }, 400);
 
       const notes: string[] = [];
       if (b.title !== undefined && b.title !== t.title) notes.push("mengubah judul");
       if (b.note !== undefined && b.note !== t.note) notes.push("mengubah deskripsi");
-      if ((b.date !== undefined && b.date !== t.date) || (b.start !== undefined && b.start !== t.start) || (b.due !== undefined && b.due !== t.due))
-        notes.push(`mengatur jadwal ke ${b.date ?? t.date}${start || due ? ` ${start ?? "…"}–${due ?? "…"}` : ""}`);
+      if ((b.date !== undefined && b.date !== t.date) || (b.dueDate !== undefined && b.dueDate !== t.dueDate) || (b.start !== undefined && b.start !== t.start) || (b.due !== undefined && b.due !== t.due)) {
+        const dateRange = (targetDueDate && targetDueDate !== startDate) ? `${startDate} s/d ${targetDueDate}` : startDate;
+        notes.push(`mengatur jadwal ke ${dateRange}${start || due ? ` ${start ?? "…"}–${due ?? "…"}` : ""}`);
+      }
       if (b.priority && b.priority !== t.priority) notes.push(`mengubah prioritas menjadi ${PRIORITY_LABEL[b.priority]}`);
       if (b.projectId !== undefined && b.projectId !== t.projectId) notes.push("memindahkan proyek");
       if (labelIds) notes.push("mengubah label");

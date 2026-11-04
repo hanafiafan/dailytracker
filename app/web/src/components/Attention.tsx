@@ -13,7 +13,10 @@ const DAY = 86_400_000;
 /** What a manager has to act on: late work (nudge), finished work to review (accept or send back), urgent work not started, and pending self tasks to approve. */
 export function attention(tasks: TaskDTO[], canManage: (e: string) => boolean, meEmail?: string) {
   const now = Date.now(), t0 = today(), mine = tasks.filter(t => canManage(t.email));
-  const late = mine.filter(t => t.status !== "done" && (t.date < t0 || (t.due && now > atMs(t.date, t.due)))).sort((a, b) => a.date.localeCompare(b.date));
+  const late = mine.filter(t => {
+    const end = t.dueDate || t.date;
+    return t.status !== "done" && (end < t0 || (t.due && end === t0 && now > atMs(end, t.due)));
+  }).sort((a, b) => (a.dueDate || a.date).localeCompare(b.dueDate || b.date));
   const review = mine.filter(t => t.status === "done" && t.by !== "self" && t.doneAt && now - t.doneAt < 3 * DAY).sort((a, b) => b.doneAt! - a.doneAt!);
   const stuck = mine.filter(t => t.status === "todo" && (t.priority === "urgent" || t.priority === "high") && t.date <= addDays(t0, 1) && !late.includes(t));
   const pending = mine.filter(t => t.approvalStatus === "pending" && (!meEmail || t.email !== meEmail));
@@ -40,14 +43,18 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
   const approveTask = useAction((v: { id: string; status: "approved" | "rejected" }) => ok(api.tasks[":id"].approve.$post({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity], done: "Keputusan persetujuan tersimpan" });
   const nudge = useAction((id: string) => ok(api.tasks[":id"].nudge.$post({ param: { id } })), { done: "Pengingat terkirim", refresh: [keys.activity, keys.inbox] });
   const back = useAction((id: string) => ok(api.tasks[":id"].return.$post({ param: { id } })), { done: "Dikembalikan untuk diperbaiki", refresh: [keys.tasks, keys.activity, keys.analytics] });
-  const days = (d: string) => { const n = Math.round((atMs(today(), "12:00") - atMs(d, "12:00")) / DAY); return n > 0 ? `terlambat ${n} hari` : "lewat jam tenggat"; };
+  const days = (t: TaskDTO) => {
+    const end = t.dueDate || t.date;
+    const n = Math.round((atMs(today(), "12:00") - atMs(end, "12:00")) / DAY);
+    return n > 0 ? `terlambat ${n} hari` : "lewat jam tenggat";
+  };
   return (
     <div className="two2">
       {pending.length > 0 && (
         <section className="bc s12">
           <div className="bc-h"><span className="bc-ico" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#d97706" }}><Clock size={18} /></span><h2>Persetujuan tugas mandiri</h2><span className="muted">{pending.length}</span></div>
           <ul className="alist">{pending.slice(0, 8).map(t => (
-            <Row key={t.id} t={t} note={`${fmtShort(t.date)}${t.due ? ` · s/d ${t.due}` : ""}`}>
+            <Row key={t.id} t={t} note={`${t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}${t.due ? ` · s/d ${t.due}` : ""}`}>
               <button className="btn small primary" disabled={approveTask.isPending} onClick={() => approveTask.mutate({ id: t.id, status: "approved" })}>Setujui</button>
               <button className="btn small" disabled={approveTask.isPending} onClick={() => approveTask.mutate({ id: t.id, status: "rejected" })}>Tolak</button>
             </Row>
@@ -56,7 +63,7 @@ export function Attention({ tasks }: { tasks: TaskDTO[] }) {
       )}
       <section className="bc">
         <div className="bc-h"><span className="bc-ico red"><BellRing size={18} /></span><h2>Terlambat</h2><span className="muted">{late.length}</span></div>
-        <ul className="alist">{late.slice(0, 8).map(t => <Row key={t.id} t={t} note={days(t.date)}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>
+        <ul className="alist">{late.slice(0, 8).map(t => <Row key={t.id} t={t} note={days(t)}><button className="btn small" disabled={nudge.isPending} onClick={() => nudge.mutate(t.id)}>Ingatkan</button></Row>)}</ul>
         {!late.length && <Empty art="tasks" title="Tidak ada yang terlambat" />}
       </section>
       <section className="bc">

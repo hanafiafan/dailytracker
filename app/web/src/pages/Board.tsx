@@ -36,7 +36,7 @@ function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
       )}
       <div className="foot2">
         {m && <Avatar m={m} />}
-        <div className="who"><b className="clamp1">{m?.name ?? t.email}</b><small className="clamp1">{fmtShort(t.date)}{t.start || t.due ? ` · ${t.start ?? ""}${t.start && t.due ? "–" : ""}${t.due ?? ""}` : ""}{t.comments.length ? ` · 💬 ${t.comments.length}` : ""}</small></div>
+        <div className="who"><b className="clamp1">{m?.name ?? t.email}</b><small className="clamp1">{t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}{t.start || t.due ? ` · ${t.start ?? ""}${t.start && t.due ? "–" : ""}${t.due ?? ""}` : ""}{t.comments.length ? ` · 💬 ${t.comments.length}` : ""}</small></div>
       </div>
     </div>
   );
@@ -82,9 +82,10 @@ export function Board() {
   const tasks = useMemo(() => {
     const s = q.trim().toLowerCase();
     return (tq.data ?? []).filter(t => {
-      if (range === "hari" && !(t.date === date || (date === today() && t.date < date && t.status !== "done"))) return false;
-      if (range === "minggu" && !((t.date >= wk && t.date <= addDays(wk, 6)) || (t.status !== "done" && t.date < wk && date >= today()))) return false;
-      if (range === "aktif" && t.status === "done" && t.date < addDays(today(), -7)) return false;
+      const end = t.dueDate || t.date;
+      if (range === "hari" && !((t.date <= date && end >= date) || (date === today() && end < date && t.status !== "done"))) return false;
+      if (range === "minggu" && !((t.date <= addDays(wk, 6) && end >= wk) || (t.status !== "done" && end < wk && date >= today()))) return false;
+      if (range === "aktif" && t.status === "done" && end < addDays(today(), -7)) return false;
       if (who && t.email !== who) return false;
       if (proj && t.projectId !== (proj === "none" ? null : proj)) return false;
       if (lab && !t.labelIds.includes(lab)) return false;

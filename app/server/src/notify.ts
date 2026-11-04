@@ -15,8 +15,12 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
   };
   return {
     // A deadline already inside its own warning window is flagged right away instead of waiting for the next reminder run.
-    newTask: (t: TaskRow) =>
-      deliver([t.email], "task_new", t.id, t.due && t.date === wib().date && atMs(t.date, t.due) - Date.now() <= (t.warnMin ?? 30) * 60000 ? "Tugas baru, tenggat mepet" : "Tugas baru", t.title + (t.date === wib().date ? "" : ` (${t.date})`), "new-" + t.id),
+    newTask: (t: TaskRow) => {
+      const end = t.dueDate || t.date, isToday = end === wib().date;
+      const isMepet = !!(t.due && isToday && atMs(end, t.due) - Date.now() <= (t.warnMin ?? 30) * 60000);
+      const dateLabel = t.dueDate && t.dueDate !== t.date ? ` (${t.date} s/d ${t.dueDate})` : isToday ? "" : ` (${t.date})`;
+      return deliver([t.email], "task_new", t.id, isMepet ? "Tugas baru, tenggat mepet" : "Tugas baru", t.title + dateLabel, "new-" + t.id);
+    },
     assigned: (t: TaskRow, by: string) =>
       deliver([t.email], "assigned", t.id, "Tugas dialihkan ke kamu", `${t.title} (oleh ${by})`, "assign-" + t.id),
     returned: (t: TaskRow, reason?: string) =>

@@ -140,7 +140,7 @@ export function TasksPage() {
             {groups.map(([g, gr]) => [
               g && <tr key={"g" + g} className="grp"><td colSpan={7}><b>{g}</b> <span className="muted">{gr.length}</span></td></tr>,
               ...(gr.map(t => {
-              const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), late = t.status !== "done" && t.date < today();
+              const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), late = t.status !== "done" && (t.dueDate || t.date) < today();
               return (
                 <tr key={t.id} className={"ptr" + (sel.has(t.id) ? " open" : "")} onClick={() => openTask(t.id)}>
                   <td className="chk" onClick={e => e.stopPropagation()}><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} aria-label={`Pilih ${t.title}`} /></td>
@@ -148,7 +148,7 @@ export function TasksPage() {
                   <td><span className="who">{m && <Avatar m={m} />}<span className="clamp1">{m?.name ?? t.email}</span></span></td>
                   <td>{p ? <span className="pbadge" data-c={p.color}>{p.name}</span> : <span className="muted">—</span>}</td>
                   <td><span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span></td>
-                  <td className={late ? "bad" : ""}>{fmtShort(t.date)}{t.start ? ` · ${t.start}` : ""}</td>
+                  <td className={late ? "bad" : ""}>{t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}{t.start ? ` · ${t.start}` : ""}</td>
                   <td><span className={"stpill " + (late && t.status !== "done" ? "late" : t.status)}>{late && t.status !== "done" ? "Terlambat" : STATUS[t.status]}</span></td>
                 </tr>
               );

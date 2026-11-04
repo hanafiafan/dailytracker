@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { addDays, parseYmd, ymd } from "@shared/time";
-import { DAYN, STATUS, today, fmtLong } from "../lib/format";
+import { DAYN, STATUS, today, fmtLong, fmtShort } from "../lib/format";
 import { PRIORITY_RANK, weekStart } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
 import { Avatar, Empty } from "./ui";
@@ -12,7 +12,7 @@ export function Agenda({ days, tasks }: { days: string[]; tasks: TaskDTO[] }) {
   const { member, project } = useViewer();
   const t0 = today();
   const day = days.includes(date) ? date : days[0]!;
-  const list = tasks.filter(t => t.date === day).sort((a, b) => (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99") || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
+  const list = tasks.filter(t => t.date === day || (t.dueDate ? day >= t.date && day <= t.dueDate : false)).sort((a, b) => (a.start ?? a.due ?? "99").localeCompare(b.start ?? b.due ?? "99") || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
   return (
     <div className="agenda">
       <MonthGrid tasks={tasks} day={day} onPick={setDate} />
@@ -23,7 +23,7 @@ export function Agenda({ days, tasks }: { days: string[]; tasks: TaskDTO[] }) {
           {list.map(t => { const m = member(t.email), p = project(t.projectId); return (
             <li key={t.id}>
               <button className="agi" data-c={p?.color} onClick={() => openTask(t.id)}>
-                <span className="agt">{t.start ? <>{t.start}<small>{t.due ?? ""}</small></> : t.due ? <>s/d<small>{t.due}</small></> : <small>Seharian</small>}</span>
+                <span className="agt">{t.dueDate && t.dueDate !== t.date ? <small>{fmtShort(t.date)}–{fmtShort(t.dueDate)}</small> : t.start ? <>{t.start}<small>{t.due ?? ""}</small></> : t.due ? <>s/d<small>{t.due}</small></> : <small>Seharian</small>}</span>
                 <span className="agm"><b className="clamp2">{t.title}</b><small className="muted clamp1">{m?.name ?? t.email}{p ? " · " + p.name : ""}</small></span>
                 <span className="agr">{m && <Avatar m={m} />}<em className={"stpill " + t.status}>{STATUS[t.status]}</em></span>
               </button>
@@ -43,7 +43,18 @@ function MonthGrid({ tasks, day, onPick }: { tasks: TaskDTO[]; day: string; onPi
   const start = weekStart(ymd(first));
   const cells = Array.from({ length: 42 }, (_, i) => addDays(start, i)).filter((d, i) => i < 35 || d.slice(0, 7) === ymd(first).slice(0, 7));
   const by = new Map<string, { n: number; done: number }>();
-  for (const t of tasks) { const e = by.get(t.date) ?? { n: 0, done: 0 }; e.n++; if (t.status === "done") e.done++; by.set(t.date, e); }
+  for (const t of tasks) {
+    const end = t.dueDate || t.date;
+    if (t.date === end) {
+      const e = by.get(t.date) ?? { n: 0, done: 0 }; e.n++; if (t.status === "done") e.done++; by.set(t.date, e);
+    } else {
+      let cur = t.date;
+      while (cur <= end) {
+        const e = by.get(cur) ?? { n: 0, done: 0 }; e.n++; if (t.status === "done") e.done++; by.set(cur, e);
+        cur = addDays(cur, 1);
+      }
+    }
+  }
   const shift = (k: number) => { const d = parseYmd(day); d.setDate(1); d.setMonth(d.getMonth() + k); onPick(ymd(d)); };
   return (
     <section className="mmonth" aria-label="Kalender bulan">

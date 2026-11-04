@@ -43,6 +43,8 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const [routine, setRoutine] = useState(false);
   const [days, setDays] = useState(new Set([1, 2, 3, 4, 5, 6]));
   const [lab, setLab] = useState(new Set<string>(prefill.labelIds ?? []));
+  const [taskDate, setTaskDate] = useState(prefill.date ?? date);
+  const [taskDueDate, setTaskDueDate] = useState(prefill.dueDate ?? "");
   const [start, setStart] = useState(prefill.start ?? "");
   const [due, setDue] = useState(prefill.due ?? "");
 
@@ -109,12 +111,16 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
 
     // Checklist subtasks
     const finalSubtasks = String(f.get("subtasks") ?? "").split("\n").map(s => s.trim()).filter(Boolean);
+    const finalDate = routine && !isSelf ? undefined : (taskDate || String(f.get("date") || date));
+    const rawDueDate = routine && !isSelf ? undefined : (taskDueDate.trim() || undefined);
+    const finalDueDate = rawDueDate && (!finalDate || rawDueDate > finalDate) ? rawDueDate : undefined;
 
     return ok(api.tasks.$post({ json: {
       emails: finalEmails,
       title: String(f.get("title")),
       note: finalNote,
-      date: routine && !isSelf ? undefined : String(f.get("date") || date),
+      date: finalDate,
+      dueDate: finalDueDate,
       start: start || null,
       due: due || null,
       priority,
@@ -134,7 +140,8 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
   const submit = (f: FormData) => {
     if (mode === "team" && !sel.size) return void toast.error("Pilih minimal satu penerima tugas");
     if (!String(f.get("title")).trim()) return void toast.error("Tulis judul tugasnya dulu");
-    if (start && due && start >= due) return void toast.error("Jam selesai harus setelah jam mulai");
+    if (taskDueDate && taskDate && taskDueDate < taskDate) return void toast.error("Tenggat selesai harus setelah atau sama dengan tanggal mulai");
+    if ((!taskDueDate || taskDueDate === taskDate) && start && due && start >= due) return void toast.error("Jam selesai harus setelah jam mulai");
     if (mode === "team" && routine && !days.size) return void toast.error("Pilih hari untuk tugas rutin");
     save.mutate(f, { onSuccess: onClose });
   };
@@ -198,10 +205,21 @@ export function NewTaskDialog({ prefill, date, onClose, onTemplate }: { prefill:
 
             <section className="dsec">
               <div className="dgrid">
-                {!(routine && mode === "team") && <label className="field"><span>Tanggal</span><input className="input" name="date" type="date" defaultValue={prefill.date ?? date} /></label>}
-                <div className="timegrid" style={routine && mode === "team" ? { gridColumn: "1 / -1" } : undefined}>
-                  <label className="tl"><span>Mulai</span><input className="input" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
-                  <label className="tl"><span>Selesai</span><input className="input" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>
+                {!(routine && mode === "team") && (
+                  <>
+                    <label className="field">
+                      <span>Tanggal mulai</span>
+                      <input className="input" name="date" type="date" value={taskDate} onChange={e => { setTaskDate(e.target.value); if (taskDueDate && taskDueDate < e.target.value) setTaskDueDate(e.target.value); }} />
+                    </label>
+                    <label className="field">
+                      <span>Tenggat selesai <em style={{ fontStyle: "normal", fontWeight: 400 }}>(opsional jika multi-hari)</em></span>
+                      <input className="input" name="dueDate" type="date" min={taskDate} value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} placeholder="Selesai di hari yang sama" />
+                    </label>
+                  </>
+                )}
+                <div className="timegrid span2" style={routine && mode === "team" ? { gridColumn: "1 / -1" } : undefined}>
+                  <label className="tl"><span>Jam Mulai</span><input className="input" type="time" value={start} onChange={e => setStart(e.target.value)} /></label>
+                  <label className="tl"><span>Jam Selesai</span><input className="input" type="time" value={due} onChange={e => setDue(e.target.value)} /></label>
                 </div>
               </div>
               <Presets />

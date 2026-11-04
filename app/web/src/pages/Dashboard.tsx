@@ -49,11 +49,11 @@ function Feed({ limit = 8 }: { limit?: number }) {
 
 function Upcoming({ tasks, date }: { tasks: TaskDTO[]; date: string }) {
   const { openTask } = useUi(), { member } = useViewer();
-  const list = sortTasks(tasks.filter(t => t.status !== "done" && t.date === date && t.due)).sort((a, b) => a.due!.localeCompare(b.due!)).slice(0, 6);
+  const list = sortTasks(tasks.filter(t => t.status !== "done" && (t.dueDate ? t.dueDate === date : t.date === date) && t.due)).sort((a, b) => a.due!.localeCompare(b.due!)).slice(0, 6);
   return (
     <section className="surface"><div className="surface-h"><h2>Tenggat {date === today() ? "hari ini" : fmtShort(date)}</h2></div>
       <ul className="feed">
-        {list.map(t => { const late = now() > atMs(t.date, t.due!); return (
+        {list.map(t => { const end = t.dueDate || t.date, late = now() > atMs(end, t.due!); return (
           <li key={t.id}><span className={"tag " + (late ? "hot" : "due")} style={{ height: "fit-content" }}>{t.due}</span>
             <div><button onClick={() => openTask(t.id)}>{t.title}</button><small>{member(t.email)?.name}{late ? " · terlambat" : ""}</small></div></li>); })}
         {!list.length && <li><Empty art="calendar" title="Tidak ada tenggat" /></li>}

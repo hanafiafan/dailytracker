@@ -22,7 +22,7 @@ export const toMemberLite = (m: Omit<MemberRow, "photo">): MemberDTO => ({
 export const toComment = (c: CommentRow): CommentDTO => ({ id: c.id, by: c.by, byEmail: c.byEmail, text: c.text, at: c.at });
 export interface TaskExtras { comments?: CommentRow[]; labelIds?: string[]; subtasks?: SubtaskDTO[] }
 export const toTask = (t: TaskRow, x: TaskExtras = {}): TaskDTO => ({
-  id: t.id, email: t.email, date: t.date, title: t.title, note: t.note, start: t.start, due: t.due, status: t.status,
+  id: t.id, email: t.email, date: t.date, dueDate: t.dueDate ?? null, title: t.title, note: t.note, start: t.start, due: t.due, status: t.status,
   hot: t.hot, priority: t.priority, projectId: t.projectId, serviceId: t.serviceId ?? null, qty: t.qty ?? 0, labelIds: x.labelIds ?? [], subtasks: x.subtasks ?? [], needProof: t.needProof, warnMin: t.warnMin, by: t.by, fromAdmin: t.fromAdmin, routineId: t.routineId, createdAt: t.createdAt,
   approvalStatus: (t.approvalStatus ?? "approved") as TaskDTO["approvalStatus"], approvedBy: t.approvedBy ?? null, approvedAt: t.approvedAt ?? null,
   startedAt: t.startedAt, doneAt: t.doneAt, returnedAt: t.returnedAt, revisions: t.revisions, revisionNote: t.revisionNote ?? null, proofLink: t.proofLink, proofAt: t.proofAt,
