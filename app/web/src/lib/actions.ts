@@ -8,7 +8,10 @@ const refresh = [keys.tasks, keys.activity, keys.analytics, keys.team];
 export function useTaskActions(t: Pick<TaskDTO, "id" | "routineId">) {
   const id = t.id, param = { id };
   return {
-    setStatus: useAction((status: TaskDTO["status"]) => ok(api.tasks[":id"].status.$patch({ param, json: { status } })), { refresh }),
+    setStatus: useAction((arg: TaskDTO["status"] | { status: TaskDTO["status"]; holdReason?: string }) => {
+      const json = typeof arg === "string" ? { status: arg } : arg;
+      return ok(api.tasks[":id"].status.$patch({ param, json }));
+    }, { refresh }),
     approve: useAction((status: "approved" | "rejected") => ok(api.tasks[":id"].approve.$post({ param, json: { status } })), { done: "Keputusan persetujuan disimpan", refresh }),
     stopRoutine: useAction(() => ok(api.routines[":id"].$delete({ param: { id: t.routineId ?? "" } })), { done: "Tugas rutin dihentikan, tidak akan muncul lagi", refresh: [...refresh, keys.routines] }),
     remove: useAction(() => ok(api.tasks[":id"].$delete({ param })), { done: "Tugas dihapus", refresh }),

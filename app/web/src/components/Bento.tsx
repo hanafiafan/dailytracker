@@ -174,12 +174,12 @@ function HistoryCard({ all }: { all: TaskDTO[] }) {
       <table className="htable" style={{ tableLayout: "fixed" }}>
         <thead><tr><th style={{ width: "36%" }}>Tugas</th><th className="hide-s">Penerima</th><th className="hide-s">Proyek</th><th>Tanggal</th><th style={{ width: 120 }}>Status</th></tr></thead>
         <tbody>
-          {rows.map(t => { const m = member(t.email), p = project(t.projectId), late = t.status !== "done" && t.date < today(); return (
+          {rows.map(t => { const m = member(t.email), p = project(t.projectId), late = t.status !== "done" && t.status !== "hold" && t.date < today(); return (
             <tr key={t.id} className="hr" onClick={() => openTask(t.id)}>
               <td><span className="nm"><b>{t.title}</b></span></td>
               <td className="hide-s"><span className="nm">{m && <Avatar m={m} />}<span style={{ overflow: "hidden", textOverflow: "ellipsis" }}><PersonLink email={t.email}>{m?.name ?? t.email}</PersonLink></span></span></td>
               <td className="hide-s">{p?.name ?? "—"}</td><td>{fmtShort(t.date)}</td>
-              <td><span className={"stpill " + (late ? "late" : t.status)}>{late ? "Terlambat" : t.status === "done" ? "Selesai" : t.status === "doing" ? "Dikerjakan" : "Belum"}</span></td>
+              <td><span className={"stpill " + (late ? "late" : t.status)}>{late ? "Terlambat" : t.status === "done" ? "Selesai" : t.status === "doing" ? "Dikerjakan" : t.status === "hold" ? "Hold" : "Belum"}</span></td>
             </tr>); })}
         </tbody>
       </table>

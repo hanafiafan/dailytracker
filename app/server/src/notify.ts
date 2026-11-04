@@ -45,6 +45,13 @@ export function createNotify(push: Push, db: Db, bus: Bus, nameOf: (email: strin
       deliver(push.managersOf(t.email), "task_approval", t.id, "Persetujuan tugas baru", `${requesterName} mengajukan "${t.title}"`, "task-req-" + t.id),
     taskApprovalDecided: (t: TaskRow, approverName: string, approved: boolean) =>
       deliver([t.email], "task_decision", t.id, approved ? "Tugas disetujui" : "Tugas ditolak", `Tugas "${t.title}" ${approved ? "disetujui" : "ditolak"} oleh ${approverName}`, "task-dec-" + t.id),
+    taskHeld: (t: TaskRow, by: string, byEmail: string, reason: string) => {
+      const targets = byEmail === t.email
+        ? push.managersOf(t.email).filter(e => e !== byEmail)
+        : [t.email];
+      if (!targets.length) return Promise.resolve(0);
+      return deliver(targets, "task_held", t.id, byEmail === t.email ? `${by} menahan tugas` : "Tugas ditahan (hold)", `${t.title} · Alasan: ${reason}`, "held-" + t.id);
+    },
   };
 }
 export type Notify = ReturnType<typeof createNotify>;

@@ -169,6 +169,13 @@
       "when": 1793769961109,
       "tag": "0023_stormy_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1793774000000,
+      "tag": "0024_hold_status",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,7 @@ import { STATUS, fmtShort, today } from "../lib/format";
 import { keys, useTasks, windowFrom } from "../lib/queries";
 import { PRIORITY_LABEL, PRIORITY_RANK, subtaskProgress } from "../lib/tasks";
 import { useUi, useViewer } from "../lib/viewer";
+import { HoldModal } from "../components/HoldModal";
 
 type Group = "" | "status" | "who" | "project" | "date";
 interface View { name: string; st: Status | "open"; who: string; q: string; sort: { k: Key; asc: boolean }; group: Group }
@@ -26,10 +27,11 @@ export function TasksPage() {
   const qc = useQueryClient();
   const tq = useTasks(windowFrom(date, today()), true);
   const [params] = useSearchParams();
-  const initSt = params.get("st"), [q, setQ] = useState(""), [st, setSt] = useState<Status | "open" | "all">(initSt === "done" || initSt === "todo" || initSt === "doing" || initSt === "open" || initSt === "all" ? initSt : "open"), [who, setWho] = useState(params.get("who") ?? "");
+  const initSt = params.get("st"), [q, setQ] = useState(""), [st, setSt] = useState<Status | "open" | "all">(initSt === "done" || initSt === "todo" || initSt === "doing" || initSt === "hold" || initSt === "open" || initSt === "all" ? initSt : "open"), [who, setWho] = useState(params.get("who") ?? "");
   const [sort, setSort] = useState<{ k: Key; asc: boolean }>({ k: "date", asc: true });
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [bulkHoldOpen, setBulkHoldOpen] = useState(false);
   const [group, setGroup] = useState<Group>(""), [views, setViews] = useState(loadViews);
   const apply = (v: View) => { setSt(v.st); setWho(v.who); setQ(v.q); setSort(v.sort); setGroup(v.group); };
   const saveView = () => {
@@ -98,6 +100,7 @@ export function TasksPage() {
             ["done", "Arsip Selesai"],
             ["todo", "Belum"],
             ["doing", "Dikerjakan"],
+            ["hold", "Hold"],
             ["all", "Semua"]
           ].map(([k, l]) => (
             <button key={k} aria-pressed={st === k} onClick={() => setSt(k as any)}>{l}</button>
@@ -113,7 +116,15 @@ export function TasksPage() {
       {picked.length > 0 && (
         <div className="bulkbar" role="region" aria-label="Aksi massal">
           <b>{picked.length} dipilih</b>
-          <select className="input" disabled={busy} value="" onChange={e => { const s = e.target.value as Status; if (s) void bulk(`Status ${STATUS[s]}`, id => ok(api.tasks[":id"].status.$patch({ param: { id }, json: { status: s } }))); }} aria-label="Ubah status">
+          <select className="input" disabled={busy} value="" onChange={e => {
+            const s = e.target.value as Status;
+            if (!s) return;
+            if (s === "hold") {
+              setBulkHoldOpen(true);
+              return;
+            }
+            void bulk(`Status ${STATUS[s]}`, id => ok(api.tasks[":id"].status.$patch({ param: { id }, json: { status: s } })));
+          }} aria-label="Ubah status">
             <option value="">Ubah status…</option>{STATUSES.map(s => <option key={s} value={s}>{STATUS[s]}</option>)}
           </select>
           <select className="input" disabled={busy || !canAll} value="" onChange={e => { const p = e.target.value as Priority; if (p) void bulk(`Prioritas ${PRIORITY_LABEL[p]}`, id => ok(api.tasks[":id"].$patch({ param: { id }, json: { priority: p } }))); }} aria-label="Ubah prioritas">
@@ -140,7 +151,7 @@ export function TasksPage() {
             {groups.map(([g, gr]) => [
               g && <tr key={"g" + g} className="grp"><td colSpan={7}><b>{g}</b> <span className="muted">{gr.length}</span></td></tr>,
               ...(gr.map(t => {
-              const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), late = t.status !== "done" && (t.dueDate || t.date) < today();
+              const m = member(t.email), p = project(t.projectId), sp = subtaskProgress(t), late = t.status !== "done" && t.status !== "hold" && (t.dueDate || t.date) < today();
               return (
                 <tr key={t.id} className={"ptr" + (sel.has(t.id) ? " open" : "")} onClick={() => openTask(t.id)}>
                   <td className="chk" onClick={e => e.stopPropagation()}><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} aria-label={`Pilih ${t.title}`} /></td>
@@ -149,7 +160,10 @@ export function TasksPage() {
                   <td>{p ? <span className="pbadge" data-c={p.color}>{p.name}</span> : <span className="muted">—</span>}</td>
                   <td><span className={"tag " + t.priority}>{PRIORITY_LABEL[t.priority]}</span></td>
                   <td className={late ? "bad" : ""}>{t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}{t.start ? ` · ${t.start}` : ""}</td>
-                  <td><span className={"stpill " + (late && t.status !== "done" ? "late" : t.status)}>{late && t.status !== "done" ? "Terlambat" : STATUS[t.status]}</span></td>
+                  <td>
+                    <span className={"stpill " + (late && t.status !== "done" ? "late" : t.status)}>{late && t.status !== "done" ? "Terlambat" : STATUS[t.status]}</span>
+                    {t.status === "hold" && t.holdReason && <small className="muted clamp1" style={{ maxWidth: 120, fontSize: "0.68rem", marginTop: 2 }} title={`Alasan: ${t.holdReason}`}>{t.holdReason}</small>}
+                  </td>
                 </tr>
               );
             }))
@@ -158,6 +172,17 @@ export function TasksPage() {
         </table>
         {!rows.length && <Empty title="Tidak ada tugas">Ubah filter untuk melihat tugas lain.</Empty>}
       </div>
+      {bulkHoldOpen && (
+        <HoldModal
+          taskTitle={`${picked.length} tugas terpilih`}
+          onClose={() => setBulkHoldOpen(false)}
+          onSubmit={reason => {
+            setBulkHoldOpen(false);
+            void bulk("Status Hold", id => ok(api.tasks[":id"].status.$patch({ param: { id }, json: { status: "hold", holdReason: reason } })));
+          }}
+          isPending={busy}
+        />
+      )}
     </Page>
   );
 }

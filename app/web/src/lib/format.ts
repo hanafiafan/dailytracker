@@ -2,8 +2,8 @@ import type { MemberDTO } from "@shared/schemas";
 import { parseYmd, ymd } from "@shared/time";
 
 export const DAYN = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"] as const;
-export const STATUS = { todo: "Belum", doing: "Dikerjakan", done: "Selesai" } as const;
-export const NEXT = { todo: "doing", doing: "done", done: "todo" } as const;
+export const STATUS = { todo: "Belum", doing: "Dikerjakan", hold: "Hold", done: "Selesai" } as const;
+export const NEXT = { todo: "doing", doing: "done", hold: "doing", done: "todo" } as const;
 
 export const today = () => ymd(new Date());
 export const fmtLong = (s: string) => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(parseYmd(s));

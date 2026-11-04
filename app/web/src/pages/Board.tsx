@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { Leaf, SlidersHorizontal, Target, Wrench } from "lucide-react";
+import { Leaf, PauseCircle, SlidersHorizontal, Target, Wrench } from "lucide-react";
 import { Sheet } from "../components/Sheet";
 import { toast } from "sonner";
 import { PRIORITIES, STATUSES, type Priority, type Status, type TaskDTO } from "@shared/schemas";
@@ -14,8 +14,9 @@ import { patchTaskLocally, useAction, useTasks, windowFrom, keys } from "../lib/
 import { PRIORITY_LABEL, PRIORITY_RANK, subtaskProgress, weekStart } from "../lib/tasks";
 import { useIsMobile } from "../lib/useMedia";
 import { useUi, useViewer } from "../lib/viewer";
+import { HoldModal } from "../components/HoldModal";
 
-const COL_TINT: Record<Status, string> = { todo: "gray", doing: "sky", done: "mint" };
+const COL_TINT: Record<Status, string> = { todo: "gray", doing: "sky", hold: "yellow", done: "mint" };
 
 function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
   const { member, project, label } = useViewer();
@@ -32,6 +33,12 @@ function Card({ t, drag }: { t: TaskDTO; drag?: boolean }) {
           {p && <span className="pbadge" title={p.name}>{p.name}</span>}
           {t.labelIds.slice(0, 2).map(id => { const l = label(id); return l ? <span key={id} className="pbadge" title={l.name}>#{l.name}</span> : null; })}
           {t.labelIds.length > 2 && <span className="pbadge">+{t.labelIds.length - 2}</span>}
+        </div>
+      )}
+      {t.status === "hold" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(245, 158, 11, 0.15)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: 6, padding: "4px 8px", fontSize: "0.75rem", color: "#d97706", fontWeight: 600 }}>
+          <PauseCircle size={13} style={{ flexShrink: 0 }} />
+          <span className="clamp1" title={t.holdReason ? `Alasan: ${t.holdReason}` : "Tugas di-hold"}>{t.holdReason || "Di-hold"}</span>
         </div>
       )}
       <div className="foot2">
@@ -59,7 +66,7 @@ function Column({ status, tasks, canDrag }: { status: Status; tasks: TaskDTO[]; 
     <section ref={setNodeRef} className="col" data-c={COL_TINT[status]} data-over={isOver} aria-label={STATUS[status]}>
       <h2 className="col-h">{STATUS[status]}<span>{tasks.length}</span></h2>
       {tasks.map(t => <DraggableCard key={t.id} t={t} canDrag={canDrag(t)} />)}
-      {!tasks.length && <Empty icon={status === "done" ? <Target size={22} /> : status === "doing" ? <Wrench size={22} /> : <Leaf size={22} />} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
+      {!tasks.length && <Empty icon={status === "done" ? <Target size={22} /> : status === "doing" ? <Wrench size={22} /> : status === "hold" ? <PauseCircle size={22} /> : <Leaf size={22} />} title={status === "done" ? "Belum ada yang selesai" : status === "doing" ? "Tidak ada yang sedang dikerjakan" : status === "hold" ? "Tidak ada tugas di-hold" : "Semua sudah berjalan"}>Seret kartu ke sini untuk mengubah status.</Empty>}
     </section>
   );
 }
@@ -73,9 +80,10 @@ export function Board() {
   const [dragging, setDragging] = useState<TaskDTO | null>(null);
   const mobile = useIsMobile();
   const [mst, setMst] = useState<Status>("todo"), [filterOpen, setFilterOpen] = useState(false);
+  const [holdTarget, setHoldTarget] = useState<TaskDTO | null>(null);
   const tq = useTasks(windowFrom(date, today()), true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }));
-  const move = useAction((v: { id: string; status: Status }) => ok(api.tasks[":id"].status.$patch({ param: { id: v.id }, json: { status: v.status } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
+  const move = useAction((v: { id: string; status: Status; holdReason?: string }) => ok(api.tasks[":id"].status.$patch({ param: { id: v.id }, json: { status: v.status, holdReason: v.holdReason } })), { refresh: [keys.tasks, keys.activity, keys.analytics] });
 
   const people = team.filter(m => (!m.isAdmin || m.email === policy.me || policy.isBoss || policy.isBO) && policy.canSee(m.email));
   const wk = weekStart(date);
@@ -101,6 +109,10 @@ export function Board() {
     if (!t || !to || !STATUSES.includes(to) || to === t.status) return;
     if (t.approvalStatus === "pending") { toast("Tugas belum disetujui atasan."); return; }
     if (to === "done" && !policy.canManage(t.email)) { toast("Selesaikan lewat panel tugas agar bisa melampirkan bukti."); openTask(t.id); return; }
+    if (to === "hold") {
+      setHoldTarget(t);
+      return;
+    }
     patchTaskLocally(qc, t.id, { status: to });
     move.mutate({ id: t.id, status: to });
   };
@@ -140,10 +152,23 @@ export function Board() {
               <div key={t.id} className="mk">
                 <div role="button" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}><Card t={t} /></div>
                 {canDrag(t) && t.status !== "done" && (
-                  <button className={"btn small " + (t.status === "todo" ? "blue" : "primary")} onClick={() => { if (t.status === "todo") { patchTaskLocally(qc, t.id, { status: "doing" }); move.mutate({ id: t.id, status: "doing" }); } else openTask(t.id); }}>{t.status === "todo" ? "Mulai kerjakan" : "Selesaikan"}</button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {t.status === "todo" && (
+                      <button className="btn small blue" onClick={() => { patchTaskLocally(qc, t.id, { status: "doing" }); move.mutate({ id: t.id, status: "doing" }); }}>Mulai kerjakan</button>
+                    )}
+                    {t.status === "doing" && (
+                      <>
+                        <button className="btn small primary" onClick={() => openTask(t.id)}>Selesaikan</button>
+                        <button className="btn small" onClick={() => setHoldTarget(t)} style={{ color: "#d97706" }}>Hold</button>
+                      </>
+                    )}
+                    {t.status === "hold" && (
+                      <button className="btn small primary" onClick={() => { patchTaskLocally(qc, t.id, { status: "doing" }); move.mutate({ id: t.id, status: "doing" }); }}>Lanjutkan</button>
+                    )}
+                  </div>
                 )}
               </div>))}
-            {!tasks.some(t => t.status === mst) && <Empty art="tasks" title={mst === "done" ? "Belum ada yang selesai" : mst === "doing" ? "Tidak ada yang sedang dikerjakan" : "Semua sudah berjalan"} />}
+            {!tasks.some(t => t.status === mst) && <Empty art="tasks" title={mst === "done" ? "Belum ada yang selesai" : mst === "doing" ? "Tidak ada yang sedang dikerjakan" : mst === "hold" ? "Tidak ada tugas di-hold" : "Semua sudah berjalan"} />}
           </div>
         </div>
       ) : (
@@ -153,6 +178,19 @@ export function Board() {
         </div>
         <DragOverlay>{dragging ? <Card t={dragging} drag /> : null}</DragOverlay>
       </DndContext>)}
+      {holdTarget && (
+        <HoldModal
+          taskTitle={holdTarget.title}
+          onClose={() => setHoldTarget(null)}
+          onSubmit={reason => {
+            const tid = holdTarget.id;
+            setHoldTarget(null);
+            patchTaskLocally(qc, tid, { status: "hold", holdReason: reason });
+            move.mutate({ id: tid, status: "hold", holdReason: reason });
+          }}
+          isPending={move.isPending}
+        />
+      )}
     </Page>
   );
 }

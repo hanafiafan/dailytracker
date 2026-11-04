@@ -533,5 +533,53 @@ describe("instant self tasks and proof completion", () => {
     });
     expect(badPatch.status).toBe(400);
   });
+
+  it("supports hold status with mandatory reason and proper state transitions", async () => {
+    const t = setup();
+
+    // 1. Create a task
+    const res = await t.call(OWNER, "POST", "/tasks", {
+      emails: ["a@x.id"],
+      title: "Pengembangan Modul Pembayaran",
+    });
+    expect(res.status).toBe(201);
+    const { ids } = await json(res);
+    const taskId = ids[0];
+
+    // 2. Setting status to hold without reason fails (status 400)
+    const noReason = await t.call("a@x.id", "PATCH", `/tasks/${taskId}/status`, { status: "hold" });
+    expect(noReason.status).toBe(400);
+
+    const emptyReason = await t.call("a@x.id", "PATCH", `/tasks/${taskId}/status`, { status: "hold", holdReason: "   " });
+    expect(emptyReason.status).toBe(400);
+
+    // 3. Setting status to hold with valid reason succeeds
+    const holdRes = await t.call("a@x.id", "PATCH", `/tasks/${taskId}/status`, {
+      status: "hold",
+      holdReason: "Menunggu kredensial API Midtrans dari client",
+    });
+    expect(holdRes.status).toBe(200);
+
+    // 4. Verify task state has status "hold", holdReason, heldAt, and heldBy
+    const heldTask = await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`));
+    expect(heldTask.status).toBe("hold");
+    expect(heldTask.holdReason).toBe("Menunggu kredensial API Midtrans dari client");
+    expect(typeof heldTask.heldAt).toBe("number");
+    expect(heldTask.heldBy).toBeDefined();
+
+    // 5. Timer cannot be started while task is in hold status
+    const timerRes = await t.call("a@x.id", "POST", `/time/${taskId}/start`);
+    expect(timerRes.status).toBe(400);
+
+    // 6. Resuming task to doing clears hold fields and sets startedAt
+    const resumeRes = await t.call("a@x.id", "PATCH", `/tasks/${taskId}/status`, { status: "doing" });
+    expect(resumeRes.status).toBe(200);
+
+    const resumedTask = await json(await t.call("a@x.id", "GET", `/tasks/${taskId}`));
+    expect(resumedTask.status).toBe("doing");
+    expect(resumedTask.holdReason).toBeNull();
+    expect(resumedTask.heldAt).toBeNull();
+    expect(resumedTask.heldBy).toBeNull();
+  });
 });
 

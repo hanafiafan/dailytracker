@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const STATUSES = ["todo", "doing", "done"] as const;
+export const STATUSES = ["todo", "doing", "hold", "done"] as const;
 export type Status = (typeof STATUSES)[number];
 export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 export type Priority = (typeof PRIORITIES)[number];
@@ -131,7 +131,13 @@ export const pollCreate = z.object({
 export const groupInput = z.object({ name: z.string().trim().min(1).max(40), description: z.string().trim().max(300).optional().default(""), emails: z.array(email).max(200).default([]) });
 export const groupPatch = z.object({ name: z.string().trim().min(1).max(40).optional(), description: z.string().trim().max(300).optional(), emails: z.array(email).max(200).optional() });
 export const notificationsRead = z.object({ ids: z.array(z.string()).max(200).optional() });
-export const taskStatus = z.object({ status: z.enum(STATUSES) });
+export const taskStatus = z.object({
+  status: z.enum(STATUSES),
+  holdReason: z.string().trim().max(300).optional(),
+}).refine(v => v.status !== "hold" || !!v.holdReason?.trim(), {
+  message: "Keterangan alasan hold wajib diisi",
+  path: ["holdReason"],
+});
 export const taskReport = z.object({ report: z.string().trim().max(600) });
 export const commentCreate = z.object({ text: z.string().trim().min(1).max(600), mentions: z.array(email).max(10).default([]) });
 export const linkCreate = z.object({ title: z.string().trim().min(1).max(80), url: z.string().trim().url().max(500) });
@@ -204,6 +210,7 @@ export interface TaskDTO {
   qty: number;
   createdAt: number; startedAt: number | null; doneAt: number | null; returnedAt: number | null; revisions: number;
   revisionNote?: string | null;
+  holdReason?: string | null; heldAt?: number | null; heldBy?: string | null;
   proofLink: string | null; proofAt: number | null; hasPhoto: boolean; report: string | null; reportAt: number | null;
   comments: CommentDTO[];
 }
@@ -229,7 +236,7 @@ export interface ProjectReportDTO {
   project: ProjectDTO;
   services?: ProjectServiceDTO[];
   stats: { total: number; done: number; open: number; onTime: number; late: number; minutes: number; withProof: number; revisions: number };
-  tasks: { id: string; title: string; email: string; name: string; date: string; dueDate?: string | null; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null; qty: number; startedAt: number | null }[];
+  tasks: { id: string; title: string; email: string; name: string; date: string; dueDate?: string | null; status: Status; priority: Priority; doneAt: number | null; hasPhoto: boolean; proofLink: string | null; report: string | null; minutes: number; revisions: number; serviceId?: string | null; qty: number; startedAt: number | null; holdReason?: string | null; heldAt?: number | null; heldBy?: string | null }[];
 }
 export interface ResourceDTO { id: string; name: string; kind: ResourceKind; note: string; archived: boolean }
 export interface BookingDTO { id: string; resourceId: string; email: string; taskId: string | null; taskTitle: string | null; date: string; start: string; end: string; note: string }

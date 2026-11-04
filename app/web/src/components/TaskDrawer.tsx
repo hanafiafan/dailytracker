@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertCircle, BellRing, Bookmark, MoreHorizontal, CheckCircle2, Copy, ListChecks, MessageSquare, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
+import { AlertCircle, BellRing, Bookmark, MoreHorizontal, CheckCircle2, Copy, ListChecks, MessageSquare, PauseCircle, Pencil, Sparkles, Undo2, UserRound, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { loadTemplates, saveTemplates } from "../lib/templates";
@@ -15,6 +15,7 @@ import { TimeTags } from "./TaskTags";
 import { Avatar, ConfirmButton } from "./ui";
 import { Sheet } from "./Sheet";
 import { useIsMobile } from "../lib/useMedia";
+import { HoldModal } from "./HoldModal";
 
 const ICON: Record<string, ReactNode> = { created: <Sparkles size={14} />, status: <CheckCircle2 size={14} />, edited: <Pencil size={14} />, assigned: <UserRound size={14} />, returned: <Undo2 size={14} />, comment: <MessageSquare size={14} />, subtask: <ListChecks size={14} /> };
 
@@ -42,6 +43,7 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
   const qc = useQueryClient();
   const [proofOpen, setProofOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
+  const [holdOpen, setHoldOpen] = useState(false);
   const mobile = useIsMobile(), [more, setMore] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [sub, setSub] = useState("");
@@ -69,7 +71,14 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
     <>
       <div className="drawer-h">
         <div style={{ flex: 1, display: "grid", gap: 8 }}>
-          <div><button className={"status " + (isPending ? "pending" : t.status)} onClick={cycle} disabled={!work && !isPending} title={isPending ? "Menunggu persetujuan atasan" : undefined} aria-label={`Status: ${isPending ? "Menunggu" : STATUS[t.status]}. Ketuk untuk ganti.`}>{isPending ? "Menunggu" : STATUS[t.status]}</button></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button className={"status " + (isPending ? "pending" : t.status)} onClick={cycle} disabled={!work && !isPending} title={isPending ? "Menunggu persetujuan atasan" : undefined} aria-label={`Status: ${isPending ? "Menunggu" : STATUS[t.status]}. Ketuk untuk ganti.`}>{isPending ? "Menunggu" : STATUS[t.status]}</button>
+            {work && t.status !== "done" && t.status !== "hold" && (
+              <button type="button" className="btn small" onClick={() => setHoldOpen(true)} title="Hold / tunda tugas ini (wajib isi keterangan)" style={{ height: 24, fontSize: "0.72rem", padding: "0 10px", borderColor: "rgba(245, 158, 11, 0.4)", color: "#d97706" }}>
+                <PauseCircle size={13} style={{ marginRight: 4 }} /> Hold
+              </button>
+            )}
+          </div>
           {canEdit
             ? <textarea className="input titlefield" rows={2} defaultValue={t.title} maxLength={120} onBlur={onBlur("title")} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} aria-label="Judul tugas" />
             : <h2>{t.title}</h2>}
@@ -78,6 +87,35 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
         <button className="iconbtn" onClick={closeTask} aria-label="Tutup"><X size={18} /></button>
       </div>
       <div className="drawer-b">
+        {t.status === "hold" && (
+          <div className="surface" style={{ background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: 10, padding: "12px 14px", display: "grid", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#d97706", fontWeight: 700, fontSize: "0.88rem" }}>
+                <PauseCircle size={16} />
+                <span>Status: HOLD (Tertunda)</span>
+              </div>
+              {work && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn small primary" disabled={a.setStatus.isPending} onClick={() => a.setStatus.mutate("doing")}>
+                    Lanjutkan Pengerjaan
+                  </button>
+                  <button className="btn small ghost" disabled={a.setStatus.isPending} onClick={() => a.setStatus.mutate("todo")}>
+                    Ke Belum
+                  </button>
+                </div>
+              )}
+            </div>
+            {t.holdReason && (
+              <div style={{ fontSize: "0.85rem", color: "var(--ink)", lineHeight: 1.45, background: "rgba(255, 255, 255, 0.05)", padding: "8px 10px", borderRadius: 6 }}>
+                <b style={{ color: "#d97706" }}>Alasan Hold:</b> {t.holdReason}
+              </div>
+            )}
+            <small className="muted" style={{ fontSize: "0.78rem" }}>
+              {t.heldBy ? `Ditahan oleh ${t.heldBy}` : "Ditahan"}
+              {t.heldAt ? ` · ${fmtTime(t.heldAt)} (${fmtShort(new Date(t.heldAt).toISOString().slice(0, 10))})` : ""}
+            </small>
+          </div>
+        )}
         {isPending && (
           <div className="surface" style={{ background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div style={{ display: "grid", gap: 2 }}>
@@ -257,6 +295,18 @@ function DrawerBody({ t, activity, owner }: { t: TaskDTO; activity: ActivityDTO[
             });
           }}
           isPending={a.giveBack.isPending}
+        />
+      )}
+      {holdOpen && (
+        <HoldModal
+          taskTitle={t.title}
+          onClose={() => setHoldOpen(false)}
+          onSubmit={reason => {
+            a.setStatus.mutate({ status: "hold", holdReason: reason }, {
+              onSuccess: () => setHoldOpen(false),
+            });
+          }}
+          isPending={a.setStatus.isPending}
         />
       )}
     </>

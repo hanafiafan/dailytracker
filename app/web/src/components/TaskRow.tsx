@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState } from "react";
+import { PauseCircle } from "lucide-react";
 import type { TaskDTO } from "@shared/schemas";
 import { NEXT, STATUS, fmtTime, host } from "../lib/format";
 import { useTaskActions } from "../lib/actions";
@@ -36,6 +37,12 @@ export function TaskRow({ t, canDelete, isLate }: { t: TaskDTO; canDelete: boole
         <b className="clamp2" title={t.title} role="link" tabIndex={0} onClick={() => openTask(t.id)} onKeyDown={e => e.key === "Enter" && openTask(t.id)}>{t.title}</b>
         {t.note && <p className="clamp2">{t.note}</p>}
         <TaskMeta t={t} isLate={isLate} compact max={3} />
+        {t.status === "hold" && t.holdReason && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: 6, padding: "2px 8px", fontSize: "0.74rem", color: "#d97706", marginTop: 4, fontWeight: 500 }}>
+            <PauseCircle size={12} style={{ flexShrink: 0 }} />
+            <span className="clamp1">Alasan: {t.holdReason}</span>
+          </div>
+        )}
         {t.proofAt && (
           <div className="proof">
             {photo && <button className="thumb" onClick={() => setLightbox(true)} aria-label="Lihat foto bukti"><img src={photo} alt={"Bukti: " + t.title} loading="lazy" /></button>}

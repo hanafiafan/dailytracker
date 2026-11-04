@@ -1,4 +1,4 @@
-import type { Color, Priority, TaskDTO } from "@shared/schemas";
+import type { Color, Priority, Status, TaskDTO } from "@shared/schemas";
 import { addDays } from "@shared/time";
 import { today } from "./format";
 
@@ -65,7 +65,7 @@ export const taskEndDate = (t: Pick<TaskDTO, "date" | "dueDate">) => t.dueDate |
 export const isMultiDay = (t: Pick<TaskDTO, "date" | "dueDate">) => !!t.dueDate && t.dueDate > t.date;
 
 export const sortTasks = (arr: TaskDTO[]) => arr.slice().sort((a, b) => {
-  const st = { todo: 0, doing: 0, done: 1 };
+  const st: Record<Status, number> = { doing: 0, todo: 1, hold: 2, done: 3 };
   const da = a.start || a.due || "99:99", db = b.start || b.due || "99:99";
   const ea = taskEndDate(a), eb = taskEndDate(b);
   return st[a.status] - st[b.status] || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (da < db ? -1 : da > db ? 1 : 0) || (ea < eb ? -1 : ea > eb ? 1 : 0) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || a.createdAt - b.createdAt;

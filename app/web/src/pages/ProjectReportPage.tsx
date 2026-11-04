@@ -17,7 +17,7 @@ import { useUi, useViewer } from "../lib/viewer";
 type T = ProjectReportDTO["tasks"][number];
 const day = (ms: number) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(ms));
 const dayLong = (d: string) => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long" }).format(new Date(d + "T12:00:00+07:00"));
-const ST = { todo: "Belum", doing: "Dikerjakan", done: "Selesai" } as const;
+const ST = { todo: "Belum", doing: "Dikerjakan", hold: "Hold", done: "Selesai" } as const;
 
 function Ring({ value, size = 96 }: { value: number; size?: number }) {
   return (
@@ -207,15 +207,18 @@ function Tasks({ tasks }: { tasks: T[] }) {
   const rows = tasks.filter(t => !f || t.status === f);
   return (
     <section className="bc">
-      <div className="bc-h"><h2>Semua tugas</h2><div className="seg" role="group" aria-label="Status"><button aria-pressed={!f} onClick={() => setF("")}>Semua {tasks.length}</button>{(["todo", "doing", "done"] as const).map(s => <button key={s} aria-pressed={f === s} onClick={() => setF(s)}>{ST[s]} {tasks.filter(t => t.status === s).length}</button>)}</div></div>
+      <div className="bc-h"><h2>Semua tugas</h2><div className="seg" role="group" aria-label="Status"><button aria-pressed={!f} onClick={() => setF("")}>Semua {tasks.length}</button>{(["todo", "doing", "hold", "done"] as const).map(s => <button key={s} aria-pressed={f === s} onClick={() => setF(s)}>{ST[s]} {tasks.filter(t => t.status === s).length}</button>)}</div></div>
       <table className="htable" style={{ tableLayout: "fixed" }}>
         <thead><tr><th style={{ width: "38%" }}>Tugas</th><th className="hide-s">Penerima</th><th>Tanggal</th><th className="hide-s">Hasil</th><th style={{ width: 120 }}>Status</th></tr></thead>
-        <tbody>{rows.map(t => { const m = member(t.email), late = t.status !== "done" && (t.dueDate || t.date) < today(); return (
+        <tbody>{rows.map(t => { const m = member(t.email), late = t.status !== "done" && t.status !== "hold" && (t.dueDate || t.date) < today(); return (
           <tr key={t.id} className={policy.isClient ? "" : "hr"} onClick={policy.isClient ? undefined : () => openTask(t.id)}>
             <td><span className="nm"><b>{t.title}</b>{t.revisions > 0 && <span className="tag off">Revisi {t.revisions}×</span>}</span></td>
             <td className="hide-s"><span className="nm">{m && <Avatar m={m} />}<span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span></span></td>
             <td>{t.dueDate && t.dueDate !== t.date ? `${fmtShort(t.date)} – ${fmtShort(t.dueDate)}` : fmtShort(t.date)}</td><td className="hide-s">{t.qty || "–"}</td>
-            <td><span className={"stpill " + (late ? "late" : t.status)}>{late ? "Terlambat" : ST[t.status]}</span></td>
+            <td>
+              <span className={"stpill " + (late ? "late" : t.status)}>{late ? "Terlambat" : ST[t.status]}</span>
+              {t.status === "hold" && t.holdReason && <small className="muted clamp1" style={{ fontSize: "0.7rem", marginTop: 2 }} title={`Alasan: ${t.holdReason}`}>{t.holdReason}</small>}
+            </td>
           </tr>); })}</tbody>
       </table>
       {!rows.length && <Empty art="search" title="Tidak ada tugas" />}

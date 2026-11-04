@@ -175,22 +175,35 @@ export const taskRoutes = ({ db, bus, env }: Deps, notify: Notify) => {
       return c.json({ ok: true });
     })
     .patch("/:id/status", zValidator("json", taskStatus), c => {
-      const u = c.var.user, t = find(c.req.param("id")), { status } = c.req.valid("json");
+      const u = c.var.user, t = find(c.req.param("id")), { status, holdReason } = c.req.valid("json");
       if (!t) return c.json({ error: "not found" }, 404);
       if (!canWork(u, t)) return c.json({ error: "forbidden" }, 403);
       if (t.approvalStatus === "pending") return c.json({ error: "Tugas belum disetujui atasan" }, 400);
       // Members finish a task through /complete (proof); managers can set it directly.
       if (status === "done" && !u.policy.canManage(t.email)) return c.json({ error: "Selesaikan tugas lewat form bukti" }, 400);
+      if (status === "hold" && !holdReason?.trim()) return c.json({ error: "Keterangan alasan hold wajib diisi" }, 400);
       const now = Date.now();
-      db.update(tasks).set({
+      const patch: Partial<typeof tasks.$inferInsert> = {
         status,
         doneAt: status === "done" ? now : null,
         ...(status === "done" ? { returnedAt: null } : {}),
         ...(status === "doing" && !t.startedAt ? { startedAt: now } : {}),
-      }).where(eq(tasks.id, t.id)).run();
-      if (status !== t.status) log(u, t.id, "status", status === "done" ? "menyelesaikan tugas" : status === "doing" ? "mulai mengerjakan" : "mengembalikan ke belum dikerjakan");
+        ...(status === "hold"
+          ? { holdReason: holdReason?.trim() || null, heldAt: now, heldBy: who(u) }
+          : { holdReason: null, heldAt: null, heldBy: null }),
+      };
+      db.update(tasks).set(patch).where(eq(tasks.id, t.id)).run();
+      if (status !== t.status) {
+        let actText = "mengubah status tugas";
+        if (status === "done") actText = "menyelesaikan tugas";
+        else if (status === "hold") actText = `menahan tugas (hold): "${holdReason?.trim()}"`;
+        else if (status === "doing") actText = t.status === "hold" ? "melanjutkan tugas (lepas hold)" : "mulai mengerjakan";
+        else if (status === "todo") actText = t.status === "hold" ? "mengembalikan ke belum dikerjakan (lepas hold)" : "mengembalikan ke belum dikerjakan";
+        log(u, t.id, status === "hold" ? "hold" : "status", actText);
+      }
       touch();
       if (status === "done") void notify.done({ ...t, status }, u.email);
+      if (status === "hold" && holdReason?.trim()) void notify.taskHeld(t, who(u), u.email, holdReason.trim());
       return c.json({ ok: true });
     })
     // Mark done with proof: multipart { photo?: JPEG, link?, note?, skipProof? }.

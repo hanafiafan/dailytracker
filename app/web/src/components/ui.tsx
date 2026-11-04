@@ -38,7 +38,7 @@ export function Bar({ c, total }: { c: Record<Status, number>; total: number }) 
   );
 }
 export const tally = (list: { status: Status }[]) => {
-  const c: Record<Status, number> = { todo: 0, doing: 0, done: 0 };
+  const c: Record<Status, number> = { todo: 0, doing: 0, hold: 0, done: 0 };
   for (const t of list) c[t.status]++;
   return c;
 };

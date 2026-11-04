@@ -37,7 +37,7 @@ export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: B
   const dueToday = allTasks.filter(t => taskDueDay(t) === date);
 
   for (const t of dueToday) {
-    if (t.status === "done" || !t.due) continue;
+    if (t.status === "done" || t.status === "hold" || !t.due) continue;
     const dl = atMs(date, t.due);
     if (now > dl && !t.remLate) {
       db.update(tasks).set({ remLate: true }).where(eq(tasks.id, t.id)).run();
@@ -53,7 +53,7 @@ export async function runReminders(db: Db, push: Push, now = Date.now(), bus?: B
   const names = new Map(db.select({ email: members.email, name: members.name }).from(members).all().map(m => [m.email, m.name]));
   const dueYesterdayOrToday = allTasks.filter(t => taskDueDay(t) === date || taskDueDay(t) === addDays(date, -1));
   for (const t of dueYesterdayOrToday) {
-    if (t.status === "done" || !t.due || now - atMs(taskDueDay(t), t.due) < AUTO_LATE_MS) continue;
+    if (t.status === "done" || t.status === "hold" || !t.due || now - atMs(taskDueDay(t), t.due) < AUTO_LATE_MS) continue;
     const text = `Tugas ini belum selesai, sudah lewat 15 menit dari jam selesai ${t.due}. Mohon segera diselesaikan atau beri kabar di komentar.`;
     const res = db.insert(comments).values({ id: "auto-" + t.id, taskId: t.id, by: "Pengingat otomatis", byEmail: "", text, at: now }).onConflictDoNothing().run();
     if (!res.changes) continue;
